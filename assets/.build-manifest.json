@@ -3,72 +3,72 @@
   "schema_note": "SHA-256 of build-time-generated runtime assets. Used for CI determinism check.",
   "files": {
     "face_halftone.png": {
-      "sha256": "f8fafe3f834b6f14a46e3e5a52f760b68911f21dd0cda2d5533783b8534d4fb3",
-      "size_bytes": 30891
+      "sha256": "a23721f7e8b4c4279274e3edcf01c70a97a5b95a364c6e5a63a6da2c07288909",
+      "size_bytes": 30758
     },
     "visemes/viseme_AA.png": {
-      "sha256": "26cd0c891932392c09a75c58d5993d2978cb159b3f5f16c373e5d8360e4d287a",
-      "size_bytes": 36521
+      "sha256": "bb4384fc9e6202bf896922d6d0d256848b7c5b0eaa426f54ee59625f07f79eb2",
+      "size_bytes": 36053
     },
     "visemes/viseme_EE.png": {
-      "sha256": "e22e654f4401863704c1230f11ba98c8df13e09d66d24550b604f6c6c78c695d",
-      "size_bytes": 33234
+      "sha256": "958034c5824b7f2efaf5af94e3e4fc4a47e9f347497d14eae0ae1a183ea7efc9",
+      "size_bytes": 33381
     },
     "visemes/viseme_IH.png": {
-      "sha256": "cf470533fa7dcaec0ddf0cec347ef47e6af1c8f5e0139d321ced65afcb11a556",
-      "size_bytes": 33726
+      "sha256": "ce310b13dd5d92c9d964ed976bf675fcc9b3b5e161c82e0669fec60d16e4c8e8",
+      "size_bytes": 33771
     },
     "visemes/viseme_OH.png": {
-      "sha256": "895b0577ec88b5dc6c02ab3988653324f14e4f0ce59decc093e2048d266a4cb9",
-      "size_bytes": 34441
+      "sha256": "fcff8583b177645b21997541a8f65d378510049d60d03cc49db4cd358c509bcc",
+      "size_bytes": 34567
     },
     "visemes/viseme_OW.png": {
-      "sha256": "b8d52bea805c1526de35d04224317cc6ee82a9d7e1583e2b83a14cd4f17c4d23",
-      "size_bytes": 33664
+      "sha256": "8825667e5995ec63297a1aa0d00826fd1ffae616884acfbbccd88052a87bb331",
+      "size_bytes": 33507
     },
     "visemes/viseme_UH.png": {
-      "sha256": "a261d9c6a210c33f3ca77c3d99878f15758ed2169e54a9d731109fca77e1afd3",
-      "size_bytes": 33777
+      "sha256": "efb3e709c634065fbe318acda02a31fd1b682af4d8fb483e8ae7b29f62a09092",
+      "size_bytes": 33693
     },
     "visemes/viseme_M.png": {
-      "sha256": "d2a5938670e1dec1d453997917c2d996c9cdc32c019fd1c5d0fdd65ef75306c4",
-      "size_bytes": 32351
+      "sha256": "800303dbccf43e216dcf9d2e1888fca24f84fe2429e41c4a3fd606f9fcca56ea",
+      "size_bytes": 32092
     },
     "visemes/viseme_P.png": {
-      "sha256": "d2a5938670e1dec1d453997917c2d996c9cdc32c019fd1c5d0fdd65ef75306c4",
-      "size_bytes": 32351
+      "sha256": "800303dbccf43e216dcf9d2e1888fca24f84fe2429e41c4a3fd606f9fcca56ea",
+      "size_bytes": 32092
     },
     "visemes/viseme_B.png": {
-      "sha256": "d2a5938670e1dec1d453997917c2d996c9cdc32c019fd1c5d0fdd65ef75306c4",
-      "size_bytes": 32351
+      "sha256": "800303dbccf43e216dcf9d2e1888fca24f84fe2429e41c4a3fd606f9fcca56ea",
+      "size_bytes": 32092
     },
     "visemes/viseme_F.png": {
-      "sha256": "d138e5850cf61f91cb6a79d76c8b186bcece6617bda87a7ece291166774f7acf",
-      "size_bytes": 32812
+      "sha256": "7778a406775eca6bf0bada6b4c78ece590722e8ccd8914d039813a118bb697c1",
+      "size_bytes": 32335
     },
     "visemes/viseme_V.png": {
-      "sha256": "d138e5850cf61f91cb6a79d76c8b186bcece6617bda87a7ece291166774f7acf",
-      "size_bytes": 32812
+      "sha256": "7778a406775eca6bf0bada6b4c78ece590722e8ccd8914d039813a118bb697c1",
+      "size_bytes": 32335
     },
     "visemes/viseme_TH.png": {
-      "sha256": "6669e6f6e36db0a4a2b433ebf038d44812b641ff22f92305227c804548b4c928",
-      "size_bytes": 33427
+      "sha256": "0e3285ec4943ae80971fe6bc5b6a17d116ea192e8371416f474eafc568870356",
+      "size_bytes": 33179
     },
     "visemes/viseme_S.png": {
-      "sha256": "35d06524f4acf6fc170eb58406cc9f01df97d4977c826a5ab336b98c21c01990",
-      "size_bytes": 33354
+      "sha256": "5966e35a5b66443214f30108ca87a22e556541138a5fd84e67ad3281d227da29",
+      "size_bytes": 32974
     },
     "visemes/viseme_SH.png": {
-      "sha256": "e46575aae1c3fde68cd2251b863eb8cc23a40216803c0332772b899972bc48a9",
-      "size_bytes": 33595
+      "sha256": "cdb1cb7a6f0b57b83b596fb9cbbf0d43b311ce304689dbb0a0e55fa3db27d0c4",
+      "size_bytes": 33446
     },
     "visemes/viseme_R.png": {
-      "sha256": "4ac474b0aa6f504c5a950394b0a6f88d4ce5e94c1002f6f6680882c38e8d2d74",
-      "size_bytes": 33658
+      "sha256": "a76f3a0a98636e4593fe33d24b644b10df6a98cee0832c3dfab880b2a6adb5a9",
+      "size_bytes": 33597
     },
     "visemes/viseme_REST.png": {
-      "sha256": "c1946940fa6b0bb7e311a4a2465141eedbb0831e0786ef324bee6aa652578067",
-      "size_bytes": 32308
+      "sha256": "56ad0789c1cd2e38b9164dab0ea6ed2540d935253ec894b4e557bb0a4e8c4cda",
+      "size_bytes": 31864
     }
   },
   "viseme_count": 16
