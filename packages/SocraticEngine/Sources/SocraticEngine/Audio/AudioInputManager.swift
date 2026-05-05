@@ -37,6 +37,16 @@ public final class AudioInputManager: NSObject {
     public var onPartialTranscript: ((String) -> Void)?
     public var onError: ((NSError) -> Void)?
 
+    /// Most recent partial transcript observed during the active session.
+    /// Used by `stopListening()` as a fallback when SFSpeechRecognitionTask
+    /// does not deliver a final result within a short deadline (observed in
+    /// practice on ko-KR voices for short / silent-tail utterances).
+    private var lastPartialTranscript: String = ""
+
+    /// Outstanding fallback timer scheduled by `stopListening()`. Cancelled
+    /// if the real final result arrives in time.
+    private var finalFallbackTask: Task<Void, Never>?
+
     #if canImport(Speech) && canImport(AVFAudio)
     private var recognizer: SFSpeechRecognizer?
     private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -193,8 +203,12 @@ public final class AudioInputManager: NSObject {
                 if let result {
                     let transcript = result.bestTranscription.formattedString
                     if result.isFinal {
+                        self.finalFallbackTask?.cancel()
+                        self.finalFallbackTask = nil
+                        self.lastPartialTranscript = ""
                         self.onFinalTranscript?(transcript, self.locale)
                     } else {
+                        self.lastPartialTranscript = transcript
                         self.onPartialTranscript?(transcript)
                     }
                 }
@@ -204,6 +218,9 @@ public final class AudioInputManager: NSObject {
             }
         }
 
+        lastPartialTranscript = ""
+        finalFallbackTask?.cancel()
+        finalFallbackTask = nil
         state = .listening(startedAt: Date())
         #else
         throw EngineError.make(
@@ -223,8 +240,28 @@ public final class AudioInputManager: NSObject {
         if audioEngine.isRunning {
             audioEngine.stop()
         }
+        let partialAtStop = lastPartialTranscript
+        let captureLocale = locale
         task?.finish()
-        // Result delivery happens asynchronously via the recognitionTask callback.
+
+        // SFSpeechRecognitionTask does not always deliver a final result
+        // after `finish()` — observed for ko-KR voices on short or
+        // silent-tail utterances. Without a fallback the host's turn loop
+        // wedges in `.listening`. Schedule a 1.5s safety net: if the real
+        // final hasn't fired by then, promote the most recent partial (or
+        // an empty string) so the coordinator can advance.
+        finalFallbackTask?.cancel()
+        finalFallbackTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard let self else { return }
+            guard self.finalFallbackTask != nil else { return }
+            self.finalFallbackTask = nil
+            self.lastPartialTranscript = ""
+            self.task?.cancel()
+            self.task = nil
+            self.onFinalTranscript?(partialAtStop, captureLocale)
+        }
+
         state = .ready
         #endif
     }
