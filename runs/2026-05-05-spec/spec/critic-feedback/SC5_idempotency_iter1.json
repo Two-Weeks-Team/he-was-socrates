@@ -1,0 +1,39 @@
+{
+  "critic_id": "SC5",
+  "domain": "idempotency",
+  "audit_phase": "iter-1 (post-author re-review)",
+  "audited_at_kst": "2026-05-05T17:03+09:00",
+  "delta_vs_pre_audit": { "blocking_was": 4, "blocking_now": 0, "high_was": 6, "high_now": 0, "medium_was": 3, "medium_now": 1, "low_was": 1, "low_now": 0 },
+  "resolutions": [
+    { "id": "SC5-01", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L14 + coredata-model.md §2.3: Wonder.id=UUIDv4 random; contentFingerprint=SHA-256 separate field; dedup policy=accumulate locked." },
+    { "id": "SC5-02", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L15 + function_call_contract.yaml inference_params per function; Wonder.inferenceFingerprint=({modelSHA256, mlxSwiftVersion, temp, topP, topK, seed}). 14-month replay reproducible." },
+    { "id": "SC5-03", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "All 4 functions require turn_id; orchestrator generates UUIDv4 per turn (SPEC.md §3.3 step 1). One Wonder per (sessionId, turnId). Cancellation via Cmd+. (SPEC.md §7.4)." },
+    { "id": "SC5-04", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L13 + coredata-model.md §3 migration policy: AppMeta.schemaVersion, lightweight only, backup-before-migrate, idempotent re-run check, rollback on failure." },
+    { "id": "SC5-05", "previous_severity": "high", "current_severity": "resolved", "evidence": "coredata-model.md §2.5 SemanticTag uniqueness on embeddingHash + NSMergeByPropertyStoreTrumpMergePolicy. Cascade delete on Wonder soft-delete (SC7-014 cross-ref)." },
+    { "id": "SC5-06", "previous_severity": "high", "current_severity": "resolved", "evidence": "coredata-model.md §2.2 dropped stored Session.wonderCount (computed); crash recovery scan idempotent via recoveryReason ≠ nil." },
+    { "id": "SC5-07", "previous_severity": "high", "current_severity": "resolved", "evidence": "coredata-model.md §2.3 immutability invariant; soft-delete via supersedesId; SurfaceEvent for replay-fire control." },
+    { "id": "SC5-08", "previous_severity": "high", "current_severity": "resolved", "evidence": "function_call_contract.yaml surface_past_wonder.request.already_surfaced_this_session_ids; response was_already_surfaced_this_session bool. coredata-model.md Session.surfacedWonderIds Set<UUID>." },
+    { "id": "SC5-09", "previous_severity": "high", "current_severity": "resolved", "evidence": "coredata-model.md §4 audio file lifecycle: filename={uuid}.m4a, never-overwrite, soft-delete + 30-day grace OR immediate purge on COPPA timer; orphan GC idempotent." },
+    { "id": "SC5-10", "previous_severity": "high", "current_severity": "resolved", "evidence": "coredata-model.md Wonder.visemeTimelineCached (CBOR); SPEC.md §4.3 cache invalidated only on voice-pack change or app version bump; pause/resume continues from frame N; 'repeat' plays cached buffer." },
+    { "id": "SC5-11", "previous_severity": "high", "current_severity": "resolved", "evidence": "function_call_contract.yaml retry policy: 2 retries max, seed XOR per attempt, failed attempts NOT persisted to wondering log (diagnostics dir 10 MB rolling), defer_to_human fail-closed canned safe phrase. SPEC.md §3.5." },
+    { "id": "SC5-12", "previous_severity": "medium", "current_severity": "resolved", "evidence": "coredata-model.md §5 JSON export schema: sorted keys, ISO-8601 +09:00 preserved, wonderingLogContentHash SHA-256 over canonical body, byte-stable on unchanged log. Test fixture path noted as post-build artifact." },
+    { "id": "SC5-13", "previous_severity": "medium", "current_severity": "resolved", "evidence": "function_call_contract.yaml + SPEC.md §3.3 step 5: hysteresis Δconfidence > 0.15 OR 3 consecutive same-mode; mode_classify cached per turn_id. Session.modeHistory persisted." },
+    { "id": "SC5-14", "previous_severity": "low", "current_severity": "resolved", "evidence": "coredata-model.md Wonder.thinkingTraceCompressed: deterministic truncation at last whole word + ellipsis; explicitly UI affordance not replay-determinism input." }
+  ],
+  "new_findings_iter1": [
+    {
+      "id": "SC5-NEW-001",
+      "severity": "medium",
+      "where": "performance-test-suite.md §8 + SC7-014 reconciliation",
+      "issue": "Per-MVP, surface_past_wonder needs semantic search but Wonder.embeddingHash is ONE-WAY SHA. The reconciliation in performance-test-suite.md introduces a SEPARATE local-only embedding cache 'encrypted at rest by FileVault'. Idempotency concern: this cache must be regeneratable from Wonder rows on demand (e.g. after a failed migration drops it). Spec doesn't say.",
+      "spec_action_required": "Add to coredata-model.md §1 storage layout note: 'embedding-cache/ is REGENERATABLE from Wonder rows; on cache miss or corruption, the orchestrator regenerates by re-embedding all Wonder.userUtterance+socraticReply content via NLEmbedding. Regeneration is idempotent and bounded by Wonder count.'",
+      "owner_when_addressed": "spec-author iter-2"
+    }
+  ],
+  "approval": "approve",
+  "approval_rationale": "All 4 pre-author blockings resolved. All 6 highs resolved. 2 of 3 mediums resolved + 1 NEW medium emerged (regenerability of embedding cache; non-blocking). 1 of 1 low resolved. FREEZE-COMPATIBLE.",
+  "blocking_count": 0,
+  "high_count": 0,
+  "medium_count": 1,
+  "low_count": 0
+}

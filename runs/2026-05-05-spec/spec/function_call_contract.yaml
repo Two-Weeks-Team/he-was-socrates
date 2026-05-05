@@ -1,0 +1,409 @@
+# He Was Socrates — Function-Call Contract
+# Schema dialect: JSON Schema 2020-12 (https://json-schema.org/draft/2020-12)
+# This file is the SINGLE SOURCE OF TRUTH for the four Gemma 4 E4B function calls.
+# SPEC.md §3 cross-references; design-approved.json#function_call_schema_locked_signatures
+# is a higher-level prose summary and defers to this contract on conflict.
+#
+# Addresses: SC2-001, SC2-002, SC2-003, SC2-004, SC2-005, SC2-006, SC2-007, SC2-008,
+#            SC2-009, SC2-010, SC2-012, SC2-013, SC2-014, SC2-016, SC3-009, SC3-020,
+#            SC4-008, SC5-02, SC5-03, SC5-08, SC5-11, SC5-13, SC7-007.
+
+contract:
+  schema_dialect: "https://json-schema.org/draft/2020-12/schema"
+  contract_version: "1.0.0"
+  contract_versioning_policy:
+    minor: "additive (new optional fields, new enum values appended)"
+    major: "breaking (removed fields, changed types, removed enum values); replay must reject unknown major"
+  authority_note: |
+    On any conflict between this file and design-approved.json#function_call_schema_locked_signatures,
+    THIS FILE WINS. design-approved.json was authored before SC2 audit; this contract integrates SC2-001
+    through SC2-016 plus orchestration semantics (SC2-004, SC5-03).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Common envelope (every function return is wrapped)
+# ─────────────────────────────────────────────────────────────────────────────
+$defs:
+  Envelope:
+    description: |
+      Every Gemma function-call return is wrapped in this envelope by the Swift
+      orchestrator before persistence or downstream dispatch. The envelope is NEVER
+      visible to Gemma directly (Gemma emits the inner `data` shape; orchestrator wraps).
+    type: object
+    required: [ok, schema_version, turn_id]
+    additionalProperties: false
+    properties:
+      ok:
+        type: boolean
+      schema_version:
+        type: string
+        const: "1.0.0"
+      turn_id:
+        $ref: "#/$defs/UUID"
+      data:
+        description: "Present when ok=true. Type is per-function (see oneOf in each function)."
+      error:
+        $ref: "#/$defs/Error"
+
+  Error:
+    description: "RFC-7807-analog problem detail for in-process function-call failures."
+    type: object
+    required: [code, message_en, message_ko, retryable]
+    additionalProperties: false
+    properties:
+      code:
+        type: string
+        enum:
+          - MALFORMED_JSON         # Gemma emitted invalid JSON
+          - UNKNOWN_FUNCTION       # Gemma called a function name not in the 4 known
+          - REQUIRED_FIELD_MISSING # Required schema field absent
+          - ENUM_OUT_OF_RANGE      # String value outside enum closed-set
+          - LOW_CONFIDENCE         # mode_classify confidence below threshold (0.6)
+          - LOG_ENTRY_NOT_FOUND    # surface_past_wonder referenced a Wonder.id that doesn't exist
+          - CONTEXT_OVERFLOW       # Compressed history + current would exceed 32K live budget (L3)
+          - INFERENCE_TIMEOUT_SOFT # > 15s on M2/M3, > 25s on M1; surface "still thinking" UI
+          - INFERENCE_TIMEOUT_HARD # > 45s; abort, return safe fallback
+          - MEMORY_PRESSURE_CRITICAL # macOS dispatched .critical pressure during inference
+          - MISSING_RESOURCE_CLASS # defer_to_human gave empty suggested_resource_class
+          - MODE_AMBIGUOUS         # Multi-peak confidence (no clear mode winner)
+      message_en: { type: string, minLength: 1, maxLength: 200 }
+      message_ko: { type: string, minLength: 1, maxLength: 200 }
+      message_en_child: { type: string, minLength: 1, maxLength: 200 }
+      message_ko_child: { type: string, minLength: 1, maxLength: 200 }
+      retryable: { type: boolean }
+      retry_attempt: { type: integer, minimum: 0, maximum: 2 }
+      fallback_action:
+        type: string
+        enum: [retry_with_higher_seed, use_canned_safe_phrase, surface_overlay, defer_to_human, terminate_turn]
+
+  UUID:
+    type: string
+    format: uuid
+    pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+
+  BCP47:
+    description: "Canonical locale tag everywhere persistent. See SPEC.md §10."
+    type: string
+    enum: ["ko-KR", "en-US", "mixed", "und"]
+
+  GemmaLanguageInput:
+    description: "User-input-side language hint (kept simple for Gemma)."
+    type: string
+    enum: ["ko", "en", "auto"]
+
+  ModeEnum:
+    description: |
+      Closed enum for persistence and UI mode chips.
+      `unspecified` replaces design-approved.json's `other` (SC2-007 L10).
+      `mode_raw` field on mode_classify return preserves Gemma's pre-normalization emission
+      so future analysis can subdivide `unspecified` cohort retroactively.
+    type: string
+    enum: [curious_adult, learning_student, skeptical, unspecified]
+
+  ModeChipPattern:
+    description: "Shape differentiator for color-blind users (SC1-001)."
+    type: string
+    enum: [disc, diamond, triangle, circle]
+
+  RegulatedAdviceCategory:
+    description: |
+      L9: union enum reconciling idea.spec.json#no_go (legal/medical/financial/welfare/insurance)
+      with design-approved.json (legal/medical/financial/emergency/other). Single source of truth.
+    type: string
+    enum: [legal, medical, financial, welfare, insurance, emergency, other]
+
+  ResourceClass:
+    description: "Stable enum for suggested_resource_class (SC4-008)."
+    type: string
+    enum:
+      - licensed_attorney
+      - licensed_clinician
+      - licensed_financial_advisor
+      - mental_health_professional
+      - emergency_services_kr   # 119 / 1393 (suicide hotline)
+      - emergency_services_us   # 911 / 988
+      - trusted_adult           # for child-mode + non-emergency soft defer
+      - other
+
+  Confidence:
+    description: |
+      Softmax probability over the four mode tokens from Gemma logits.
+      Threshold for action: < 0.6 → normalize to `unspecified` (SC2-013 L15).
+    type: number
+    minimum: 0.0
+    maximum: 1.0
+
+  CompressedHistoryV1:
+    description: |
+      Format for `recent_history_compressed` and `log_compressed_summary` strings (SC2-008).
+      Carrier is a JSON-encoded string with stable shape; Gemma sees this as a normal string param
+      but the orchestrator authors and parses with this shape.
+    type: object
+    required: [format, payload, token_count]
+    additionalProperties: false
+    properties:
+      format: { type: string, const: "compressed-history-v1" }
+      payload:
+        type: array
+        items:
+          type: object
+          required: [t, mode, summary]
+          additionalProperties: false
+          properties:
+            t: { type: string, format: date-time, description: "ISO 8601 with KST offset preserved" }
+            mode: { $ref: "#/$defs/ModeEnum" }
+            bcp47: { $ref: "#/$defs/BCP47" }
+            summary: { type: string, maxLength: 200 }
+            wonder_id: { $ref: "#/$defs/UUID" }
+      token_count: { type: integer, minimum: 0, maximum: 32000 }
+
+  TokenDelta:
+    description: "Streaming chunk for ask_back AsyncStream (L8, SC2-002, SC6-07)."
+    type: object
+    required: [delta, isFinal, sentenceBoundary, turn_id]
+    additionalProperties: false
+    properties:
+      delta: { type: string }
+      isFinal: { type: boolean }
+      sentenceBoundary: { type: boolean }
+      turn_id: { $ref: "#/$defs/UUID" }
+      bcp47Hint: { $ref: "#/$defs/BCP47", description: "Per-segment locale hint for code-switched output." }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Function definitions
+# ─────────────────────────────────────────────────────────────────────────────
+functions:
+
+  # ──────────────────────────────────────────────
+  ask_back:
+    description: |
+      Generate ONE Socratic re-question. Never answers; never gives advice.
+      Streams token-by-token. TTS dispatched at first sentence boundary (L8).
+    inference_params:
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      seed_strategy: "deterministic-hash(turn_id)"
+      max_output_tokens: 80
+    request:
+      type: object
+      required: [user_utterance, mode, language, turn_id]
+      additionalProperties: false
+      properties:
+        user_utterance: { type: string, minLength: 1, maxLength: 4000 }
+        mode: { $ref: "#/$defs/ModeEnum" }
+        language: { $ref: "#/$defs/GemmaLanguageInput" }
+        turn_id: { $ref: "#/$defs/UUID", description: "L8 SC2-009: orchestrator-generated, stable across retries" }
+        reading_level:
+          description: "Optional grade-level cap (SC1-011, child-mode). Null → no cap."
+          oneOf:
+            - { type: "null" }
+            - { type: integer, minimum: 1, maximum: 16 }
+        max_chars: { type: integer, minimum: 10, maximum: 280, default: 200 }
+    response_streaming:
+      stream_item: { $ref: "#/$defs/TokenDelta" }
+    response_terminal:
+      description: "Wrapped in Envelope. data shape:"
+      type: object
+      required: [text, language_resolved, sentence_count]
+      additionalProperties: false
+      properties:
+        text: { type: string, minLength: 1, maxLength: 280 }
+        language_resolved: { $ref: "#/$defs/BCP47" }
+        sentence_count: { type: integer, minimum: 1, maximum: 3 }
+        word_count: { type: integer, minimum: 1 }
+    sample_valid:
+      request:
+        user_utterance: "왜 어떤 노래는 들으면 우는지 모르겠어요"
+        mode: "curious_adult"
+        language: "ko"
+        turn_id: "1f9c0e4a-1b2d-4ab7-9f3c-0e1a5d6e7b8c"
+        reading_level: null
+      stream_items:
+        - { delta: "그", isFinal: false, sentenceBoundary: false, turn_id: "1f9c0e4a-1b2d-4ab7-9f3c-0e1a5d6e7b8c", bcp47Hint: "ko-KR" }
+        - { delta: " 노래를 ", isFinal: false, sentenceBoundary: false, turn_id: "1f9c0e4a-1b2d-4ab7-9f3c-0e1a5d6e7b8c" }
+        - { delta: "처음 들은 건 누구와 함께였나요?", isFinal: true, sentenceBoundary: true, turn_id: "1f9c0e4a-1b2d-4ab7-9f3c-0e1a5d6e7b8c" }
+      envelope:
+        ok: true
+        schema_version: "1.0.0"
+        turn_id: "1f9c0e4a-1b2d-4ab7-9f3c-0e1a5d6e7b8c"
+        data:
+          text: "그 노래를 처음 들은 건 누구와 함께였나요?"
+          language_resolved: "ko-KR"
+          sentence_count: 1
+          word_count: 8
+    sample_invalid:
+      malformed_response: "Sure, here's the answer: it's because of memory association."
+      reason: "Ask-back cannot give an answer (M07 absolute reject). Orchestrator detects declarative form, treats as MALFORMED_JSON-class violation, retries once with stricter system prompt, falls back to canned safe phrase '잠시만, 그 질문을 다시 들려줄 수 있나요?' / 'Could you say that one more time?'"
+
+  # ──────────────────────────────────────────────
+  surface_past_wonder:
+    description: |
+      Recall a single semantically-related Wonder from prior sessions and produce a connector phrasing.
+      L8 streaming optional (small output, may return atomic).
+    inference_params:
+      temperature: 0.0
+      top_p: 1.0
+      seed_strategy: "deterministic-hash(turn_id)"
+      max_output_tokens: 60
+    request:
+      type: object
+      required: [user_utterance, log_compressed_summary, max_surfaced, turn_id]
+      additionalProperties: false
+      properties:
+        user_utterance: { type: string, minLength: 1, maxLength: 4000 }
+        log_compressed_summary:
+          description: "JSON-encoded string of CompressedHistoryV1 (SC2-008)."
+          type: string
+          maxLength: 32000
+        max_surfaced: { type: integer, minimum: 0, maximum: 5, default: 1 }
+        turn_id: { $ref: "#/$defs/UUID" }
+        already_surfaced_this_session_ids:
+          type: array
+          items: { $ref: "#/$defs/UUID" }
+          maxItems: 50
+          description: "SC5-08: orchestrator excludes these from candidate pool."
+    response_terminal:
+      type: object
+      required: [relevant_past, was_already_surfaced_this_session]
+      additionalProperties: false
+      properties:
+        relevant_past:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            required: [wonder_id, summary, t, bcp47]
+            additionalProperties: false
+            properties:
+              wonder_id: { $ref: "#/$defs/UUID" }
+              summary: { type: string, maxLength: 200 }
+              t: { type: string, format: date-time }
+              bcp47: { $ref: "#/$defs/BCP47" }
+        connector_phrasing: { type: string, maxLength: 280 }
+        connector_phrasing_locale: { $ref: "#/$defs/BCP47" }
+        past_locale: { $ref: "#/$defs/BCP47" }
+        current_locale: { $ref: "#/$defs/BCP47" }
+        was_already_surfaced_this_session: { type: boolean }
+
+  # ──────────────────────────────────────────────
+  mode_classify:
+    description: |
+      Classify the user utterance into one of four modes with confidence.
+      Hysteresis applied by orchestrator (SC5-13): Session.mode changes only if
+      new confidence > current_mode.confidence + 0.15 OR over 3 consecutive turns.
+      Cached for the duration of one turn via turn_id (SC5-13).
+    inference_params:
+      temperature: 0.0
+      top_p: 1.0
+      seed: 0
+      max_output_tokens: 40
+    request:
+      type: object
+      required: [user_utterance, recent_history_compressed, turn_id]
+      additionalProperties: false
+      properties:
+        user_utterance: { type: string, minLength: 1, maxLength: 4000 }
+        recent_history_compressed:
+          description: "JSON-encoded string of CompressedHistoryV1; last 8 turns."
+          type: string
+          maxLength: 8000
+        turn_id: { $ref: "#/$defs/UUID" }
+    response_terminal:
+      type: object
+      required: [mode, confidence, reasoning_summary]
+      additionalProperties: false
+      properties:
+        mode: { $ref: "#/$defs/ModeEnum" }
+        mode_raw:
+          description: "L10: Gemma's pre-normalization emission for diagnostics."
+          type: string
+          maxLength: 64
+        confidence: { $ref: "#/$defs/Confidence" }
+        reasoning_summary: { type: string, maxLength: 200 }
+        chip_pattern: { $ref: "#/$defs/ModeChipPattern" }
+
+  # ──────────────────────────────────────────────
+  defer_to_human:
+    description: |
+      Safety valve. Detects regulated-advice domain. Always invoked FIRST in orchestration order
+      (SC3-020). Never streams.
+    inference_params:
+      temperature: 0.0
+      top_p: 1.0
+      seed: 0
+      max_output_tokens: 30
+    request:
+      type: object
+      required: [user_utterance, turn_id]
+      additionalProperties: false
+      properties:
+        user_utterance: { type: string, minLength: 1, maxLength: 4000 }
+        turn_id: { $ref: "#/$defs/UUID" }
+    response_terminal:
+      type: object
+      required: [trigger_category, suggested_resource_class, explanation_phrase, language, deferred]
+      additionalProperties: false
+      properties:
+        deferred:
+          description: |
+            Always true today; SC2-016 reserved for a future 'almost-deferred-but-recovered' state.
+            Do NOT remove; future major-version bump may add false case.
+          type: boolean
+          const: true
+        trigger_category: { $ref: "#/$defs/RegulatedAdviceCategory" }
+        suggested_resource_class: { $ref: "#/$defs/ResourceClass" }
+        explanation_phrase:
+          description: "Spoken phrase shown as caption + spoken via AVSpeechSynthesizer."
+          type: string
+          minLength: 1
+          maxLength: 200
+        language: { $ref: "#/$defs/BCP47" }
+        emergency_bypass:
+          description: |
+            When trigger_category=emergency, orchestrator BYPASSES Socratic bust and surfaces
+            full-screen hotline overlay with locale-correct number. SC3-024 L9.
+          type: boolean
+          default: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Orchestration sequence (per user-utterance turn)
+# ─────────────────────────────────────────────────────────────────────────────
+orchestration:
+  description: "SC2-004 sequence diagram in pseudocode form. Implemented in Swift orchestrator."
+  steps:
+    - step: 1
+      action: "Generate turn_id = UUIDv4(). Persist to Wonder.turnId at end of turn."
+    - step: 2
+      action: "Call defer_to_human first (parallel-safe but ordered first for safety semantics)."
+      reason: "SC3-020 + M07: regulated-advice gate is a guard, not a mode."
+    - step: 3
+      action: "If defer_to_human.trigger_category != 'other': branch to defer_path. Skip 4-6."
+    - step: 4
+      action: "Call mode_classify (cached if already called this turn_id; SC5-13)."
+    - step: 5
+      action: "Apply hysteresis: Session.mode changes only if Δconfidence > 0.15 OR 3 consecutive same-mode."
+    - step: 6
+      action: "Call ask_back AND surface_past_wonder in PARALLEL (independent inputs once mode is known)."
+      note: "GPU contention: both run on Apple Silicon GPU; surface_past_wonder is small (~60 tokens). Acceptable parallelism."
+    - step: 7
+      action: "Stream ask_back tokens to TTS at first sentence boundary; surface_past_wonder result is post-pended at next sentence boundary if relevant."
+    - step: 8
+      action: "On completion: write Wonder row with inferenceFingerprint, visemeTimelineCached, contentFingerprint."
+
+  ablation_harness:
+    description: "M01 evidence: disable function X, re-run 50 sample utterances, measure delta on 5%-answers-given metric."
+    enabled_via: "Build flag SOCRATES_ABLATE=ask_back|surface_past_wonder|mode_classify|defer_to_human"
+    output: "spec/ablation-results.csv (post-build artifact, not committed for this iter)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Retry policy (SC5-11)
+# ─────────────────────────────────────────────────────────────────────────────
+retry:
+  max_attempts_per_function: 2
+  seed_increment_strategy: "seed_n = base_seed XOR n  # escape stuck states"
+  retry_persistence:
+    persist_failed_attempts: false
+    description: "Failed attempts NOT written to wondering log. Diagnostic only at ~/Library/Application Support/<bundle>/diagnostics/ (10 MB rolling)."
+  defer_to_human_fail_closed:
+    on_final_failure: "Use canned safe phrase '이건 사람 전문가에게 물어보는 게 좋겠어요.' / 'This is a question for a real person.'"
+    description: "M07 safety-critical: defer_to_human MUST always succeed."

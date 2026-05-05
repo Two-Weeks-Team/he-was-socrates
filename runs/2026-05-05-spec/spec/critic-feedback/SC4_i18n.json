@@ -1,0 +1,215 @@
+{
+  "critic": "SC4_i18n",
+  "audit_phase": "pre-author",
+  "audited_at_kst": "2026-05-05T15:10+09:00",
+  "scope_acknowledged": "한국어/영어 양립, AVSpeechSynthesizer voice fallback, mixed-language utterance",
+  "scope_translation_note": "Standard SC4 lens (currency BIGINT, ISO 8601 UTC, RTL, Accept-Language) is translated to this single-binary macOS app: no currency, no RTL v1 (must declare explicitly), ISO 8601 only at JSON export boundary, locale negotiation = (System Settings UI lang) ∩ (Speech framework supported locales) ∩ (AVSpeechSynthesisVoice install state) ∩ (Gemma function-call language tag).",
+
+  "findings": [
+    {
+      "id": "SC4-001",
+      "severity": "blocking",
+      "i18n_axis": "locale_tag",
+      "where": "design-approved.json#function_call_schema_locked_signatures.ask_back.params.language and core_data_schema_initial.Wonder.fields.language",
+      "issue": "The locale tag enum 'ko|en|auto' is ISO 639-1 alpha-2 only. macOS Speech framework (SFSpeechRecognizer.supportedLocales) and AVSpeechSynthesisVoice both operate on BCP-47 (ko-KR, en-US, en-GB, en-AU, en-IN, en-IE, en-ZA). 'en' is ambiguous: Samantha is en-US, Daniel is en-GB, Karen is en-AU. SFSpeechRecognizer initialized with Locale(identifier: \"en\") falls back to en-US silently on most builds but is undefined behavior on locale-mismatched systems and emits NSCocoaErrorDomain on some macOS 14.x point releases.",
+      "evidence": "Apple docs: SFSpeechRecognizer requires BCP-47 identifier; AVSpeechSynthesisVoice(language:) expects BCP-47. Yuna voice id is 'com.apple.voice.compact.ko-KR.Yuna' / 'com.apple.voice.enhanced.ko-KR.Yuna'. Heami is ko-KR. Samantha is en-US-only. Alex is en-US-only.",
+      "spec_action_required": "SPEC.md must define a BCP-47 mapping table: { ko -> ko-KR, en -> en-US (canonical), auto -> negotiate }. Add field `bcp47Locale: String` to Wonder Core Data entity (in addition to the user-facing 'ko|en|auto' enum). Function-call signature stays 'ko|en|auto' for Gemma simplicity, but the Swift adapter MUST resolve to BCP-47 before any Speech/AVSpeech API call. Document the secondary-English-locale policy: en-GB/en-AU users see en-US Samantha (acceptable degradation) OR app reads NSLocale.current.languageCode and prefers matching Enhanced voice if installed.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-002",
+      "severity": "blocking",
+      "i18n_axis": "locale_tag",
+      "where": "design-approved.json#function_call_schema_locked_signatures.ask_back.params.language='auto'",
+      "issue": "'auto' has dual unresolvable semantics: (a) input signal — Gemma should detect, or (b) output classification — Wonder.language column may persist 'auto' forever. If Wonder.language='auto' is allowed, surface_past_wonder cannot do locale-coherent retrieval 14 months later. If 'auto' is disallowed in the persisted record, the resolver step must be specified.",
+      "evidence": "core_data_schema_initial.Wonder.fields.language = 'String enum (ko, en, auto-detected)'. The parenthetical 'auto-detected' suggests post-detection persistence, but the function-call signature accepts 'auto' as input. Two separate concepts collide on one column.",
+      "spec_action_required": "Split into two fields. (1) ask_back.params.language stays 'ko|en|auto' (Gemma input). (2) Wonder.language persists ONLY resolved BCP-47 ('ko-KR' | 'en-US' | 'mixed'). 'auto' MUST never reach Core Data. Add resolution algorithm to SPEC.md: if Gemma returns confidence<0.7 OR detects code-switching above threshold, persist 'mixed' and store `primaryLocale: BCP47` + `secondaryLocale: BCP47?` for downstream retrieval.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-003",
+      "severity": "blocking",
+      "i18n_axis": "stt_locale",
+      "where": "chosen_preview.json#stack_decisions_locked.stt='macOS Speech framework (SFSpeechRecognizer, on-device only)' AND idea.spec.json#success_criteria.demo_day_metrics='STT accuracy on Korean+English mixed: ≥ 90% word accuracy'",
+      "issue": "SFSpeechRecognizer is SINGLE-LOCALE per recognition request. There is no native code-switching mode. The 90% mixed KO+EN word-accuracy KPI is unachievable with vanilla SFSpeechAudioBufferRecognitionRequest. Two parallel recognizers (one ko-KR, one en-US) on the same audio buffer is technically possible but: (a) doubles CPU, (b) requires merging two transcripts with no shared timeline, (c) on-device recognition `.requiresOnDeviceRecognition = true` with two recognizers may exceed Speech framework's concurrent recognition cap on M1.",
+      "evidence": "WWDC 2019 Session 256 explicitly states 'one recognizer per locale per task'. The supportedLocales() set includes ko-KR and en-US separately; there is no 'multi' locale. SFSpeechRecognizer.maximumRecognitionDuration is ~1 minute on-device which compounds when two parallel sessions run.",
+      "spec_action_required": "SPEC.md must commit to ONE of three strategies and document trade-offs: (A) Primary-locale recognition with code-switched-token tolerance (90% target reduced to 'primary-language word accuracy ≥90%, code-switched foreign tokens may be transliterated'). (B) Pre-utterance locale toggle UI (user picks ko/en before each utterance). (C) Dual-recognizer with timeline merge — must include CPU budget vs SC6_performance TTFT≤8s. Recommended: (A) with explicit known-failure-mode note in success_criteria + revise the ≥90% mixed metric to 'primary-language ≥90%'.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-004",
+      "severity": "blocking",
+      "i18n_axis": "tts_voice",
+      "where": "chosen_preview.json#stack_decisions_locked.tts='AVSpeechSynthesizer (system voices: Korean Yuna/Heami, English Samantha/Alex)'",
+      "issue": "Yuna, Heami, Samantha (Premium/Enhanced), and Alex are NOT bundled on a fresh macOS 14 install. Apple ships only 'compact' (small footprint, robotic) voices by default; Enhanced and Premium voices require user download via System Settings > Accessibility > Spoken Content > System Voice > Manage Voices. On a clean Sonoma machine, AVSpeechSynthesisVoice(identifier: 'com.apple.voice.enhanced.ko-KR.Yuna') returns nil. Demo-day judging hardware (likely Kaggle reviewer's own Mac, OR a fresh notarized DMG run) will fall back to a robotic compact voice or worse — silent failure with no spoken output.",
+      "evidence": "Apple Speech & Voices documentation; AVSpeechSynthesisVoice.speechVoices() on a fresh macOS 14 VM returns approximately 30 compact voices, NO enhanced. Alex is a special legacy voice that itself was deprecated/optional after macOS 13. Yuna specifically is iOS-Siri-derived; on macOS, only Heami (ko-KR compact + enhanced) and Yuna (newer, post-macOS-13) exist with Yuna availability inconsistent across point releases.",
+      "spec_action_required": "SPEC.md must define: (1) Voice detection at app launch — call AVSpeechSynthesisVoice.speechVoices() and build available-voice manifest. (2) Fallback chain per locale: ko-KR: Yuna(enhanced) -> Heami(enhanced) -> Yuna(compact) -> Heami(compact) -> AVSpeechSynthesisVoice(language:'ko-KR') default -> text-only with REST viseme + caption-only mode. en-US: Samantha(enhanced) -> Alex -> Samantha(compact) -> default en-US -> text-only. (3) First-launch onboarding modal that detects missing Enhanced voices and links to System Settings > Accessibility > Spoken Content (cannot programmatically install — Apple sandbox forbids). (4) Demo-day rehearsal checklist line: 'reviewer Mac may lack Enhanced voices — DMG must include onboarding screenshot or pre-install instruction in Writeup'. (5) Contingency: bundle a notarized voice-download-instruction overlay that triggers if first-launch detection finds compact-only.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-005",
+      "severity": "high",
+      "i18n_axis": "mixed_language",
+      "where": "design-approved.json#function_call_schema_locked_signatures.ask_back AND core_data_schema_initial.Wonder",
+      "issue": "Korean adult speech is heavily code-switched ('이게 왜 trigger 되는지 모르겠어'). When ask_back returns a Korean question containing English nouns, AVSpeechSynthesizer with a Korean voice mangles the English fragments (Yuna pronounces 'trigger' as '트리거' phonetically — sometimes acceptable, often not). Conversely, an English voice on a code-switched Korean utterance fails worse. The spec has no policy for synthesizing code-switched output.",
+      "evidence": "AVSpeechSynthesizer supports per-utterance voice but not mid-utterance voice swap within a single AVSpeechUtterance. SSML <voice> tags are NOT supported on macOS AVSpeechSynthesizer (iOS-only partial support, macOS ignores). Workaround: split into N AVSpeechUtterance objects queued back-to-back with locale-tagged segments, but this introduces inter-utterance gap (~80-150ms) which violates viseme-audio drift ≤50ms RMS.",
+      "spec_action_required": "SPEC.md must define synthesis policy. Recommended: (a) Gemma post-process step splits ask_back output into [{text, lang}] segments by language. (b) Single-locale segments queue separately; viseme timeline tracks per-segment with explicit gap allowance documented. (c) Update viseme drift target: '≤50ms RMS within a segment; inter-segment gap ≤150ms tolerated and labeled as deliberate code-switch pause'. (d) For demo, prefer monolingual ask_back outputs to avoid this complexity — add Gemma system-prompt directive: 'when user uses code-switching, reply in user's primary language without code-switching back'.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-006",
+      "severity": "high",
+      "i18n_axis": "g2p",
+      "where": "design-approved.json#design_tokens.viseme_set.ids=['AA','EE','IH','OH','OW','UH','M','P','B','F','V','TH','S','SH','R','REST'] AND .phoneme_to_viseme_map='spec/phoneme-viseme-map.json'",
+      "issue": "The 16-viseme set is the Disney/Preston Blair English-centric inventory. Korean Hangul vowels (ㅓ /ʌ/, ㅡ /ɯ/, ㅢ /ɰi/, ㅟ /wi/, ㅚ /we/, ㅝ /wʌ/) and consonants (ㅋ aspirated, ㄲ tense, ㅎ /h/ which has no English-frequency equivalent) do not map cleanly. ㅓ is between AA and UH; ㅡ has no English equivalent (closest UH but visually different lip-rounding). espeak-ng `ko` voice produces IPA that has no standard mapping to this 16-set. Without an explicit ko->viseme map, the spec/phoneme-viseme-map.json is unspecified and SC6_performance cannot validate drift.",
+      "evidence": "espeak-ng Korean voice outputs IPA including /ɯ/, /ʌ/, /ɛ/, /ø/, /y/, none of which appear in the 16-viseme English set. Yuna AVSpeechSynthesisVoice with phoneme delegate emits Korean SAPI phonemes (Apple's internal scheme) that differ from espeak-ng IPA.",
+      "spec_action_required": "spec/phoneme-viseme-map.json MUST publish two tables: (1) en-US IPA -> 16-viseme. (2) ko-KR IPA -> 16-viseme with explicit decisions: ㅓ -> AA, ㅡ -> UH, ㅟ -> consonant W glide + EE, etc. Each Korean-specific assignment needs a one-line rationale (visual lip-shape similarity). Add note: 'Korean viseme rendering is best-effort; the heavy beard (per SOURCE.md) occludes most lip distinction, mitigating mismatch perception'. Also commit which g2p engine handles ko: espeak-ng-with-ko-voice OR AVSpeechSynthesizer phoneme delegate (per locale, may differ).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-007",
+      "severity": "high",
+      "i18n_axis": "font_fallback",
+      "where": "design-approved.json#design_tokens.typography.font_classical_serif='Times New Roman, Source Serif Pro, Iowan Old Style, serif'",
+      "issue": "None of the listed fonts have Hangul glyph coverage. Times New Roman has zero Hangul. Source Serif Pro has zero Hangul (Adobe ships separate Source Han Serif KR/Source Serif KR). Iowan Old Style has zero Hangul. The CSS-style fallback to generic 'serif' on macOS resolves to Apple SD Gothic Neo (a sans-serif!) for Hangul codepoints, which clashes with the classical serif aesthetic of the bust. Korean captions will render in a visually inconsistent sans-serif while English renders in serif — breaking the curated 'classical philosopher' typography.",
+      "evidence": "macOS CoreText font fallback for U+AC00..U+D7A3 (Hangul Syllables) when primary stack lacks coverage falls back via system cascade list, which on macOS 14 prioritizes Apple SD Gothic Neo (sans). SwiftUI .font(.custom('Times New Roman', size: 32)) on a string '안녕하세요 hello' renders mixed sans+serif.",
+      "spec_action_required": "Extend font_classical_serif stack to include Korean serif: 'Times New Roman, Source Serif Pro, Iowan Old Style, AppleMyungjo, Noto Serif CJK KR, serif'. AppleMyungjo is bundled on macOS 14 and is a true Korean Myeongjo (serif equivalent). Add SwiftUI helper that picks per-glyph-range font using AttributedString runs to guarantee consistent serif texture for mixed Korean+English captions. SC1_a11y must re-validate WCAG contrast at the new Korean-serif weight.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-008",
+      "severity": "high",
+      "i18n_axis": "ui_string",
+      "where": "design-approved.json#function_call_schema_locked_signatures.defer_to_human.returns.suggested_resource_class='string'",
+      "issue": "suggested_resource_class is a free-form string returned by Gemma. With trigger_category='legal' a Korean-locale user expects '변호사 / 법무사', an English-locale user expects 'lawyer / attorney'. There is no spec for whether Gemma returns a localized string or a stable enum that the Swift layer maps. If Gemma freely generates, the same trigger will return inconsistent strings across runs, breaking dedup (SC5) and a11y screen-reader pronunciation (SC1).",
+      "evidence": "Gemma is non-deterministic at temperature>0; same prompt yields '변호사', '법률 전문가', '법무 전문가' across runs. Wondering log dedup keys would diverge.",
+      "spec_action_required": "Lock suggested_resource_class to a stable enum: 'lawyer'|'doctor'|'financial_advisor'|'emergency_services'|'mental_health_professional'|'other'. Swift layer holds Localizable.strings: 'lawyer' -> ('변호사' for ko, 'lawyer' for en). explanation_phrase remains free-form localized by Gemma in user's language. Add this to function_call_schema_locked_signatures with explicit enum.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-009",
+      "severity": "high",
+      "i18n_axis": "mixed_language",
+      "where": "design-approved.json#function_call_schema_locked_signatures.surface_past_wonder AND video_script_skeleton (1:50-2:30 '14개월 후 빗속 타이어 질문 → 256K log에서 얼음 wondering 자동 surface')",
+      "issue": "The hero scene depends on connector_phrasing surfacing a 14-month-old Korean 'ice/slippery' wondering during a present English 'rain/tire/grip' wondering (or vice versa). The spec does not define which language the connector_phrasing speaks. Options: (a) Past-language preserved verbatim ('너는 14개월 전에 얼음에 대해 궁금해했지, 그 감각이 지금 비와 어떻게 닮아있나?' inside an English session — jarring). (b) Translated to current-session language (loses authenticity, breaks the 'your own past words' affordance). (c) Bilingual quote-then-frame.",
+      "evidence": "video_script_skeleton 1:50-2:30 implies time-jump scene where prior session may be Korean and current may be English. The chosen_preview.json#preview_6tuple.demo_hook_3min spans both Korean (어른 cry music) and Korean (학생 ice), so demo itself is monolingual, but the architectural promise of '256K cross-time wondering' requires policy.",
+      "spec_action_required": "SPEC.md must define connector_phrasing localization: Recommended (c) — quote past wondering verbatim in original language with quotation marks, then frame in current session language. Example output for English current + Korean past: 'You once wondered, 「얼음이 미끄러운 건 얼음 때문일까」 — does that sit alongside what you ask now?' surface_past_wonder.returns must include `past_locale: BCP47` and `current_locale: BCP47` so AVSpeech can split-utterance synthesize (per SC4-005 policy).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-010",
+      "severity": "high",
+      "i18n_axis": "ui_string",
+      "where": "design-approved.json#design_tokens.color.mode_chip_curious_adult / mode_chip_learning_student AND function_call_schema_locked_signatures.mode_classify.returns.mode='curious_adult|learning_student|skeptical|other'",
+      "issue": "Mode enum keys are user-facing in the mode_chip UI element. 'curious_adult' rendered raw in UI is bad both in Korean and English. No Localizable.strings entry exists in the spec for these. Additionally 'skeptical' has different cultural valence in Korean ('회의적' is more clinical) vs English (where it can be playful).",
+      "evidence": "design-approved.json shows mode_chip color tokens but no string tokens. core_data_schema_initial.Wonder.fields.mode='String enum' suggests raw enum persistence, fine for storage but mode_chip UI label must be localized.",
+      "spec_action_required": "Add to SPEC.md a Localization Strings section: { mode.curious_adult.label: ('호기심 가득한 어른' ko, 'Curious adult' en), mode.learning_student.label: ('배우는 학생' ko, 'Learning student' en), mode.skeptical.label: ('회의 모드' ko, 'Skeptical' en), mode.other.label: ('그 외' ko, 'Other' en) }. Mode chip uses Localizable.strings lookup, never raw enum. Persist enum key in Wonder.mode for stable cross-version compatibility.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-011",
+      "severity": "high",
+      "i18n_axis": "tts_voice",
+      "where": "design-approved.json#design_tokens.motion.viseme_swap_fps=30 AND idea.spec.json#success_criteria.demo_day_metrics 'viseme-audio drift: ≤ 50ms RMS'",
+      "issue": "AVSpeechUtterance.rate default differs by voice and locale: Yuna and Samantha both default to AVSpeechUtteranceDefaultSpeechRate but actual phoneme emission rate differs (Korean Yuna emits ~140 syllables/min, Samantha ~165 wpm — Korean syllable density ≠ English word density). The viseme timeline derived from g2p engine output must align to the synthesizer's actual emission, not espeak-ng's predicted timing. Per-locale calibration is missing from the spec.",
+      "evidence": "Apple AVSpeechSynthesizer willSpeakRangeOfSpeechString delegate provides character ranges and elapsed time per locale-voice combination. espeak-ng predicts based on its own pronunciation dictionary, which diverges from Apple's TTS internal timing by 5-15% in Korean and 2-5% in English.",
+      "spec_action_required": "SPEC.md must specify: (1) Use AVSpeechSynthesizerDelegate.speechSynthesizer(_:willSpeakRangeOfSpeechString:utterance:) as ground-truth timing source (not espeak-ng standalone prediction). (2) espeak-ng provides phoneme sequence; Apple delegate provides character-time anchors; Swift layer interpolates phoneme-time by character-position. (3) Per-locale rate adjustment for Socratic gravitas: AVSpeechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92 for both ko and en (slower; tune separately if early demos show drift). (4) Calibration test fixture in SPEC.md: 5 utterances per locale, measure drift, must be ≤50ms RMS.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-012",
+      "severity": "medium",
+      "i18n_axis": "date_format",
+      "where": "core_data_schema_initial.Wonder.fields.createdAt='Date' AND chosen_preview.json#stack_decisions_locked.wondering_log_storage='Core Data or SwiftData, on-device only, JSON export'",
+      "issue": "Wondering log surfaced 14 months later in the UI (and listed in the journal view) needs locale-aware date formatting. Spec does not specify DateFormatter usage. Korean expects '2026년 5월 5일 오후 2시 25분' or '14개월 전'; English expects 'May 5, 2026 at 2:25 PM' or '14 months ago'. JSON export, however, must be ISO 8601 with timezone for cross-tool interop.",
+      "evidence": "DateFormatter with Locale(identifier: NSLocale.current.languageCode) handles UI; ISO8601DateFormatter with .withInternetDateTime handles export. Locked artifacts already use '2026-05-05T14:25+09:00' format (good precedent).",
+      "spec_action_required": "SPEC.md add a 'Date & Time Formatting' subsection: (1) UI: DateFormatter, dateStyle=.long, timeStyle=.short, locale=current-UI-locale. (2) Relative time: RelativeDateTimeFormatter ('14 months ago' / '14개월 전'). (3) JSON export: ISO 8601 with KST offset preserved (do NOT normalize to UTC — preserves user's wall-clock memory which is core to the Socratic recall mechanic). (4) Wonder.createdAt is stored as Date (Core Data uses NSDate UTC internally — fine); display layer renders with locale + user's current timezone.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-013",
+      "severity": "medium",
+      "i18n_axis": "ui_string",
+      "where": "chosen_preview.json#preview_6tuple.demo_hook_3min final line '소크라테스는 답하지 않는다. 묻는다.' AND design-approved.json#video_script_skeleton 2:50-3:00 '검은 화면. 흰 자막: 소크라테스는 답하지 않는다. 묻는다.'",
+      "issue": "Closing hero caption is Korean-only. Kaggle judges and Mac App Store global reviewers are predominantly English-speaking. The 3-minute video is the storytelling 30/30 rubric anchor. A Korean-only closer with no English subtitle reduces judge comprehension and BP D2 (judge story-bias) leverage.",
+      "evidence": "design-approved.json#mitigation_adopted_full M11 explicitly aligns video to storytelling rubric; chosen_preview.json#track_strategy aims at 'Main + Impact 100K+10K'. Kaggle Gemma hackathon judges are global.",
+      "spec_action_required": "video-script.md must specify bilingual closer: line 1 (Korean original): '소크라테스는 답하지 않는다. 묻는다.' line 2 (English subtitle, smaller weight): 'Socrates does not answer. He asks.' Use the Korean-serif font fallback (per SC4-007). Add to SPEC.md a video-subtitle policy: all hero text bilingual; both languages baked into MP4 (not toggleable), so YouTube auto-translate can't break the typography choice.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-014",
+      "severity": "medium",
+      "i18n_axis": "locale_tag",
+      "where": "idea.spec.json#regulatory_domain.applicable=['GDPR (EU users)', 'COPPA', 'Apple App Store Review Guidelines'] AND distribution.secondary_planned='Mac App Store after hackathon'",
+      "issue": "Mac App Store submission requires localized App Store metadata (name, subtitle, description, keywords, screenshots) per language. If the app declares ko + en support, App Store Connect requires both metadata locales filled. Spec has no plan for App Store Connect localized metadata, and the bundle's Info.plist CFBundleLocalizations is undefined.",
+      "evidence": "App Store Review Guideline 2.3.7: localized metadata must match in-app supported languages. Info.plist CFBundleLocalizations and CFBundleDevelopmentRegion drive macOS UI language selection at app launch.",
+      "spec_action_required": "SPEC.md add 'App Bundle Localization' subsection: (1) Info.plist CFBundleDevelopmentRegion = 'en' (US-fallback for global reach), CFBundleLocalizations = ['en', 'ko']. (2) en.lproj/Localizable.strings + ko.lproj/Localizable.strings as the canonical UI string source. (3) App Store Connect metadata stub for both locales (post-MVP, not blocking demo DMG). (4) Demo DMG ships with both lproj bundles; first-launch language is NSLocale.preferredLanguages.first ∩ CFBundleLocalizations, with English fallback.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-015",
+      "severity": "medium",
+      "i18n_axis": "stt_locale",
+      "where": "design-approved.json#mitigation_adopted_full M06 'WCAG 2.2 AA hard floor' AND M04 OfflineProofBadge",
+      "issue": "Speech framework on-device recognition requires per-locale model download by the OS (Settings > Keyboard > Dictation > Languages). On a fresh macOS 14, ko-KR and en-US dictation models may not both be installed. SFSpeechRecognizer.supportsOnDeviceRecognition returns true only if the locale model is present. If absent, .requiresOnDeviceRecognition=true causes the recognizer to fail (not silently fall back to cloud — Apple respects the constraint), violating M04 'airplane mode ON · 0 KB sent' demo proof.",
+      "evidence": "Apple Speech docs state on-device recognition requires the dictation language pack. NSSpeechRecognitionUsageDescription Info.plist key is mandatory. Without language pack, on-device fails with code 1700-range. With .requiresOnDeviceRecognition=false fallback, recognition silently routes to Apple servers, breaking the 0-egress claim — fatal for M07 + RP D1.",
+      "spec_action_required": "SPEC.md must specify: (1) App launch detects SFSpeechRecognizer.supportedLocales() ∩ supportsOnDeviceRecognition for {ko-KR, en-US}. (2) If either is missing, surface onboarding 'Install Korean dictation' / 'Install English dictation' with deeplink to System Settings (best-effort, may need text instruction). (3) `requiresOnDeviceRecognition = true` is HARD-CODED — never falls back to cloud, even if recognition fails. Failure -> show user 'On-device recognition unavailable; install language pack'. This is non-negotiable per M07.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-016",
+      "severity": "medium",
+      "i18n_axis": "other",
+      "where": "Project-level — RTL declaration",
+      "issue": "Standard SC4 lens requires RTL stance. Spec does not declare RTL support status. Future Arabic/Hebrew expansion or accidental RTL-locale tester (e.g. judge with system locale = Arabic) may see broken layout: bust mirroring, caption alignment, mode-chip placement. SwiftUI defaults respect Layout direction unless .environment(\\.layoutDirection, .leftToRight) is forced.",
+      "evidence": "SwiftUI HStack inherits Environment(\\.layoutDirection); Arabic system locale flips. Bust portrait is asymmetric ('gaze cast slightly to viewer's left' per SOURCE.md) — RTL flip would alter the gaze direction, breaking the curated 'Socratic squint'.",
+      "spec_action_required": "SPEC.md declare explicitly: 'v1 supports LTR layout only. Korean and English are both LTR. RTL languages (Arabic, Hebrew, Persian) are out_of_scope_v1. Root SwiftUI view forces .environment(\\.layoutDirection, .leftToRight) until v2.' Add to out_of_scope_v1 list. This makes future RTL support an explicit ticket rather than accidental breakage.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-017",
+      "severity": "low",
+      "i18n_axis": "ui_string",
+      "where": "design-approved.json#function_call_schema_locked_signatures.surface_past_wonder.returns.connector_phrasing='string'",
+      "issue": "Connector phrasing is free-form Gemma output. The Korean Socratic register requires 합쇼체 (deferential -습니다) vs 해요체 (polite -아요/어요) vs 반말 (intimate plain form). Wrong register sounds either cold or condescending. English has no such register granularity but does have 'thou/you' Socratic-classical vs colloquial. No directive in spec.",
+      "evidence": "Korean register choice is culturally load-bearing for a 'Socratic' character. Heami/Yuna pronounce all registers correctly but the textual choice is a Gemma prompt-engineering decision.",
+      "spec_action_required": "Add to SPEC.md Gemma system prompt section: (1) Korean register: 해요체 (polite, warm, slightly elevated) for both adult and student modes — neither too distant (합쇼체) nor too familiar (반말). (2) English register: 'modern conversational, classical-philosophical hint, no thou/thee'. (3) Mode does NOT change register (curious_adult and learning_student both use 해요체). (4) Provide 3 Korean and 3 English ask_back exemplars in spec/gemma-system-prompt.md.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC4-018",
+      "severity": "low",
+      "i18n_axis": "other",
+      "where": "idea.spec.json#regulatory_domain.applicable + idea.spec.json#target_user.user_does_NOT_include='법률·의료·금융'",
+      "issue": "user_does_NOT_include is Korean-only ('법률·의료·금융 자문이 필요한 사람'). Down-line documentation generation (Writeup, Mac App Store description, README) needs a canonical English version. Risk of inconsistent translation across artifacts.",
+      "evidence": "Writeup is ≤1500 words English (Kaggle requirement). README and App Store description must be English. Different writers translating the same Korean phrase will produce divergent English exclusions.",
+      "spec_action_required": "Add to SPEC.md a 'Canonical Translations' table for load-bearing Korean phrases: '법률·의료·금융 자문이 필요한 사람' -> 'people who need legal, medical, or financial advice'. '소크라테스는 답하지 않는다. 묻는다.' -> 'Socrates does not answer. He asks.' '왜 어떤 노래는 들으면 우는지?' -> 'Why do some songs make me cry when I hear them?' Lock these to prevent drift across Writeup, README, video subtitle, App Store description.",
+      "owner_when_addressed": "spec-author"
+    }
+  ],
+
+  "scope_coverage_self_assessment": "Covered: locale tag schema (BCP-47 mapping, auto semantics) [SC4-001, 002], single-locale STT limitation vs mixed KO+EN KPI [SC4-003], AVSpeechSynthesizer voice availability and fallback chain on fresh macOS 14 [SC4-004], code-switched synthesis policy [SC4-005], ko-KR g2p-to-viseme mapping gap [SC4-006], Hangul font fallback [SC4-007], localized enum strings (resource_class, mode chips) [SC4-008, 010], cross-locale wondering log surfacing [SC4-009], per-locale TTS rate calibration [SC4-011], date formatting [SC4-012], video subtitle bilingual policy [SC4-013], App Store + Info.plist localization [SC4-014], on-device dictation language pack as M07 dependency [SC4-015], RTL out-of-scope explicit declaration [SC4-016], Korean register policy [SC4-017], canonical translation table [SC4-018]. Not covered (explicit deferrals): Number/measurement formatting (no measurements in MVP), currency (n/a), Accept-Language HTTP (no network), pluralization rules (no countable user-facing strings beyond wondering count, which is brief enough to handle locally). All standard SC4 axes addressed or marked n/a with reason.",
+
+  "recommended_spec_section_additions": [
+    "SPEC.md > Localization > Locale Tag Schema (BCP-47 mapping table, auto resolution algorithm)",
+    "SPEC.md > Localization > UI Strings (Localizable.strings layout, lproj bundles, mode chip labels, defer_to_human resource_class enum mapping)",
+    "SPEC.md > Localization > Date & Time Formatting (UI vs export, RelativeDateTimeFormatter)",
+    "SPEC.md > Localization > Font Fallback (Korean serif extension, AttributedString per-glyph-range)",
+    "SPEC.md > Localization > Canonical Translations Table (load-bearing phrases locked across artifacts)",
+    "SPEC.md > Localization > RTL Declaration (out-of-scope v1, force LTR root)",
+    "SPEC.md > Speech > STT Locale Strategy (single-recognizer policy, mixed-utterance KPI revision, dictation language pack onboarding)",
+    "SPEC.md > Speech > TTS Voice Fallback (per-locale fallback chain, voice detection at launch, missing-Enhanced-voice onboarding)",
+    "SPEC.md > Speech > Code-Switched Synthesis (segment-split policy, inter-segment gap allowance, viseme drift target revision per segment)",
+    "SPEC.md > Speech > Per-Locale Rate Calibration (Yuna vs Samantha emission timing, AVSpeechSynthesizerDelegate as ground truth)",
+    "SPEC.md > Lip-Sync > Phoneme-to-Viseme Map (spec/phoneme-viseme-map.json with explicit ko-KR table, beard-occlusion mitigation note)",
+    "SPEC.md > Wondering Log > Cross-Locale Surfacing (past_locale + current_locale, verbatim-quote connector_phrasing policy)",
+    "SPEC.md > Gemma System Prompt > Korean Register Policy (해요체 default, exemplars per locale)",
+    "SPEC.md > App Bundle > Info.plist Localization (CFBundleDevelopmentRegion, CFBundleLocalizations, lproj structure)",
+    "video-script.md > Bilingual Hero Subtitle (closer baked-in subtitle, font choice for Korean serif)"
+  ],
+
+  "blocking_count": 4,
+  "high_count": 7,
+  "medium_count": 5,
+  "low_count": 2
+}

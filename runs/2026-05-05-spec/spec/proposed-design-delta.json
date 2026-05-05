@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Patch file describing requested mutations to LOCKED upstream artifacts (idea.spec.json, chosen_preview.json, design-approved.json). SPEC_LEAD does not mutate locked artifacts directly per Claude main-thread constraint; this file is the proposal for user/main-thread approval at freeze time.",
+  "authored_kst": "2026-05-05T16:40+09:00",
+  "authored_by": "SPEC_LEAD (acting as SPEC_AUTHOR within single-thread limitation)",
+  "iteration": 1,
+  "deltas": [
+    {
+      "id": "DELTA-01",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.design_tokens.viseme_set.g2p_engine_primary",
+      "current_value": "espeak-ng",
+      "proposed_value": "AVSpeechSynthesizer phoneme delegate",
+      "rationale": "L2 / SC7-002: GPLv3 ↮ Apache-2.0 + Mac App Store. Cannot link GPLv3 espeak-ng into a binary distributed under Apache-2.0 license; Mac App Store also rejects GPL apps. Reverses the current primary/fallback assignment.",
+      "user_approval_required": true,
+      "user_question_label": "(a) g2p engine swap",
+      "blocks_freeze_if_unapproved": "yes for Mac App Store path, no for hackathon DMG (the DMG could ship with espeak-ng if user explicitly accepts Apache-2.0 + GPLv3 incompatibility for hackathon-scope only — but recommended NO regardless)"
+    },
+    {
+      "id": "DELTA-02",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.design_tokens.viseme_set.g2p_engine_fallback",
+      "current_value": "AVSpeechSynthesizer phoneme delegate",
+      "proposed_value": "Bundled Hangul jamo class table (Apache-2.0)",
+      "rationale": "L2 cascade from DELTA-01.",
+      "user_approval_required": true,
+      "user_question_label": "(a) g2p engine swap (cascade)"
+    },
+    {
+      "id": "DELTA-03",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.mitigation_adopted_full[0].specdd_application",
+      "current_value": "thinking mode + 256K + function-call 3가지 load-bearing임을 SPEC.md architecture diagram에 명시. 각 feature 제거 시 product 성립 안 함을 ablation table로 입증.",
+      "proposed_value": "thinking mode + 256K-context CAPABILITY + function-call 3가지 load-bearing임을 SPEC.md architecture diagram에 명시. 256K context는 multi-year wondering log COMPRESSED-RECALL 능력 (직접 주입이 아닌 surface_past_wonder를 통한 선택적 호출). 라이브 컨텍스트 윈도우 ≤ 32K 토큰, KV cache INT8 minimum, peak RAM ≤ 7 GB on 16 GB Mac. 각 feature 제거 시 product 성립 안 함을 ablation table로 입증.",
+      "rationale": "L3 / SC6-03: literal 256K live KV cache is RAM-infeasible on consumer M-series (~12.5 GB working set). Reframing to compressed-recall preserves the architectural promise without misrepresenting the runtime.",
+      "user_approval_required": true,
+      "user_question_label": "(b) M01 256K wording revision",
+      "blocks_freeze_if_unapproved": "spec freezes either way, but demo-day claim must match. If user objects, alternative is to demand a hardware tier with much higher RAM (e.g. 64 GB Mac Studio) for the 'multi-year direct injection' framing — practically impossible for hackathon."
+    },
+    {
+      "id": "DELTA-04",
+      "target_artifact": "idea.spec.json",
+      "json_path": "$.success_criteria.demo_day_metrics[1]",
+      "current_value": "viseme-audio drift: ≤ 50ms RMS",
+      "proposed_value": "viseme-audio drift: ≤ 30ms RMS within segment, ≤ 80ms peak; inter-segment gap ≤ 150ms tolerated for code-switched output (deliberate pause)",
+      "rationale": "L7 / SC6-04 + SOURCE.md: beard-occlusion makes drift more perceptible, not less. ATSC IS-191 broadcast tolerance ≤ 45 ms lag; SMPTE ≤ 22 ms; closeup viewing ≤ 40 ms perception threshold.",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead (perf target tightening; demo-day rehearsal must hit it but does not affect product semantics)"
+    },
+    {
+      "id": "DELTA-05",
+      "target_artifact": "idea.spec.json",
+      "json_path": "$.success_criteria.demo_day_metrics[2]",
+      "current_value": "STT accuracy on Korean+English mixed: ≥ 90% word accuracy (Speech framework baseline)",
+      "proposed_value": "STT accuracy: primary-language word accuracy ≥ 90% (Speech framework baseline, ko-KR or en-US single-locale recognizer per utterance); code-switched foreign tokens MAY be transliterated and are not penalized; user can manually toggle locale before each utterance for explicit code-switching scenes",
+      "rationale": "L12 / SC4-003: SFSpeechRecognizer is single-locale; native multilingual mode does not exist. The original metric is unfalsifiable.",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead"
+    },
+    {
+      "id": "DELTA-06",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.design_tokens.motion.viseme_crossfade_ms",
+      "current_value": 0,
+      "proposed_value": 16,
+      "rationale": "SC6-07: 16 ms (1 frame at 60 Hz display) crossfade is ~0 GPU cost and hides the hard-cut discontinuity that the painterly bust style otherwise emphasizes. Reduces perception of drift on the only-mouth-visible region (per SOURCE.md beard occlusion).",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead",
+      "note": "If user prefers original hard-cut feel, this delta can be reverted with no engineering impact."
+    },
+    {
+      "id": "DELTA-07",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.design_tokens.color",
+      "operation": "merge_add",
+      "added_keys": {
+        "mode_chip_curious_adult_pattern": "disc",
+        "mode_chip_learning_student_pattern": "diamond",
+        "mode_chip_skeptical_pattern": "triangle",
+        "mode_chip_unspecified_pattern": "circle",
+        "user_utterance_dim_high_contrast": "oklch(0.78 0.02 280)",
+        "alabaster_bust_hi_contrast": "oklch(0.96 0.02 75)",
+        "warm_amber_accent_hi_contrast": "oklch(0.85 0.18 75)",
+        "thought_silhouette_pulse_low_hi_contrast": "oklch(0.40 0.02 280)",
+        "thought_silhouette_pulse_high_hi_contrast": "oklch(0.50 0.04 285)",
+        "mode_chip_curious_adult_hi_contrast": "oklch(0.75 0.18 200)",
+        "mode_chip_learning_student_hi_contrast": "oklch(0.75 0.18 145)",
+        "focus_ring_color": "oklch(0.78 0.15 75)",
+        "error_overlay_bg": "oklch(0.20 0.01 280)",
+        "error_overlay_border": "oklch(0.78 0.15 75)",
+        "error_text_primary": "oklch(0.95 0.02 75)",
+        "error_text_secondary": "oklch(0.70 0.02 280)"
+      },
+      "rationale": "SC1-001 (mode chip differentiation), SC1-002 (user_utterance_dim contrast), SC1-010 (Increase Contrast variants), SC1-016 (focus ring), SC3-006 / L16 (error overlay tokens).",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead (additive)"
+    },
+    {
+      "id": "DELTA-08",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.design_tokens.motion",
+      "operation": "merge_add",
+      "added_keys": {
+        "reduce_motion_tier3_static_bust": true,
+        "reduce_motion_tier3_disable_lipsync": true,
+        "user_toggle_disable_lipsync": "settings_panel_a11y_section"
+      },
+      "rationale": "L17 / SC1-008 Reduce Motion 3-tier fallback.",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead (additive)"
+    },
+    {
+      "id": "DELTA-09",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.function_call_schema_locked_signatures",
+      "operation": "supersede_by_reference",
+      "supersede_target": "spec/function_call_contract.yaml",
+      "rationale": "L1 / SC2-001: machine-readable JSON Schema 2020-12 contract is now authoritative. design-approved.json prose summary remains as a high-level reference only; on conflict, function_call_contract.yaml wins.",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead"
+    },
+    {
+      "id": "DELTA-10",
+      "target_artifact": "idea.spec.json",
+      "json_path": "$.business_model.sustainability_partner",
+      "current_value": "TBD — candidates: Khan Academy 한국지부 / OER 공동체 / 한국교총 / EduTech 비영리. Submission 전 1개 명명 의무 (BP D3 mitigation)",
+      "proposed_value": "TBD — user_decision_pending (escalation (e)). 4 candidates listed; user picks 1 before 2026-05-19 submission deadline.",
+      "rationale": "Tracking-only delta to mark this as escalation (e). No content change.",
+      "user_approval_required": true,
+      "user_question_label": "(e) sustainability partner pick",
+      "blocks_freeze_if_unapproved": "no — Writeup deliverable, not spec deliverable"
+    },
+    {
+      "id": "DELTA-11",
+      "target_artifact": "design-approved.json",
+      "json_path": "$.lock_sha256_to_be_computed",
+      "current_value": "TBD — generated by spec-lead at SpecDD freeze time, hash of (idea.spec.json + chosen_preview.json + design-approved.json) byte-concat",
+      "proposed_value_at_freeze": "<computed at freeze>",
+      "rationale": "Mirror of spec/lock.sha256 written at freeze.",
+      "user_approval_required": false,
+      "owner_authority": "spec-lead"
+    }
+  ],
+
+  "user_escalations_summary": [
+    {
+      "label": "(a) g2p engine swap (espeak-ng → AVSpeechSynthesizer phoneme delegate)",
+      "default_if_silent": "apply (DELTA-01, DELTA-02)",
+      "blocks_freeze": "for Mac App Store path; not for hackathon DMG"
+    },
+    {
+      "label": "(b) M01 256K → compressed-recall reframing",
+      "default_if_silent": "apply (DELTA-03)",
+      "blocks_freeze": "no — spec freezes with reframe; demo-day claim aligns"
+    },
+    {
+      "label": "(c) Demo-day machine class commitment (REQUIRED tier vs DEGRADED M2 Air)",
+      "default_if_silent": "apply REQUIRED tier (no JSON delta needed; documented in spec/demo-day-reliability.md + spec/performance-test-suite.md)",
+      "blocks_freeze": "no — spec freezes either way; demo prep instruction differs"
+    },
+    {
+      "label": "(d) Portrait provenance for assets/socrates-portrait.png",
+      "default_if_silent": "spec freezes with PROVENANCE.md stub flagging UNKNOWN; SPEC.md §11 carves out hackathon-DMG-only with Mac App Store submission BLOCK until resolved",
+      "blocks_freeze": "no for hackathon; yes for MAS submission"
+    },
+    {
+      "label": "(e) Sustainability partner pick (M12)",
+      "default_if_silent": "spec freezes; Writeup author selects",
+      "blocks_freeze": "no"
+    }
+  ]
+}

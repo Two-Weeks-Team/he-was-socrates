@@ -1,0 +1,184 @@
+{
+  "critic": "SC2_api_design",
+  "audit_phase": "pre-author",
+  "audited_at_kst": "2026-05-05T15:10+09:00",
+  "scope_acknowledged": "function-call schema는 본 프로젝트의 'API'. naming, params, error states, evolution",
+  "translation_note": "Standard SC2 lens (REST/HATEOAS/HTTP-method semantics) translated to MLX-Swift function-calling: schema clarity, naming, params, return shape, evolvability, contract stability, four-call orchestration (mode_classify → surface_past_wonder → ask_back, with defer_to_human as escape hatch).",
+  "findings": [
+    {
+      "id": "SC2-001",
+      "severity": "blocking",
+      "convention_referenced": "JSON Schema 2020-12 / Gemma function-calling format",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[*]",
+      "issue": "The four signatures are documented in shorthand prose ('string', 'integer (default 1)', 'curious_adult|learning_student|skeptical|other'). There is no machine-readable schema declaration. SPEC.md needs a single canonical schema language (JSON Schema draft 2020-12 OR Gemma's native function-call format) and every param/return must be expressed in it. Without this, the spec author cannot generate the Swift `Codable` types, MLX-Swift cannot validate Gemma's emitted JSON, and SC3/SC5 cannot author error/idempotency tests against a contract that doesn't exist.",
+      "evidence": "Line 67-70: 'params: {user_utterance: string}' is prose, not schema. No `required` array, no `additionalProperties` policy, no string `maxLength`, no enum closure markers. Compare to OpenAPI 3.1 / JSON Schema where every field is explicitly typed and constrained.",
+      "spec_action_required": "Author MUST produce `spec/function_call_contract.yaml` (or `.json`) in JSON Schema 2020-12 form, declaring (a) which schema dialect Gemma 4 E4B emits against, (b) full type/constraint definitions for all 4 functions × params + returns, (c) `required` arrays, (d) `additionalProperties: false` posture per object. Include a sample valid + sample invalid JSON for each function for SC3 and SC5 to author tests against.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-002",
+      "severity": "blocking",
+      "convention_referenced": "OpenAPI 3.1 / streaming response semantics",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[0].returns ('ask_back returns: string')",
+      "issue": "`ask_back` returns 'string (the question to speak back)' as a non-streaming scalar. But the product depends on TTFT ≤ 8s (M2/M3) and viseme-audio drift ≤ 50ms — physically impossible if the bust waits for the full string before starting AVSpeechSynthesizer + viseme animation. The contract MUST declare whether the return is (a) atomic-string, (b) token-by-token AsyncSequence/AsyncStream, or (c) sentence-by-sentence chunked. Currently undefined → implementer guesses → ablation cannot verify M01 'load-bearing'. This is the highest-risk ambiguity in the locked artifact.",
+      "evidence": "idea.spec.json line 47: 'TTFT (time to first viseme): ≤ 8s on M2/M3'. design-approved.json line 67: 'returns: string'. With a 7B-class model on M1, generating a full 30-token Korean question takes >8s; first-token latency is ~1-2s. The only path to the metric is streaming, but the contract says scalar.",
+      "spec_action_required": "Define the streaming contract explicitly in SPEC.md: e.g. `ask_back` returns `AsyncStream<TokenDelta>` with `{ delta: String, isFinal: Bool, sentenceBoundary: Bool }`. Specify the buffering rule (start TTS at first sentence boundary or first N tokens). Document the back-pressure policy when AVSpeechSynthesizer queue is full. SC6_performance must validate the chosen contract meets TTFT.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-003",
+      "severity": "blocking",
+      "convention_referenced": "Error envelope / RFC 7807 Problem Details analog",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[*].returns",
+      "issue": "All four signatures document only the happy path. No error envelope is specified for: (a) Gemma emits malformed JSON, (b) Gemma hallucinates a 5th function name, (c) Gemma calls `defer_to_human` with `trigger_category: 'other'` and produces an empty `suggested_resource_class`, (d) `mode_classify` returns `confidence < threshold`, (e) `surface_past_wonder` returns past entries that no longer exist (Wonder.id deleted). Without an error envelope, every consumer of the function-call layer invents its own error handling → drift across 14 months and Mac App Store v1.1.",
+      "evidence": "No `error?: {code, message, retryable}` field on any return. No documented behavior for malformed model output. SC3_error_model is scoped for runtime errors (STT, OOM, mic permission), not function-call schema violations — so this falls to SC2.",
+      "spec_action_required": "Spec author MUST add an envelope: every function return wrapped as `{ ok: true, data: <returns> } | { ok: false, error: { code: enum, message: string, retryable: bool, fallback_action?: string } }`. Enumerate error codes: `MALFORMED_JSON`, `UNKNOWN_FUNCTION`, `LOW_CONFIDENCE`, `MISSING_RESOURCE_CLASS`, `LOG_ENTRY_NOT_FOUND`, `CONTEXT_OVERFLOW`. Define the recovery policy (re-prompt Gemma? fall back to canned phrasing? defer to human?).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-004",
+      "severity": "blocking",
+      "convention_referenced": "Orchestration / call ordering contract",
+      "where": "design-approved.json $.function_call_schema_locked_signatures (collective)",
+      "issue": "The four functions are defined individually but the spec does not declare the orchestration contract: must `mode_classify` always precede `ask_back`? Is `surface_past_wonder` invoked in parallel or before `ask_back`? Does `defer_to_human` short-circuit the rest? Is the orchestrator (a) Swift code calling Gemma 4 times, or (b) Gemma autonomously chaining via native function-calling? M01 demands ablation evidence per feature — but without a documented orchestration DAG, you cannot ablate one function and observe the result.",
+      "evidence": "idea.spec.json line 36: 'native function calling — mode_classify, ask_back, surface_past_wonder, defer_to_human' lists them as a flat set. chosen_preview.json line 15: 'native function calling (ask_back, surface_past_wonder, mode_classify, defer_to_human). 셋 모두 load-bearing.' (note: '셋' = three; defer_to_human is bracketed as escape hatch but not load-bearing — even the count is ambiguous). No sequence diagram exists.",
+      "spec_action_required": "Add SPEC.md section 'Function-Call Orchestration': sequence diagram (or pseudocode) for one user utterance → one socratic reply. Specify: (1) which function fires first, (2) which are parallel, (3) which is conditional, (4) what happens on each function's failure. Declare orchestration owner (Swift orchestrator vs Gemma autonomous chain). Define the ablation harness: 'disable function X, re-run 50 sample utterances, measure delta on 5% answers-given metric' for M01 evidence.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-005",
+      "severity": "high",
+      "convention_referenced": "BCP-47 vs ISO-639-1 vs Apple locale identifiers",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[0].params.language ('ko|en|auto')",
+      "issue": "The `language` enum uses ISO-639-1 short codes (`ko`, `en`) plus a runtime detection mode (`auto`). But the surrounding stack uses different conventions: macOS Speech framework uses BCP-47 (`ko-KR`, `en-US`); AVSpeechSynthesizer uses BCP-47 voice locales (`ko-KR.Yuna`, `en-US.Samantha` per chosen_preview.json line 36). Gemma's input may use yet a different convention. `auto` is also not a *value* — it's a *mode* that triggers detection and produces a value; conflating them in one enum hides the detection contract.",
+      "evidence": "chosen_preview.json line 36: 'tts: AVSpeechSynthesizer (system voices: Korean Yuna/Heami, English Samantha/Alex)'. core_data_schema_initial.Wonder.language: 'String enum (ko, en, auto-detected)' — already drifting (`auto` vs `auto-detected`). Three layers, three conventions.",
+      "spec_action_required": "Pick BCP-47 as the canonical language tag everywhere (`ko-KR`, `en-US`). Replace `auto` with two separate concepts: `language_input?: BCP-47` (optional; null means auto-detect) and `language_resolved: BCP-47` (always populated in returns). Document the Speech-framework → Gemma → AVSpeechSynthesizer locale hand-off as a state diagram. SC4_i18n must co-sign.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-006",
+      "severity": "high",
+      "convention_referenced": "Single source of truth / drift prevention",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[3].params.trigger_category vs idea.spec.json $.no_go.absolute_rejects[3]",
+      "issue": "`defer_to_human.trigger_category` enum is `legal|medical|financial|emergency|other`. But `idea.spec.json` no_go list explicitly names `legal/medical/financial/welfare/insurance`. **`welfare` and `insurance` are missing from the trigger enum**. Either the no_go list is wrong or the function signature is wrong; the two artifacts cannot both be authoritative on regulated-advice gating. Drift between two locked artifacts on a safety-critical enum is a blocking-class hazard, but I'm scoring it `high` because either fix is small if caught now.",
+      "evidence": "idea.spec.json line 68: 'regulated advice (legal/medical/financial/welfare/insurance)'. design-approved.json line 70: 'trigger_category: legal|medical|financial|emergency|other'. `emergency` is in design but not no_go; `welfare` and `insurance` are in no_go but not design.",
+      "spec_action_required": "Spec-lead designate ONE source of truth for the regulated-advice taxonomy. Recommend `defer_to_human.trigger_category` as the canonical enum, expand to `legal|medical|financial|welfare|insurance|emergency|other`, and reference it from idea.spec.json (or vice versa). Add a unit test that asserts the two artifacts agree at lock-hash time.",
+      "owner_when_addressed": "spec-lead"
+    },
+    {
+      "id": "SC2-007",
+      "severity": "high",
+      "convention_referenced": "Closed-set enum stability vs forward compatibility",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[2].returns.mode (mode_classify) and [0].params.mode (ask_back)",
+      "issue": "The mode enum `curious_adult|learning_student|skeptical|other` is consumed by *both* the Gemma function-call layer AND Core Data persistence (Wonder.mode, Session.mode). `other` as a catchall is a documented anti-pattern: it absorbs all unknown cases without producing the data needed to know which 5th mode to add. After 14 months of wondering log accumulation, you'll have N% `other` rows and no way to subdivide them retroactively. Also: enum is closed in spec, but Gemma is a generative model — it will emit unseen values (`curious_child`, `confused_adult`, `playful`). What's the policy when emitted ≠ enumerated?",
+      "evidence": "design-approved.json line 67 (ask_back.params.mode), line 69 (mode_classify.returns.mode), line 81 (Wonder.mode 'String enum'), line 100 (Session.mode 'String enum'). Four touchpoints, no version field, no migration path.",
+      "spec_action_required": "(1) Rename `other` → `unspecified` to signal intent (mirror BCP-47 `und`). (2) Add `mode_classify.returns.mode_raw: string` (Gemma's emitted token, before normalization) so future analysis can subdivide `unspecified`. (3) Add `function_call_schema_version: '1.0.0'` field to each return envelope; document the mode-enum migration policy (additive only in minor versions; closed-set break = major bump). (4) Define normalization: 'if Gemma emits a mode not in the enum, normalize to `unspecified`, store `mode_raw` for telemetry-free local analysis.'",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-008",
+      "severity": "high",
+      "convention_referenced": "Contract specification — string is not a contract",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[2].params.recent_history_compressed AND [1].params.log_compressed_summary",
+      "issue": "Two of the four functions accept a critical input typed only as `string`: `recent_history_compressed` (mode_classify) and `log_compressed_summary` (surface_past_wonder). These are the *256K context compression* surfaces — load-bearing per M01. 'string' tells the implementer nothing: is it (a) bullet list, (b) JSON-encoded array of `{utterance, reply, t}`, (c) Gemma-summarized prose, (d) embedding vector base64-encoded? The 256K wondering log compression strategy is the product's most novel claim and it's specified as `string`.",
+      "evidence": "design-approved.json line 68 ('log_compressed_summary: string'), line 69 ('recent_history_compressed: string'). idea.spec.json line 33-37 calls 256K context 'load-bearing' with no compression spec. M01 demands ablation evidence — without a compression contract, ablation results are not reproducible.",
+      "spec_action_required": "Spec author MUST add SPEC.md section 'Wondering Log Compression Contract' specifying: (a) compression algorithm (LLM summarization vs embedding+top-k vs sliding-window vs hierarchical), (b) input format (Wonder JSON array shape), (c) output format (token-budget, structure, delimiter conventions), (d) the explicit JSON Schema for both `recent_history_compressed` and `log_compressed_summary` strings (e.g. `{format: 'compressed-history-v1', payload: <structured>, token_count: int}`). SC5 will own dedup; SC2 owns the contract shape.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-009",
+      "severity": "high",
+      "convention_referenced": "Correlation-id / request-id convention (analog of HTTP X-Request-ID)",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[*] (all four)",
+      "issue": "No function carries a `request_id` / `correlation_id` / `turn_id`. Without one: (a) retry logic is undefined — the orchestrator cannot tell whether 're-call ask_back' is a retry of the same turn or a new turn (SC5 idempotency boundary), (b) Wonder rows cannot be tied back to the function-call set that produced them, (c) ablation harness cannot match before/after function outputs, (d) thinking-trace surfacing in UI ('thought silhouette pulse') has no anchor to bind animation lifecycle to function lifecycle.",
+      "evidence": "Zero of four functions take an id param. core_data_schema_initial.Wonder has `id: UUID` but no `turnId` linking back. SC5 is scoped to dedup/retry — but you can't dedup what isn't identified.",
+      "spec_action_required": "Add `turn_id: UUID` (orchestrator-generated, propagated to all four functions of one user utterance turn) as a required param on every function. Add `turn_id` to Wonder Core Data schema. Document propagation rule: 'one user utterance = one turn_id, all 1-4 function calls share it.' SC5 will define dedup/retry semantics on top.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-010",
+      "severity": "high",
+      "convention_referenced": "External API surface declaration / app sandbox bind",
+      "where": "(absent — should exist in SPEC.md 'External Surfaces' section)",
+      "issue": "idea.spec.json line 68 says '0 byte cloud' (no_go: any cloud network call). But the current locked artifacts do NOT explicitly enumerate all surfaces: HTTP API (none), AppleScript .sdef (?), NSXPC service (?), URL scheme handler (?), Universal Links (?), share extension (?), Spotlight indexing (?), Siri Shortcuts (?), debug-port (?), file-system watch outside sandbox (?). Each of these is an 'API' a future contributor might add. Without an explicit *negative* declaration, the no_go list cannot be enforced at SC7_security gate.",
+      "evidence": "idea.spec.json $.no_go covers cloud/regulated/COPPA/voice-cloning, but does not enumerate macOS-specific external surfaces. design-approved.json has no 'External Surfaces' section.",
+      "spec_action_required": "SPEC.md add section 'External Surfaces (binding declaration)' with explicit `present: false` for each: HTTP server, AppleScript .sdef, NSXPC, URL scheme, Universal Links, share extension, Spotlight CoreSpotlight indexing, Siri Shortcuts donation, debug WebSocket, file-watch outside container. The ONLY documented surfaces are: (a) 4 internal Gemma function calls, (b) Speech framework (input), (c) AVSpeechSynthesizer (output), (d) Core Data (storage), (e) one optional JSON export user-action. Co-sign with SC7.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-011",
+      "severity": "medium",
+      "convention_referenced": "Function naming — verb form / action vs query semantics",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[*].name",
+      "issue": "Naming is inconsistent in semantic class: `ask_back` (imperative-action), `surface_past_wonder` (imperative-action), `mode_classify` (NOUN-verb, reverse word order; should be `classify_mode` for consistency with the others), `defer_to_human` (imperative-action). Also: `ask_back` reads as describing the *output* (a question is asked back), not the action; `generate_socratic_question` would be more action-explicit. `surface_past_wonder` is fine as action ('to surface' = to bring up) but `past_wonder` is unidiomatic for English readers — `prior_wonder` or `past_wondering` is more natural. These will appear in 14 months of replay logs and Mac App Store v1.1; rename costs compound.",
+      "evidence": "Four names: `ask_back`, `surface_past_wonder`, `mode_classify`, `defer_to_human`. Three are verb-first; one is noun-first. Naming convention does not survive scrutiny across the set.",
+      "spec_action_required": "Rename `mode_classify` → `classify_mode` for verb-first consistency. Document the naming convention explicitly ('all function names are imperative verb_object snake_case'). Optionally consider `generate_socratic_question` (clearer than `ask_back`) and `recall_prior_wondering` (clearer than `surface_past_wonder`) — but these are style; the consistency fix is the must.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-012",
+      "severity": "medium",
+      "convention_referenced": "Param validation / numeric bounds",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[1].params.max_surfaced ('integer (default 1)')",
+      "issue": "`max_surfaced: integer (default 1)` has no upper bound. With a 256K wondering log accumulated over 14 months (potentially 10K+ Wonder entries), an unbounded `max_surfaced` is a context-overflow vector when Gemma is given log-compressed-summary + recalled past entries + system prompt. Also no lower bound (does 0 mean 'don't recall' or is it invalid?). Default of 1 is sensible but not justified — why not 3 (lookup typically returns top-k)? Document the default's rationale and the bounds.",
+      "evidence": "design-approved.json line 68. No min, no max, no rationale.",
+      "spec_action_required": "Specify `max_surfaced: integer, min: 0, max: 5, default: 1` with rationale ('max=5 fits within 8K-token tail-budget after compressed-summary; default=1 favors the most relevant single connector, matching Socratic single-thread style'). 0 = explicitly disable past-wonder surfacing for this turn (useful for ablation harness).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-013",
+      "severity": "medium",
+      "convention_referenced": "Confidence / probability semantics",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[2].returns.confidence ('float')",
+      "issue": "`confidence: float` is undefined: range [0,1] or [0,100]? Source: Gemma's softmax over the four mode tokens? Self-reported in the model's reasoning_summary? Calibrated or raw? Two consumers — UI ('mode chip' rendering, design-approved.json line 30-31 has `mode_chip_curious_adult` etc.) and idempotency thresholding (SC5 dedup gate). Without a defined semantics, both consumers will pick different thresholds.",
+      "evidence": "design-approved.json line 69. Wonder.modeConfidence: 'Float' (line 81) inherits the same ambiguity. No threshold documented for 'low confidence → fall back to UNSPECIFIED' policy.",
+      "spec_action_required": "Define `confidence: float, range: [0.0, 1.0], semantics: 'softmax probability of the chosen mode token from Gemma logits'`. Document threshold policy: '< 0.55 → mode = unspecified, mode_raw preserved'. SC5 references this for dedup gating.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-014",
+      "severity": "medium",
+      "convention_referenced": "Schema versioning / migration",
+      "where": "(absent — should exist on every function return envelope)",
+      "issue": "There is no `function_call_schema_version` field on any return. The wondering log will be replayed across 14 months and across Mac App Store v1.0 → v1.1 → v1.2. If a 5th function is added, or a param shape changes, replays from old logs must still parse. Without a version field on every persisted function-call result, schema migration is impossible without a heuristic-detection layer.",
+      "evidence": "design-approved.json $.function_call_schema_locked_signatures has no `version` field at the top, and no `schema_version` on any return shape. Wonder Core Data schema (line 73-87) has no schemaVersion column.",
+      "spec_action_required": "Add `function_call_schema_version: '1.0.0'` (semver) at the top of the contract. Add `schema_version: string` to every function return envelope. Add `schemaVersion: String` to Wonder, Session Core Data entities. Document the migration policy: minor = additive (new optional fields, new enum values), major = breaking (removed fields, changed types). Replay must reject unknown major.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-015",
+      "severity": "low",
+      "convention_referenced": "AppleScript / accessibility tree as implicit API",
+      "where": "(absent — should be an explicit declaration in SPEC.md)",
+      "issue": "macOS native apps implicitly expose a UI accessibility tree (AX API) that any other process can read via Accessibility permissions. For a fullscreen privacy-sensitive app where user utterances are spoken aloud and rendered as captions, the AX tree IS an API surface. SPEC must declare whether captions are exposed to AX (yes — required for VoiceOver per SC1_a11y M06) AND whether the wondering-log content surfaces in any AX-accessible text. Trade-off: VoiceOver vs leakage to other apps with Accessibility permission.",
+      "evidence": "M06 (design-approved.json line 13) requires VoiceOver compatibility. No discussion of which text is exposed to AX vs hidden. AppleScript .sdef presence not declared.",
+      "spec_action_required": "SPEC.md 'External Surfaces' subsection: declare AppleScript .sdef = absent (no scripting dictionary shipped). Declare AX tree contents: 'caption text + mode chip exposed to AX for VoiceOver; wondering log entries NOT exposed to AX (Core Data, not in view hierarchy).' Co-sign with SC1 + SC7.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC2-016",
+      "severity": "low",
+      "convention_referenced": "Explicit no-op / default-value declarations",
+      "where": "design-approved.json $.function_call_schema_locked_signatures[3] (defer_to_human)",
+      "issue": "`defer_to_human` returns `{deferred: true, suggested_resource_class: string, explanation_phrase: string}`. (a) `deferred` is always `true` — why is it a returned field? Either remove it or document that `false` is reserved for future 'almost-deferred-but-recovered' state. (b) `suggested_resource_class` is `string` with no enum — what values? 'lawyer', 'therapist', '119 (Korea emergency)', '911', 'KAIST 학생상담센터'? This is the user-facing locale-sensitive content under the COPPA/regulated-advice gate (M07) — must be defined, not freeform. (c) `explanation_phrase` is the spoken script — needs language tag (which BCP-47?) and length bound.",
+      "evidence": "design-approved.json line 70. M07 (line 14) says 'defer_to_human() advice 트리거 시 발동' — implies a phrase is spoken, but the phrase content is undefined.",
+      "spec_action_required": "Remove `deferred: true` (vacuous) OR document its future use. Define `suggested_resource_class` as enum: `licensed_attorney|licensed_clinician|licensed_financial_advisor|emergency_services_kr|emergency_services_us|trusted_adult|other`. Add `language: BCP-47` and `explanation_phrase_max_chars: 200` to the return shape. Reference the canonical phrase strings (Localizable.strings keys) rather than inlining.",
+      "owner_when_addressed": "spec-author"
+    }
+  ],
+  "scope_coverage_self_assessment": "Covered: function naming (SC2-011), param clarity for compression (SC2-008), return shape & streaming (SC2-002), error envelope (SC2-003), orchestration ordering (SC2-004), correlation-id (SC2-009), enum drift across artifacts (SC2-006), enum stability (SC2-007), versioning (SC2-014), language/locale conventions (SC2-005), defer_to_human contract (SC2-016), validation bounds (SC2-012, SC2-013), schema-language declaration (SC2-001), external surface negative-declaration (SC2-010, SC2-015). Out-of-scope handed off: detailed error recovery semantics (SC3), idempotency dedup logic (SC5), a11y AX exposure detail (SC1), security threat model on each surface (SC7), i18n locale matrix (SC4), TTFT validation under streaming contract (SC6).",
+  "recommended_spec_section_additions": [
+    "SPEC.md §'Function-Call Contract' — JSON Schema 2020-12 file at spec/function_call_contract.yaml, with version field, error envelope, all 4 functions × params + returns fully typed, sample valid+invalid JSON each.",
+    "SPEC.md §'Function-Call Orchestration' — sequence diagram for one user-utterance turn, ablation harness definition (M01 evidence), turn_id propagation rule.",
+    "SPEC.md §'Wondering Log Compression Contract' — algorithm choice, input/output format, JSON Schema for recent_history_compressed and log_compressed_summary, token-budget allocation.",
+    "SPEC.md §'External Surfaces (binding declaration)' — explicit present:false for HTTP server, AppleScript .sdef, NSXPC, URL scheme, Universal Links, share extension, Spotlight, Siri Shortcuts, debug ports. Co-signed by SC7.",
+    "SPEC.md §'Streaming & Back-Pressure' — ask_back AsyncStream contract, sentence-boundary buffering rule, AVSpeechSynthesizer queue policy, viseme animation lifecycle bound to turn_id.",
+    "SPEC.md §'Schema Versioning Policy' — semver rules, migration on log replay, schemaVersion column on Core Data entities.",
+    "SPEC.md §'Locale & Language Tag Convention' — BCP-47 canonical, mapping to Speech framework, AVSpeechSynthesizer voices, Gemma input/output. Co-signed by SC4.",
+    "SPEC.md §'Regulated-Advice Taxonomy' — single source of truth for trigger_category enum, alignment with no_go list, suggested_resource_class enum with locale variants. Co-signed by SC7."
+  ],
+  "blocking_count": 4,
+  "high_count": 6,
+  "medium_count": 4,
+  "low_count": 2
+}

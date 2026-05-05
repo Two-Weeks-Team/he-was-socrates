@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>He Was Socrates — Viseme Preview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --ink-black: oklch(0.15 0.01 280);
+      --label-band: oklch(0.20 0.015 280);
+      --alabaster: oklch(0.92 0.02 75);
+      --warm-amber: oklch(0.78 0.15 75);
+      --user-dim: oklch(0.55 0.02 280);
+      --thought-low: oklch(0.25 0.02 280);
+      --thought-high: oklch(0.32 0.04 285);
+      --chip-curious: oklch(0.65 0.10 200);
+      --chip-student: oklch(0.65 0.10 145);
+      --serif: "Times New Roman", "Source Serif Pro", "Iowan Old Style", serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--ink-black);
+      color: var(--alabaster);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.55;
+      letter-spacing: -0.005em;
+      min-height: 100vh;
+      padding: 48px clamp(20px, 4vw, 64px) 96px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    header { margin-bottom: 56px; }
+    h1 {
+      font-size: clamp(34px, 4.5vw, 56px);
+      margin: 0 0 12px;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      color: var(--user-dim);
+      font-size: 15px;
+      max-width: 680px;
+    }
+    h2 {
+      font-size: 24px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      margin: 64px 0 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--thought-low);
+    }
+    h3 {
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--user-dim);
+      margin: 20px 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    p { max-width: 740px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-bottom: 56px;
+    }
+    @media (min-width: 800px) {
+      .hero { grid-template-columns: 360px 1fr; align-items: center; }
+    }
+    .hero-img {
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 1;
+      background: var(--ink-black);
+      border: 1px solid var(--thought-low);
+      border-radius: 4px;
+    }
+    .hero-text { font-size: 16px; }
+    .meta {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--user-dim);
+      margin-top: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .cell {
+      background: var(--ink-black);
+      border: 1px solid var(--thought-low);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 200ms ease;
+    }
+    .cell:hover { border-color: var(--warm-amber); }
+    .cell.active { border-color: var(--warm-amber); }
+    .cell-img {
+      aspect-ratio: 1;
+      width: 100%;
+      display: block;
+    }
+    .cell-label {
+      background: var(--label-band);
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cell-id {
+      font-family: var(--mono);
+      font-weight: 600;
+      color: var(--alabaster);
+      font-size: 13px;
+    }
+    .cell-desc {
+      color: var(--user-dim);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    .mouth-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 720px) {
+      .mouth-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .mouth-cell {
+      background: var(--ink-black);
+      border: 1px solid var(--thought-low);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .mouth-img-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.36;
+      overflow: hidden;
+      background: var(--ink-black);
+    }
+    .mouth-img-wrap img {
+      position: absolute;
+      max-width: none;
+      /* width/left/top set by JS based on mouth_xy from config */
+    }
+    .mouth-cell .cell-label { padding: 8px 10px; }
+
+    /* Player */
+    .player {
+      background: var(--label-band);
+      border: 1px solid var(--thought-low);
+      border-radius: 6px;
+      padding: 24px;
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 720px) {
+      .player { grid-template-columns: 320px 1fr; align-items: start; }
+    }
+    .player-stage {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1;
+      background: var(--ink-black);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .player-stage img { width: 100%; height: 100%; }
+    .controls { display: flex; flex-direction: column; gap: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .row-label {
+      font-size: 12px;
+      color: var(--user-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      width: 80px;
+      flex-shrink: 0;
+    }
+    button {
+      background: var(--ink-black);
+      color: var(--alabaster);
+      border: 1px solid var(--thought-low);
+      border-radius: 4px;
+      padding: 8px 14px;
+      font-family: var(--serif);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    button:hover { border-color: var(--warm-amber); color: var(--warm-amber); }
+    button.on {
+      background: var(--warm-amber);
+      color: var(--ink-black);
+      border-color: var(--warm-amber);
+    }
+    button:focus-visible {
+      outline: 2px solid var(--warm-amber);
+      outline-offset: 2px;
+    }
+    .now-playing {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--user-dim);
+      padding-top: 8px;
+      border-top: 1px solid var(--thought-low);
+    }
+    .now-playing strong {
+      color: var(--alabaster);
+      font-size: 18px;
+      letter-spacing: 0.06em;
+    }
+    code, kbd {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--warm-amber);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--thought-low);
+      vertical-align: top;
+    }
+    th { color: var(--user-dim); font-weight: 400; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .footnote {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--thought-low);
+      font-size: 13px;
+      color: var(--user-dim);
+    }
+    .chip {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--mono);
+      letter-spacing: 0.06em;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+    .chip-curious { background: color-mix(in oklch, var(--chip-curious) 30%, var(--ink-black)); color: var(--chip-curious); }
+    .chip-student { background: color-mix(in oklch, var(--chip-student) 30%, var(--ink-black)); color: var(--chip-student); }
+
+    /* Editor */
+    .editor {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      background: var(--label-band);
+      border: 1px solid var(--thought-low);
+      border-radius: 6px;
+      padding: 24px;
+      margin-top: 12px;
+    }
+    @media (min-width: 900px) {
+      .editor { grid-template-columns: minmax(360px, 480px) 1fr; }
+    }
+    .editor-stage {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 1;
+      border: 1px solid var(--thought-low);
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--ink-black);
+      cursor: crosshair;
+      user-select: none;
+    }
+    .editor-stage img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+    .editor-stage svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .editor-panel { display: flex; flex-direction: column; gap: 12px; }
+    .editor-panel .row { gap: 10px; }
+    .editor-panel input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--warm-amber); }
+    .value-readout {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--warm-amber);
+      min-width: 64px;
+      text-align: right;
+    }
+    .badge-online { background: color-mix(in oklch, var(--chip-student) 25%, var(--ink-black)); color: var(--chip-student); border-color: var(--chip-student) !important; }
+    .badge-offline { background: color-mix(in oklch, var(--user-dim) 20%, var(--ink-black)); color: var(--user-dim); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>He Was Socrates</h1>
+    <div class="subtitle">
+      Viseme preview — 16 mouth shapes derived from your painterly source portrait via halftone conversion.
+      Generated <code>2026-05-05 KST</code> · <code>1024 × 1024 RGBA</code> · halftone <code>dot_size=6</code>, <code>gamma=0.85</code>.
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-img-wrap">
+      <img class="hero-img" src="face_on_black.png" alt="Halftone bust on ink-black">
+    </div>
+    <div class="hero-text">
+      <h3>Halftone bust (REST)</h3>
+      <p>
+        The painterly Socrates portrait you provided, converted to a 1-bit-feel halftone with
+        alabaster dots on transparent background. At runtime this composites onto
+        <code>oklch(0.15 0.01 280)</code> ink-black to produce the bust the user sees.
+      </p>
+      <div class="meta">
+        170 × 170 cells · 17,944 visible dots · alabaster <code>oklch(0.92 0.02 75)</code>
+      </div>
+    </div>
+  </section>
+
+  <h2>Mouth Position Editor <span id="server-badge" class="meta" style="margin-left:12px;display:inline-block;padding:2px 8px;border:1px solid var(--thought-low);border-radius:999px;font-size:11px;">checking…</span></h2>
+  <p>
+    Click the bust to set mouth center. Drag the crosshair to fine-tune. Use sliders for
+    halftone params + viseme scale. <strong>Save & Rebuild</strong> writes
+    <code>assets/.preview-config.json</code> and regenerates the 17 PNGs in place.
+    Requires the local preview server (<code>make preview-server</code>); when running
+    statically (file://) the API endpoints will be disabled and the editor falls back to
+    download-only.
+  </p>
+
+  <div class="editor">
+    <div class="editor-stage" id="editor-stage">
+      <img id="editor-img" src="../source-portrait.png" alt="source portrait for mouth alignment">
+      <svg id="editor-svg" preserveAspectRatio="none" viewBox="0 0 1024 1024">
+        <ellipse id="editor-mouth" cx="514" cy="540" rx="40" ry="35" fill="rgba(255,220,60,0.30)" stroke="rgba(255,220,60,0.95)" stroke-width="3" stroke-dasharray="6,3"/>
+        <line id="editor-cross-h" x1="0" y1="540" x2="1024" y2="540" stroke="rgba(255,220,60,0.4)" stroke-width="1" stroke-dasharray="6,4"/>
+        <line id="editor-cross-v" x1="514" y1="0" x2="514" y2="1024" stroke="rgba(255,220,60,0.4)" stroke-width="1" stroke-dasharray="6,4"/>
+      </svg>
+    </div>
+    <div class="editor-panel">
+      <div class="row">
+        <span class="row-label">Mouth X</span>
+        <input type="range" id="cfg-mx" min="0" max="1024" step="1" value="514">
+        <span class="value-readout" id="rd-mx">514</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Mouth Y</span>
+        <input type="range" id="cfg-my" min="0" max="1024" step="1" value="540">
+        <span class="value-readout" id="rd-my">540</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Scale</span>
+        <input type="range" id="cfg-scale" min="0.5" max="2.0" step="0.05" value="1.0">
+        <span class="value-readout" id="rd-scale">1.00×</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Dot size</span>
+        <input type="range" id="cfg-dot" min="3" max="14" step="1" value="6">
+        <span class="value-readout" id="rd-dot">6</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Gamma</span>
+        <input type="range" id="cfg-gamma" min="0.5" max="2.0" step="0.05" value="0.85">
+        <span class="value-readout" id="rd-gamma">0.85</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Mouth mode</span>
+        <button data-mode="erase" class="on">Alpha erase (soft cavity)</button>
+        <button data-mode="fill">Solid fill (legacy black)</button>
+      </div>
+      <div class="row">
+        <span class="row-label">Feather</span>
+        <input type="range" id="cfg-feather" min="0" max="12" step="0.5" value="3">
+        <span class="value-readout" id="rd-feather">3.0 px</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Preview</span>
+        <button data-preview-mode="source" class="on">Source portrait</button>
+        <button data-preview-mode="REST">Halftone REST</button>
+        <button data-preview-mode="AA">Viseme AA</button>
+        <button data-preview-mode="OH">Viseme OH</button>
+      </div>
+      <div class="row" style="border-top:1px solid var(--thought-low);padding-top:14px;margin-top:6px;">
+        <button id="btn-save" style="background:var(--warm-amber);color:var(--ink-black);border-color:var(--warm-amber);font-weight:600;">💾 Save config</button>
+        <button id="btn-rebuild" style="font-weight:600;">🔨 Save &amp; Rebuild PNGs</button>
+        <button id="btn-download">⬇ Download config.json</button>
+        <button id="btn-reset" style="opacity:0.7;">Reset to defaults</button>
+      </div>
+      <div class="now-playing" id="editor-status">
+        Ready. Click on the portrait to set mouth position.
+      </div>
+    </div>
+  </div>
+
+  <h2>16 Visemes — full bust</h2>
+  <p>Click a cell to feature it in the player below. Hover for description.</p>
+
+  <div class="grid" id="full-grid"></div>
+
+  <h2>16 Visemes — mouth close-up</h2>
+  <p>Same 16 PNGs cropped to the visible mouth region (the gap in the beard mustache). Differences become unambiguous at this scale.</p>
+
+  <div class="mouth-grid" id="mouth-grid"></div>
+
+  <h2>Lip-sync animation player</h2>
+  <p>See how the visemes feel at different frame rates. Default <code>30 fps</code> matches the locked spec.</p>
+
+  <div class="player">
+    <div class="player-stage">
+      <img id="stage" src="../visemes/viseme_REST.png" alt="">
+    </div>
+    <div class="controls">
+      <div class="row">
+        <span class="row-label">FPS</span>
+        <button data-fps="5">5 fps</button>
+        <button data-fps="12">12 fps · Reduce Motion</button>
+        <button data-fps="15">15 fps</button>
+        <button data-fps="30" class="on">30 fps · spec</button>
+      </div>
+      <div class="row">
+        <span class="row-label">Sequence</span>
+        <button data-seq="vowels" class="on">Vowels (AA EE OH UH)</button>
+        <button data-seq="consonants">Consonants (M P B F V TH)</button>
+        <button data-seq="mixed">Mixed (REST S AA R EE SH OH)</button>
+        <button data-seq="ko">"안녕" (ko approx)</button>
+        <button data-seq="en">"hello" (en approx)</button>
+      </div>
+      <div class="row">
+        <span class="row-label">Playback</span>
+        <button id="play-toggle" class="on">⏸ Pause</button>
+        <button id="step-forward">Step ▶</button>
+      </div>
+      <div class="now-playing">
+        Now playing <strong id="now-id">REST</strong> · <span id="now-desc">neutral, slightly open</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Phoneme-to-viseme reference</h2>
+  <p>How real phonemes map to these 16 visemes (Disney/Preston Blair style; the locked spec uses the same mapping in <code>spec/phoneme-viseme-map.json</code>).</p>
+
+  <table>
+    <thead>
+      <tr><th>Viseme</th><th>Mouth shape</th><th>Phonetic class</th><th>IPA examples</th><th>Korean ㄱㄴㄷ examples</th></tr>
+    </thead>
+    <tbody id="ref-table"></tbody>
+  </table>
+
+  <h2>Demo modes — recap</h2>
+  <p>
+    The bust auto-detects mode from the first user utterance via Gemma function-call
+    <code>mode_classify</code>. UI signals the active mode with a chip:
+    <span class="chip chip-curious">curious_adult</span>
+    <span class="chip chip-student">learning_student</span>
+    plus iconography (per SC1 a11y, color alone insufficient).
+  </p>
+
+  <div class="footnote">
+    <strong>Files behind this page</strong> — generated entirely by build-time Python tools (Pillow + numpy):
+    <code>scripts/halftone.py</code> · <code>scripts/viseme_compose.py</code> · <code>scripts/build_manifest.py</code> · <code>Makefile</code>.
+    Determinism check: <code>make assets-verify</code> rebuilds and fails on byte-drift.
+    Runtime ships only the 17 generated PNGs in the <code>.app</code> bundle; Python toolchain stays in the repo, never in DMG.
+  </div>
+
+  <script>
+    const VISEMES = [
+      { id: "AA",   shape: "wide open, oval",       cls: "open vowel",     ipa: "/ɑː/",     ko: "아, ㅏ",         desc: "very wide open vowel" },
+      { id: "EE",   shape: "wide horizontal smile", cls: "front vowel",    ipa: "/iː/",     ko: "이, ㅣ",         desc: "wide horizontal smile" },
+      { id: "IH",   shape: "narrow horizontal",     cls: "lax front vowel",ipa: "/ɪ/",      ko: "(짧은 ㅣ)",      desc: "narrow horizontal" },
+      { id: "OH",   shape: "round",                 cls: "back vowel",     ipa: "/oʊ/",     ko: "오, ㅗ",         desc: "rounded mid-open" },
+      { id: "OW",   shape: "small round, pursed",   cls: "diphthong",      ipa: "/aʊ/",     ko: "(우+ㅗ 비슷)",   desc: "rounded, lips pursed" },
+      { id: "UH",   shape: "relaxed open",          cls: "central vowel",  ipa: "/ʌ/, /ə/", ko: "어, ㅓ, ㅡ",     desc: "relaxed slightly open" },
+      { id: "M",    shape: "thin closed line",      cls: "labial nasal",   ipa: "/m/",      ko: "ㅁ",             desc: "lips closed" },
+      { id: "P",    shape: "thin closed line",      cls: "labial plosive", ipa: "/p/",      ko: "ㅍ, ㅂ(어두)",   desc: "lips closed (same as M, B)" },
+      { id: "B",    shape: "thin closed line",      cls: "labial plosive", ipa: "/b/",      ko: "ㅂ",             desc: "lips closed (same as M, P)" },
+      { id: "F",    shape: "narrow horizontal",     cls: "labiodental",    ipa: "/f/",      ko: "(없음)",         desc: "upper teeth on lower lip" },
+      { id: "V",    shape: "narrow horizontal",     cls: "labiodental",    ipa: "/v/",      ko: "(없음)",         desc: "upper teeth on lower lip" },
+      { id: "TH",   shape: "relaxed open",          cls: "dental fricative", ipa: "/θ/, /ð/", ko: "(없음)",       desc: "tongue between teeth" },
+      { id: "S",    shape: "small horizontal",      cls: "alveolar fric.", ipa: "/s/, /z/", ko: "ㅅ, ㅈ, ㅉ",      desc: "teeth slightly visible" },
+      { id: "SH",   shape: "rounded mid-open",      cls: "postalveolar",   ipa: "/ʃ/",      ko: "ㅅ+ㅣ",          desc: "lips rounded, narrow" },
+      { id: "R",    shape: "small round",           cls: "rhotic",         ipa: "/r/, /ɹ/", ko: "ㄹ(어두)",       desc: "lips slightly rounded" },
+      { id: "REST", shape: "thin neutral line",     cls: "silence",        ipa: "—",        ko: "—",              desc: "neutral, slightly open" },
+    ];
+
+    const SEQUENCES = {
+      vowels: ["AA", "EE", "OH", "UH", "AA", "OH", "EE", "REST"],
+      consonants: ["M", "AA", "P", "EE", "B", "OH", "F", "AA", "V", "TH", "REST"],
+      mixed: ["REST", "S", "AA", "R", "EE", "SH", "OH", "M", "AA", "REST"],
+      ko: ["REST", "AA", "M", "EE", "OH", "REST", "S", "EE", "OH", "REST"],
+      en: ["REST", "EE", "EE", "UH", "M", "OH", "OW", "REST"],
+    };
+
+    const fullGrid = document.getElementById("full-grid");
+    const mouthGrid = document.getElementById("mouth-grid");
+    const refTable = document.getElementById("ref-table");
+    const stage = document.getElementById("stage");
+    const nowId = document.getElementById("now-id");
+    const nowDesc = document.getElementById("now-desc");
+    const playToggle = document.getElementById("play-toggle");
+    const stepBtn = document.getElementById("step-forward");
+
+    let currentFps = 30;
+    let currentSeq = "vowels";
+    let playing = true;
+    let cursor = 0;
+    let timer = null;
+
+    function setVis(vid) {
+      const v = VISEMES.find(v => v.id === vid);
+      stage.src = `../visemes/viseme_${vid}.png`;
+      nowId.textContent = vid;
+      nowDesc.textContent = v ? v.desc : "";
+      document.querySelectorAll(".cell").forEach(c => c.classList.toggle("active", c.dataset.id === vid));
+    }
+
+    function tick() {
+      const seq = SEQUENCES[currentSeq];
+      cursor = (cursor + 1) % seq.length;
+      setVis(seq[cursor]);
+    }
+
+    function restart() {
+      if (timer) clearInterval(timer);
+      if (playing) timer = setInterval(tick, Math.round(1000 / currentFps));
+    }
+
+    // Build full grid
+    VISEMES.forEach(v => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.id = v.id;
+      cell.innerHTML = `
+        <img class="cell-img" src="../visemes/viseme_${v.id}.png" alt="viseme ${v.id}">
+        <div class="cell-label">
+          <div class="cell-id">${v.id}</div>
+          <div class="cell-desc">${v.desc}</div>
+        </div>`;
+      cell.addEventListener("click", () => {
+        playing = false;
+        playToggle.textContent = "▶ Play";
+        playToggle.classList.remove("on");
+        if (timer) clearInterval(timer);
+        const seq = SEQUENCES[currentSeq];
+        cursor = seq.indexOf(v.id);
+        if (cursor === -1) cursor = 0;
+        setVis(v.id);
+      });
+      fullGrid.appendChild(cell);
+    });
+
+    // Build mouth-only grid
+    VISEMES.forEach(v => {
+      const cell = document.createElement("div");
+      cell.className = "mouth-cell";
+      cell.innerHTML = `
+        <div class="mouth-img-wrap" data-viseme="${v.id}">
+          <img src="../visemes/viseme_${v.id}.png" alt="viseme ${v.id} mouth">
+        </div>
+        <div class="cell-label">
+          <div class="cell-id">${v.id}</div>
+        </div>`;
+      mouthGrid.appendChild(cell);
+    });
+
+    // Position the mouth-grid crops dynamically based on current mouth_xy.
+    // Source canvas is 1024x1024. We want to show a 320x235 region (aspect 1.36)
+    // centered on (mouth_x, mouth_y) inside each cell.
+    function refitMouthGrid() {
+      const SRC_W = 1024;
+      const CROP_W = 320;
+      const CROP_H = CROP_W / 1.36;
+      const cfg = readUI();
+      const [mx, my] = cfg.mouth_xy;
+      const cells = document.querySelectorAll(".mouth-img-wrap");
+      cells.forEach(wrap => {
+        const cellW = wrap.clientWidth;
+        if (!cellW) return;
+        const scale = cellW / CROP_W;
+        const imgPx = SRC_W * scale;
+        const srcX0 = mx - CROP_W / 2;
+        const srcY0 = my - CROP_H / 2;
+        const img = wrap.querySelector("img");
+        img.style.width = imgPx + "px";
+        img.style.height = imgPx + "px";
+        img.style.left = (-srcX0 * scale) + "px";
+        img.style.top = (-srcY0 * scale) + "px";
+      });
+    }
+
+    // Refit after slider/editor changes — wired up below, after cfgMx const declarations.
+    window.addEventListener("resize", refitMouthGrid);
+    setTimeout(refitMouthGrid, 0);
+    setTimeout(refitMouthGrid, 200);
+
+    // Reference table
+    VISEMES.forEach(v => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${v.id}</strong></td>
+        <td>${v.shape}</td>
+        <td>${v.cls}</td>
+        <td><code>${v.ipa}</code></td>
+        <td>${v.ko}</td>`;
+      refTable.appendChild(tr);
+    });
+
+    // FPS controls
+    document.querySelectorAll("[data-fps]").forEach(b => {
+      b.addEventListener("click", () => {
+        currentFps = +b.dataset.fps;
+        document.querySelectorAll("[data-fps]").forEach(x => x.classList.toggle("on", x === b));
+        restart();
+      });
+    });
+
+    // Sequence controls
+    document.querySelectorAll("[data-seq]").forEach(b => {
+      b.addEventListener("click", () => {
+        currentSeq = b.dataset.seq;
+        document.querySelectorAll("[data-seq]").forEach(x => x.classList.toggle("on", x === b));
+        cursor = 0;
+        if (playing) restart();
+      });
+    });
+
+    playToggle.addEventListener("click", () => {
+      playing = !playing;
+      if (playing) {
+        playToggle.textContent = "⏸ Pause";
+        playToggle.classList.add("on");
+        restart();
+      } else {
+        playToggle.textContent = "▶ Play";
+        playToggle.classList.remove("on");
+        if (timer) clearInterval(timer);
+      }
+    });
+
+    stepBtn.addEventListener("click", () => {
+      playing = false;
+      playToggle.textContent = "▶ Play";
+      playToggle.classList.remove("on");
+      if (timer) clearInterval(timer);
+      tick();
+    });
+
+    setVis("REST");
+    restart();
+
+    // ──────────────────────────────────────────────────────────────────
+    // Editor
+    // ──────────────────────────────────────────────────────────────────
+    const editorImg = document.getElementById("editor-img");
+    const editorStage = document.getElementById("editor-stage");
+    const editorMouth = document.getElementById("editor-mouth");
+    const crossH = document.getElementById("editor-cross-h");
+    const crossV = document.getElementById("editor-cross-v");
+    const editorStatus = document.getElementById("editor-status");
+    const serverBadge = document.getElementById("server-badge");
+
+    const cfgMx = document.getElementById("cfg-mx");
+    const cfgMy = document.getElementById("cfg-my");
+    const cfgScale = document.getElementById("cfg-scale");
+    const cfgDot = document.getElementById("cfg-dot");
+    const cfgGamma = document.getElementById("cfg-gamma");
+    const cfgFeather = document.getElementById("cfg-feather");
+    const rdMx = document.getElementById("rd-mx");
+    const rdMy = document.getElementById("rd-my");
+    const rdScale = document.getElementById("rd-scale");
+    const rdDot = document.getElementById("rd-dot");
+    const rdGamma = document.getElementById("rd-gamma");
+    const rdFeather = document.getElementById("rd-feather");
+    let currentMode = "erase";
+
+    const btnSave = document.getElementById("btn-save");
+    const btnRebuild = document.getElementById("btn-rebuild");
+    const btnDownload = document.getElementById("btn-download");
+    const btnReset = document.getElementById("btn-reset");
+
+    const DEFAULTS = {
+      mouth_xy: [514, 540],
+      scale: 1.0,
+      dot_size: 6,
+      gamma: 0.85,
+      mode: "erase",
+      feather: 3.0,
+    };
+
+    // Approx ellipse rx/ry per scale, for the editor preview overlay.
+    // Reflects VISEME_DIMS["AA"]/2 = ~55 × 40 at scale 1.
+    function setOverlay(x, y, scale) {
+      editorMouth.setAttribute("cx", x);
+      editorMouth.setAttribute("cy", y);
+      // Reflect the *new* default AA dims (80x70) divided by 2.
+      editorMouth.setAttribute("rx", Math.round(40 * scale));
+      editorMouth.setAttribute("ry", Math.round(35 * scale));
+      crossH.setAttribute("y1", y);
+      crossH.setAttribute("y2", y);
+      crossV.setAttribute("x1", x);
+      crossV.setAttribute("x2", x);
+    }
+
+    function readUI() {
+      return {
+        mouth_xy: [+cfgMx.value, +cfgMy.value],
+        scale: +cfgScale.value,
+        dot_size: +cfgDot.value,
+        gamma: +cfgGamma.value,
+        mode: currentMode,
+        feather: +cfgFeather.value,
+      };
+    }
+
+    function writeUI(c) {
+      cfgMx.value = c.mouth_xy[0];
+      cfgMy.value = c.mouth_xy[1];
+      cfgScale.value = c.scale;
+      cfgDot.value = c.dot_size;
+      cfgGamma.value = c.gamma;
+      cfgFeather.value = c.feather;
+      currentMode = c.mode;
+      rdMx.textContent = c.mouth_xy[0];
+      rdMy.textContent = c.mouth_xy[1];
+      rdScale.textContent = (+c.scale).toFixed(2) + "×";
+      rdDot.textContent = c.dot_size;
+      rdGamma.textContent = (+c.gamma).toFixed(2);
+      rdFeather.textContent = (+c.feather).toFixed(1) + " px";
+      document.querySelectorAll("[data-mode]").forEach(b => {
+        b.classList.toggle("on", b.dataset.mode === currentMode);
+      });
+      setOverlay(c.mouth_xy[0], c.mouth_xy[1], c.scale);
+    }
+
+    [cfgMx, cfgMy, cfgScale, cfgDot, cfgGamma, cfgFeather].forEach(el => {
+      el.addEventListener("input", () => writeUI(readUI()));
+    });
+    // Mouth-grid crop follows mouth_xy live as user drags those sliders.
+    [cfgMx, cfgMy].forEach(el => el.addEventListener("input", refitMouthGrid));
+
+    document.querySelectorAll("[data-mode]").forEach(b => {
+      b.addEventListener("click", () => {
+        currentMode = b.dataset.mode;
+        document.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("on", x === b));
+      });
+    });
+
+    // Click-to-set (and drag) on the stage.
+    function setMouthFromEvent(ev) {
+      const rect = editorStage.getBoundingClientRect();
+      const xN = (ev.clientX - rect.left) / rect.width;
+      const yN = (ev.clientY - rect.top) / rect.height;
+      const x = Math.max(0, Math.min(1024, Math.round(xN * 1024)));
+      const y = Math.max(0, Math.min(1024, Math.round(yN * 1024)));
+      cfgMx.value = x;
+      cfgMy.value = y;
+      writeUI(readUI());
+    }
+
+    let dragging = false;
+    editorStage.addEventListener("mousedown", e => { dragging = true; setMouthFromEvent(e); });
+    window.addEventListener("mousemove", e => { if (dragging) setMouthFromEvent(e); });
+    window.addEventListener("mouseup", () => { dragging = false; });
+
+    // Preview mode buttons
+    document.querySelectorAll("[data-preview-mode]").forEach(b => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll("[data-preview-mode]").forEach(x => x.classList.toggle("on", x === b));
+        const mode = b.dataset.previewMode;
+        const ts = "?t=" + Date.now();
+        if (mode === "source") editorImg.src = "../source-portrait.png" + ts;
+        else if (mode === "REST") editorImg.src = "face_on_black.png" + ts;
+        else editorImg.src = "../visemes/viseme_" + mode + ".png" + ts;
+      });
+    });
+
+    btnReset.addEventListener("click", () => {
+      writeUI(DEFAULTS);
+      editorStatus.textContent = "Reset to defaults (not yet saved).";
+    });
+
+    function bustImageCache() {
+      // Force-reload all <img> referencing assets we may have just regenerated.
+      const ts = "?t=" + Date.now();
+      document.querySelectorAll("img").forEach(img => {
+        const base = img.src.split("?")[0];
+        if (base.includes("/visemes/") || base.endsWith("face_halftone.png") || base.endsWith("face_on_black.png")) {
+          img.src = base + ts;
+        }
+      });
+    }
+
+    async function postJSON(url, payload) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+
+    btnSave.addEventListener("click", async () => {
+      const cfg = readUI();
+      try {
+        editorStatus.textContent = "Saving config…";
+        const r = await postJSON("/api/config", cfg);
+        editorStatus.textContent = "Saved → " + (r.config_path || ".preview-config.json");
+      } catch (e) {
+        editorStatus.textContent = "Save failed (server?): " + e.message + " · falling back to download.";
+        downloadConfig(cfg);
+      }
+    });
+
+    btnRebuild.addEventListener("click", async () => {
+      const cfg = readUI();
+      btnRebuild.disabled = true;
+      btnRebuild.textContent = "🔨 Building…";
+      try {
+        editorStatus.textContent = "Saving config…";
+        await postJSON("/api/config", cfg);
+        editorStatus.textContent = "Rebuilding 17 PNGs (may take 5–15s)…";
+        const r = await postJSON("/api/rebuild", {});
+        if (r.ok) {
+          editorStatus.textContent = "Rebuilt. Reloading images…";
+          bustImageCache();
+        } else {
+          editorStatus.textContent = "Rebuild failed: " + (r.stderr || r.error || "see server log");
+        }
+      } catch (e) {
+        editorStatus.textContent = "Rebuild failed (server?): " + e.message + " · download config.json instead.";
+      } finally {
+        btnRebuild.disabled = false;
+        btnRebuild.textContent = "🔨 Save & Rebuild PNGs";
+      }
+    });
+
+    function downloadConfig(cfg) {
+      const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "preview-config.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      editorStatus.textContent = "Downloaded preview-config.json. Drop it at assets/.preview-config.json then run 'make assets'.";
+    }
+
+    btnDownload.addEventListener("click", () => downloadConfig(readUI()));
+
+    // Probe server availability + load persisted config.
+    (async function init() {
+      try {
+        const r = await fetch("/api/config", { cache: "no-store" });
+        if (!r.ok) throw new Error(r.statusText);
+        const data = await r.json().catch(() => ({}));
+        serverBadge.textContent = "● server online";
+        serverBadge.classList.add("badge-online");
+        if (data && Object.keys(data).length && !data._error) {
+          const merged = Object.assign({}, DEFAULTS, data);
+          writeUI(merged);
+          editorStatus.textContent = "Loaded persisted config from .preview-config.json.";
+        } else {
+          writeUI(DEFAULTS);
+          editorStatus.textContent = "No saved config yet. Adjust and Save.";
+        }
+        refitMouthGrid();
+      } catch (e) {
+        serverBadge.textContent = "○ static (no server)";
+        serverBadge.classList.add("badge-offline");
+        writeUI(DEFAULTS);
+        editorStatus.textContent = "Server offline (running over file://). Use Download config.json + 'make assets' instead.";
+        btnSave.disabled = true;
+        btnRebuild.disabled = true;
+        refitMouthGrid();
+      }
+    })();
+  </script>
+</body>
+</html>

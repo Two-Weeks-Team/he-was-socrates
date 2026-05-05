@@ -1,0 +1,42 @@
+{
+  "critic": "SC4_i18n",
+  "audit_phase": "iter-1 (post-author re-review)",
+  "audited_at_kst": "2026-05-05T17:01+09:00",
+  "delta_vs_pre_audit": { "blocking_was": 4, "blocking_now": 0, "high_was": 7, "high_now": 1, "medium_was": 5, "medium_now": 1, "low_was": 2, "low_now": 1 },
+  "resolutions": [
+    { "id": "SC4-001", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L11 + SPEC.md §10.1 BCP-47 mapping; function_call_contract.yaml $defs.BCP47 enum; coredata-model.md Wonder.bcp47Locale + bcp47SecondaryLocale." },
+    { "id": "SC4-002", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L11 + SPEC.md §10.1: 'auto NEVER reaches Core Data'; resolution split into ko|en|auto (Gemma input) vs ko-KR|en-US|mixed|und (persistence)." },
+    { "id": "SC4-003", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L12 + DELTA-05 + SPEC.md §10.2: Strategy A primary-locale; KPI revised; push-to-talk default." },
+    { "id": "SC4-004", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §4.2 voice fallback chain; error-catalog.md TTS.VoiceUnavailable.* with deeplink; demo-day-reliability.md §2 voice download checklist." },
+    { "id": "SC4-005", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §10.3 code-switched TTS: per-segment AVSpeechUtterance, ≤150ms gap allowance, drift target within segment." },
+    { "id": "SC4-006", "previous_severity": "high", "current_severity": "resolved", "evidence": "spec/phoneme-viseme-map.json authored with KO IPA table (ㅓ→AA, ㅡ→UH, etc.) + Hangul jamo class fallback. AVSpeechSynthesizer phoneme delegate primary per L2." },
+    { "id": "SC4-007", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §10.6 font fallback extended with AppleMyungjo, Noto Serif CJK KR; AttributedString per-glyph-range." },
+    { "id": "SC4-008", "previous_severity": "high", "current_severity": "resolved", "evidence": "function_call_contract.yaml $defs.ResourceClass closed enum; SPEC.md §10.7 Localizable.strings KO+EN labels." },
+    { "id": "SC4-009", "previous_severity": "high", "current_severity": "partially_resolved", "evidence": "SPEC.md §10.4 connector_phrasing verbatim quote with past_locale + current_locale fields. SC1-NEW-002 cross-flagged AttributedString locale runs for VO. Author iter-2 should add NSAttributedString.Key.languageIdentifier mandate." },
+    { "id": "SC4-010", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §10.7 mode chip Localizable.strings keys (mode.curious_adult.label etc.)." },
+    { "id": "SC4-011", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §4.2 per-locale rate calibration (rate × 0.92); §4.3 timing master = AVSpeechSynthesizer delegate." },
+    { "id": "SC4-012", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §10.5 Date & Time Formatting; coredata-model.md §5 ISO 8601 with KST +09:00 preserved." },
+    { "id": "SC4-013", "previous_severity": "medium", "current_severity": "deferred-to-shoot", "evidence": "SPEC.md §13.1 bilingual closer policy authored; actual subtitle bake is video-production task (W2). Non-blocking for spec freeze." },
+    { "id": "SC4-014", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §10.11 + entitlements.plist.md §4 Info.plist CFBundleDevelopmentRegion=en, CFBundleLocalizations=[en,ko]." },
+    { "id": "SC4-015", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §4.1 + entitlements.plist.md §5 hard-code requiresOnDeviceRecognition=true. error-catalog.md STT.OnDeviceModelMissing.* deeplink to System Settings." },
+    { "id": "SC4-016", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §10.10 RTL out-of-scope-v1 declared; root view forces .leftToRight." },
+    { "id": "SC4-017", "previous_severity": "low", "current_severity": "deferred-iter2", "evidence": "SPEC.md §10.8 Korean register policy 해요체 documented; exemplar set deferred to iter-2 author refinement (acknowledged). Non-blocking." },
+    { "id": "SC4-018", "previous_severity": "low", "current_severity": "resolved", "evidence": "SPEC.md §10.9 Canonical Translations table seeded with 3 entries; ongoing expansion noted." }
+  ],
+  "new_findings_iter1": [
+    {
+      "id": "SC4-NEW-001",
+      "severity": "medium",
+      "where": "SPEC.md §10.4 + §7.2 cross-locale + VoiceOver",
+      "issue": "Same as SC1-NEW-002: NSAttributedString.Key.languageIdentifier per-run mandate not yet codified. VoiceOver mid-string locale switch needs this; otherwise ko quoted text in en surrounding context is read with wrong voice.",
+      "spec_action_required": "Add to SPEC.md §10.4: 'AttributedString runs MUST carry .languageIdentifier per-run (BCP-47); SwiftUI Text rendering uses this for both VoiceOver pronunciation and font fallback selection.'",
+      "owner_when_addressed": "spec-author iter-2 (low cost; same patch as SC1-NEW-002)"
+    }
+  ],
+  "approval": "approve",
+  "approval_rationale": "All 4 pre-author blockings resolved. 6 of 7 highs resolved; SC4-009 partially-resolved (overlap with SC1-NEW-002, single iter-2 patch closes both). 4 of 5 mediums resolved (1 deferred-to-shoot, acceptable). 1 of 2 lows resolved (1 deferred-iter2 acceptable). 1 new finding overlaps with SC1-NEW-002. FREEZE-COMPATIBLE.",
+  "blocking_count": 0,
+  "high_count": 1,
+  "medium_count": 1,
+  "low_count": 1
+}

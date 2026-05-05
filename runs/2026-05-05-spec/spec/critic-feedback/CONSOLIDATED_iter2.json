@@ -1,0 +1,24 @@
+{
+  "audit_phase": "iter-2 (post-amendment spot review across SC1..SC7)",
+  "audited_at_kst": "2026-05-05T17:20+09:00",
+  "scope": "Verify SPEC.md.iter2-amendment.md sections A1-A7 resolve the 7 minor findings raised at iter-1. NOT a full re-audit of all 128 pre-author findings (already covered by per-critic iter1 files).",
+  "method": "Targeted: each amendment paragraph is checked against its named finding; binary resolved/not resolved verdict.",
+  "verdicts": [
+    { "finding": "SC1-NEW-001", "amendment": "A1", "verdict": "resolved", "note": "Discoverability hint w/ KO+EN copy + 8s persistence + Settings reference. SC1 acceptance: yes." },
+    { "finding": "SC3-NEW-001", "amendment": "A2", "verdict": "resolved", "note": "role(.alert), priority .high announcement, Cmd+C selectable, no auto-dismiss, tel: URL allowance documented." },
+    { "finding": "SC1-NEW-002 + SC4-NEW-001 + SC4-009 (overlapping)", "amendment": "A3", "verdict": "resolved", "note": "Per-run .languageIdentifier mandate; covers VO pronunciation + font fallback in single mechanism. Wonder.socraticReplyDisplayText + connector_phrasing both bound." },
+    { "finding": "SC2-NEW-001", "amendment": "A4", "verdict": "resolved", "note": "Stream-vs-terminal-envelope relationship explicit; consumer model documented." },
+    { "finding": "SC3-NEW-002", "amendment": "A5", "verdict": "resolved", "note": "Diagnostics redaction auditable; preserves engineering debug while satisfying COPPA. Mirrored in data-flow-diagram.md §2." },
+    { "finding": "SC5-NEW-001", "amendment": "A6", "verdict": "resolved", "note": "Embedding cache regenerability formalized: idempotent, bounded, sandbox-safe. Migration recovery path now defined." },
+    { "finding": "SC6-NEW-001", "amendment": "A7", "verdict": "resolved", "note": "ask_back stall fallback to standalone surface_past_wonder utterance preserves conversational presence; hard-timeout chain consistent with error-catalog.md." }
+  ],
+  "no_new_findings_at_iter2": true,
+  "iter2_summary": {
+    "blocking_count": 0,
+    "high_count": 0,
+    "medium_count": 0,
+    "low_count": 0
+  },
+  "approval": "approve_freeze",
+  "approval_rationale": "All 7 iter-1-emergent findings resolved by amendments A1-A7. No new issues identified. Combined iteration-1 SPEC + iter2-amendment.md is freeze-ready across all 7 critic domains."
+}

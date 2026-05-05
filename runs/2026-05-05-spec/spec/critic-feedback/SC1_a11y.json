@@ -1,0 +1,187 @@
+{
+  "critic": "SC1_a11y",
+  "audit_phase": "pre-author",
+  "audited_at_kst": "2026-05-05T15:10:00+09:00",
+  "input_artifacts_sha_note": "read but not hashed — pre-author audit, hashes computed at SpecDD freeze",
+  "scope_acknowledged": "VoiceOver 호환, Reduce Motion fallback, Increase Contrast, Larger Text, captioning",
+  "audit_method_note": "OKLCH→linear sRGB→WCAG relative luminance computed in-audit (Bjorn Ottosson inversion). Mode-chip ΔL = 0 confirmed, chip-vs-chip CR = 1.002 (color-only differentiation). All numeric contrast claims below are computed, not estimated.",
+  "findings": [
+    {
+      "id": "SC1-001",
+      "severity": "blocking",
+      "wcag_2_2_reference": "1.4.1 Use of Color (Level A)",
+      "where": "design-approved.json#design_tokens.color.mode_chip_curious_adult AND mode_chip_learning_student",
+      "issue": "두 mode chip은 oklch lightness가 0.65로 동일하고 chroma·hue만 다름. 컴퓨팅된 chip-vs-chip 명도대비비는 1.002 (사실상 같은 회색). 모드 식별이 hue(cyan vs green)에만 의존 → Differentiate Without Color, 색맹(특히 deuteranopia/protanopia)에서 두 모드가 동일하게 보임.",
+      "evidence": "mode_chip_curious_adult oklch(0.65 0.10 200), mode_chip_learning_student oklch(0.65 0.10 145). 두 토큰이 시각 식별의 유일한 신호로 사용될 경우 1.4.1 위반. M06이 'WCAG 2.2 AA hard floor'를 선언했으므로 Level A 위반은 정의상 blocking.",
+      "spec_action_required": "SPEC.md의 mode-chip 섹션에 (a) 텍스트 라벨 ('curious adult' / 'learning student' 또는 한국어) 항상 표시 의무, (b) 형태/아이콘 차이(예: ◉ vs ◆ 또는 어른=원형, 학생=정사각/태그) 추가, (c) Increase Contrast ON 또는 'Differentiate Without Color' ON일 때 사용할 outline-pattern fallback 토큰 추가. design-tokens delta로 mode_chip_curious_adult_pattern·mode_chip_learning_student_pattern 명세.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-002",
+      "severity": "blocking",
+      "wcag_2_2_reference": "1.4.3 Contrast (Minimum) (Level AA)",
+      "where": "design-approved.json#design_tokens.color.user_utterance_dim",
+      "issue": "user_utterance_dim oklch(0.55 0.02 280) on background_ink_black의 컴퓨팅 명도대비비는 4.04:1. 일반 텍스트(<24px regular / <18.66px bold)에 사용 시 AA 4.5:1 미달. 'dim'이라는 의도가 곧 a11y 위반의 신호.",
+      "evidence": "linear luminance: utterance=0.1657, bg=0.0033 → CR=(0.1657+0.05)/(0.0033+0.05)=4.04. M06 hard floor 위반.",
+      "spec_action_required": "(a) user_utterance_dim 사용처를 size_caption_speech (32px / 48px) 같은 large-text 전용으로 한정한다고 SPEC.md에 명시 (large-text AA = 3:1, 4.04 통과). (b) 또는 토큰 lightness를 0.55→0.62 이상으로 상향 (CR ≥ 4.6). (c) Increase Contrast ON일 때 0.78 이상으로 자동 상향하는 alt-token (user_utterance_dim_high_contrast) 명세 의무.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-003",
+      "severity": "blocking",
+      "wcag_2_2_reference": "1.2.2 Captions (Prerecorded) AA / 1.2.4 Captions (Live) AA — extended to synthesized speech",
+      "where": "design-approved.json#design_tokens.typography.size_caption_speech (캡션 토큰만 정의됨, 활성화 정책 부재)",
+      "issue": "AVSpeechSynthesizer로 합성되는 소크라테스 발화에 대해 자막의 default-on / opt-in / opt-out 정책이 어디에도 명시되지 않음. M06 'specdd_application'에 '자막 옵션 ON'이라는 모호한 표현만 존재. 청각 장애·VoiceOver 비사용자·소음 환경 사용자 모두에게 자막 행동이 정의돼야 한다.",
+      "evidence": "design-approved.json L13: '자막 옵션 ON'. 옵션이 default ON인지 user-toggle인지, child-mode(M08)에서 강제 ON인지 미정. WCAG 1.2.2/1.2.4는 모든 prerecorded·live audio에 captions 의무.",
+      "spec_action_required": "SPEC.md Accessibility 섹션에 'Caption Policy' 명시: (1) 모든 socraticReply 발화에 대해 자막 default-on, (2) 사용자 명시 토글로 OFF 가능하나 system-level 'Captions' 환경 설정(macOS Live Captions / Subtitles 설정)이 ON이면 자동 ON 우선, (3) Child Mode(M08)에서는 자막 forced-on (override 불가), (4) 단어경계 highlight (weight_speech_highlighted_word 600)는 자막 옵션과 독립.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-004",
+      "severity": "blocking",
+      "wcag_2_2_reference": "1.4.2 Audio Control (Level A) + Apple HIG: VoiceOver coexistence",
+      "where": "chosen_preview.json#preview_6tuple.demo_hook_3min (0:30 흉상이 자동으로 발화) AND design-approved.json (AVSpeechSynthesizer 사용 명시되나 routing 정책 부재)",
+      "issue": "VoiceOver와 AVSpeechSynthesizer는 같은 출력 디바이스를 두고 경합한다. 사용자가 fullscreen 진입 직후 흉상이 자발적으로 말을 시작하는 시나리오에서, VoiceOver가 ON이면 (a) 흉상 발화 + VO 발화가 겹치거나, (b) AVSpeechSynthesizer가 시스템 음성을 차단함. WCAG 1.4.2: 3초 이상 자동 재생되는 audio는 일시정지/정지 메커니즘 필수.",
+      "evidence": "chosen_preview.json L13-16: '흉상이 듣고, 생각하고, 입 모양 동기화로 역질문' — 자동 발화 흐름. AVSpeechSynthesizer(미명시)와 NSAccessibility / AVAudioSession ducking 정책 부재.",
+      "spec_action_required": "SPEC.md에 (a) 'VoiceOver Detection & Coexistence' 절차: NSWorkspace.shared.isVoiceOverEnabled 확인, ON이면 흉상 자동 발화 대신 'Press Space to hear Socrates' 대기 모드로 전환, (b) AVAudioSession 카테고리 .playback + .duckOthers로 시스템 음성 일시 감쇠, (c) 어떤 시점에서도 Space/Esc로 즉시 발화 중단(WCAG 1.4.2), (d) child-mode 자동 발화 시작 시 명시적 사용자 시작 동작(handshake) 의무화. function_call_schema_locked_signatures에 ask_back과 동시에 호출 가능한 'pause_speech' / 'mute_speech' 컨트롤 시그니처가 누락 — 추가 권고.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-005",
+      "severity": "blocking",
+      "wcag_2_2_reference": "2.1.1 Keyboard (Level A) + 2.1.3 Keyboard (No Exception) (Level AAA, project-elevated)",
+      "where": "idea.spec.json#primary_surface.fullscreen_takeover (true) AND design-approved.json#function_call_schema_locked_signatures (4 functions, no keyboard binding)",
+      "issue": "본 앱은 voice-driven이나 motor impairment·청각장애·VoiceOver 사용자·simply mute 환경 사용자를 위한 keyboard equivalent가 함수콜 어디에도 명시되지 않음. ask_back / surface_past_wonder / mode_classify / defer_to_human 모두 음성 트리거 외 진입로 없음. fullscreen takeover + menu_bar_auto_hide 상태에서는 메뉴/툴바 keyboard 진입로조차 부재.",
+      "evidence": "idea.spec.json L24-25: fullscreen_takeover true, menu_bar_auto_hide true. design-approved.json function_call_schema에 keyboard 매핑 없음. WCAG 2.1.1 모든 기능에 키보드 접근 가능 의무.",
+      "spec_action_required": "SPEC.md 'Keyboard Map' 섹션 의무: (a) Space=push-to-talk (start/stop listening), (b) Cmd+Enter=submit typed utterance (텍스트 fallback — out_of_scope_v1에 '텍스트 채팅 fallback (음성+캡션만)'으로 제외돼 있으나 이는 a11y 위반 가능성. 최소 '텍스트 입력 a11y 모드'로 재포함 검토 의무), (c) Esc=exit fullscreen, (d) Cmd+M=mode toggle, (e) ↑/↓=surface_past_wonder navigate, (f) Cmd+. (period)=immediate stop & defer. out_of_scope_v1의 '텍스트 채팅 fallback' 제외 항목에 대한 a11y reconciliation 명문 필요.",
+      "owner_when_addressed": "spec-lead"
+    },
+    {
+      "id": "SC1-006",
+      "severity": "blocking",
+      "wcag_2_2_reference": "2.1.2 No Keyboard Trap (Level A)",
+      "where": "idea.spec.json#primary_surface (fullscreen_takeover true, menu_bar_auto_hide true)",
+      "issue": "fullscreen takeover + menu bar auto-hide 상태에서 키보드 사용자가 명시적 exit 경로(Esc, Cmd+W, Cmd+Q) 명세 없이 갇힐 수 있음. macOS의 NSApplication.presentationOptions가 .disableProcessSwitching·.disableAppleMenu 같은 강한 옵션을 함께 쓸 경우 Switch Control / Voice Control 사용자가 빠져나오지 못한다.",
+      "evidence": "idea.spec.json: 'NSWindow.toggleFullScreen + NSApplication.presentationOptions auto-hide menu bar'. presentationOptions 구체값 미정. WCAG 2.1.2: 컴포넌트 진입 후 키보드만으로 이동 가능해야 함.",
+      "spec_action_required": "SPEC.md fullscreen 정책에 (a) 사용 금지 옵션: .disableProcessSwitching, .disableAppleMenu, .disableForceQuit. (b) 의무 Esc binding: Esc 1회=exit fullscreen (no confirm — 2.1.2 준수). (c) Switch Control 호환: NSAccessibility focus를 fullscreen window root에 attach. (d) Voice Control 'Show Numbers' / 'Show Grid'와 충돌하지 않는 발화 캡처 mute 토글.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-007",
+      "severity": "blocking",
+      "wcag_2_2_reference": "1.3.1 Info and Relationships (Level A) + Apple HIG VoiceOver routing",
+      "where": "design-approved.json (UI element semantics 미정의) + chosen_preview.json#preview_6tuple.primary_surface",
+      "issue": "흉상(bust), thought silhouette pulse, viseme 16-frame swap, caption text, mode chip — 어느 것도 NSAccessibilityElement role/label/hint 명세가 없음. VoiceOver가 fullscreen 진입 시 무엇을 읽는지 정의되지 않음. 흉상이 'image of Socrates'로 읽힐지, '소크라테스 발화 영역'으로 읽힐지 미정의.",
+      "evidence": "design-approved.json에 design_tokens / function_call_schema는 있으나 a11y semantic role(role='image' vs role='group' vs role='live-region') 명세 0개. WCAG 1.3.1 정보·관계는 프로그래매틱하게 결정 가능해야 함.",
+      "spec_action_required": "SPEC.md 'VoiceOver Map' 표 의무: (1) bust container = role='group', label='Socrates, listening', (2) caption region = role='live-region', aria-live equivalent (NSAccessibilityLiveRegion='polite' for ask_back, 'assertive' for defer_to_human), (3) thought_silhouette_pulse = role='presentation' (decorative; VO ignores), (4) mode chip = role='button'+state='selected', label='Curious adult mode' / 'Learning student mode', (5) wondering log entry hint = role='status'. accessibilityHint() 한·영 양언어 명세 의무.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-008",
+      "severity": "high",
+      "wcag_2_2_reference": "2.3.3 Animation from Interactions (Level AAA, project-elevated by Future-of-Education + child-mode)",
+      "where": "design-approved.json#design_tokens.motion (viseme_swap_fps 30 → fallback 12, thought_pulse disabled when reduce_motion)",
+      "issue": "Reduce Motion fallback이 viseme 30→12 fps로 감속하고 thought pulse를 끄지만, **lip-sync 자체를 끄는 옵션은 없다**. 광과민성 발작·전정 장애·심한 동기 장애 사용자는 12 fps 입모양 변화도 disturbing할 수 있다. SOURCE.md L48 'painterly style may show frame-stutter at 12 fps' — 12 fps fallback의 시각 품질이 stutter를 유발해 오히려 이상하게 보일 수 있다.",
+      "evidence": "design-approved.json L42-49: respect_system_reduce_motion true, reduce_motion_fallback_viseme_fps 12, reduce_motion_disable_thought_pulse true. 'static bust + audio only' 옵션 없음. assets/SOURCE.md L48-50이 12 fps painterly stutter를 명시 우려.",
+      "spec_action_required": "SPEC.md motion 섹션 추가: (a) Reduce Motion 3단계 fallback 정의 — Tier1=30fps full, Tier2=12fps + pulse off (현재), **Tier3=static bust + word-boundary caption highlight only** (추가 의무). (b) 사용자 환경설정에 'Disable lip-sync' 토글. (c) chosen_preview.json의 'mouth-sync 필수' 사용자 요구와 a11y 의무의 trade-off에 대한 reconciliation note를 SPEC.md에 명시 — 사용자 본인 요구는 default behavior, a11y는 fallback path.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-009",
+      "severity": "high",
+      "wcag_2_2_reference": "1.4.4 Resize Text (AA) + 1.4.10 Reflow (AA) + Apple Larger Text setting",
+      "where": "design-approved.json#design_tokens.typography.size_caption_speech AND layout.speech_caption_max_width_em 28",
+      "issue": "size_caption_speech 32px/48px가 viewport-relative로 명시되나, macOS System Settings > Accessibility > Display > 'Larger Text' (또는 dynamic type-equivalent) 사용자 설정이 적용되는지 명세 없음. caption_max_width_em 28과 결합 시 200% zoom (AA 1.4.4) 시 줄넘침/잘림 가능.",
+      "evidence": "design-approved.json L34-39: size 'viewport-relative'만, system Larger Text 연동 미정. WCAG 1.4.4는 200%까지 손실 없이 확대 가능 의무, 1.4.10은 320 CSS px reflow 의무.",
+      "spec_action_required": "SPEC.md typography 섹션 추가: (a) NSFont with .preferredFont(forTextStyle:) 또는 Dynamic Type-equivalent로 system Larger Text 연동, (b) caption max-width를 viewport 비율로 명시 (예: min(28em, 60vw)), (c) 200% zoom QA checklist 의무 (M06 specdd_application에 'Larger Text' 명시되나 구현 정책 부재). (d) Child Mode(M08) default font scale +20% 자동 적용 권고.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-010",
+      "severity": "high",
+      "wcag_2_2_reference": "Apple HIG Accessibility — Increase Contrast & Reduce Transparency",
+      "where": "design-approved.json#design_tokens.color (Increase Contrast 토큰 변형 부재)",
+      "issue": "macOS System Settings > Accessibility > Display > 'Increase Contrast' / 'Reduce Transparency' 설정 시 사용할 high-contrast variant 토큰이 design_tokens에 없다. M06 specdd_application이 'Increase Contrast'를 명시하지만 어떤 토큰이 어떻게 변하는지 미정. thought_silhouette_pulse_low (CR 1.23) / pulse_high (CR 1.54)는 default에서도 거의 보이지 않으며, Increase Contrast ON 시 사라질 위험.",
+      "evidence": "computed CR: thought_silhouette_pulse_low=1.23, pulse_high=1.54 vs ink-black bg. 정상 사용에서도 매우 낮음 (thought silhouette은 의도된 ambient pulse라 CR 의무 대상은 아니나, Increase Contrast ON에서 어떻게 거동할지 미정).",
+      "spec_action_required": "SPEC.md design tokens delta 추가: 모든 색 토큰에 대해 _hi_contrast variant 정의 (예: alabaster_bust_hi_contrast, mode_chip_*_hi_contrast). NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast 감지 로직 명세. thought silhouette pulse는 Increase Contrast ON 시 'static silhouette + 명시 'thinking…' 텍스트 라벨' 로 대체. accessibilityDisplayShouldReduceTransparency 또한 별도 분기 명세.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-011",
+      "severity": "high",
+      "wcag_2_2_reference": "Apple HIG Child Mode + 1.4.3/1.4.4 cumulative",
+      "where": "idea.spec.json#regulatory_domain (COPPA) + design-approved.json#mitigation_adopted_full M08",
+      "issue": "Child Mode(M08, 13세 미만 자동 감지)가 a11y default를 어떻게 변경하는지 명세 없음. 학생/아동 사용자는 (a) 더 큰 글자, (b) 자막 forced-on, (c) lip-sync 강도 완화, (d) 단순 어휘가 default여야 한다. 현재 M08 specdd_application은 데이터 retention(24h)만 다룸.",
+      "evidence": "design-approved.json M08 L15: '13세 미만 자동 감지 시 wondering log 24h retention' — 데이터 측면만. a11y default 변경 정책 부재.",
+      "spec_action_required": "SPEC.md 'Child Mode A11y Defaults' 섹션 신설: (1) caption forced-on (override 불가), (2) font scale +20% (Larger Text base와 곱연산), (3) viseme fps user-configurable이나 default Tier2(12fps), (4) socraticReply 어휘 복잡도 grade-level cap (function_call_schema의 ask_back에 'reading_level' 파라미터 추가 권고 — SC2_api_design과 cross-ref), (5) 자동 발화 시작 금지(SC1-004 강화), (6) defer_to_human 트리거 임계값 lower.",
+      "owner_when_addressed": "spec-lead"
+    },
+    {
+      "id": "SC1-012",
+      "severity": "high",
+      "wcag_2_2_reference": "1.2.5 Audio Description (AA) — applied to bust visual",
+      "where": "chosen_preview.json#preview_6tuple.one_line + design-approved.json#video_script_skeleton (0:30 viseme OW 발화)",
+      "issue": "흉상의 시각적 동작(눈 뜸, viseme 입 모양, thought pulse)은 청각만으로 인지 불가. 시각 장애 사용자에게 '흉상이 듣고 있음 → 생각 중 → 발화 중' 상태 전이가 audible signal로 전달돼야 한다. VoiceOver announce 외 nonintrusive earcon이나 announce 정책 명세 없음.",
+      "evidence": "video_script_skeleton 0:30: 'viseme OW로 발화. word-boundary highlight + thought silhouette pulse' — 모두 시각 신호. 청각 신호는 합성 음성뿐이라 'thinking' 상태가 침묵으로 보임.",
+      "spec_action_required": "SPEC.md에 (a) 상태 전이 audio cue 정의: listening_start / thinking_start / speaking_start / defer 각각 짧은 비음성 earcon (≤300ms, ≤-20 LUFS) 옵션, (b) VoiceOver ON일 때 NSAccessibility.post(notification:.announcement, value:'Socrates is thinking') 자동 발신, (c) 'thinking' 상태가 5초 이상 지속될 때 '여전히 생각 중' 재announce.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-013",
+      "severity": "medium",
+      "wcag_2_2_reference": "1.4.13 Content on Hover or Focus (AA) — adapted to Hover Text",
+      "where": "design-approved.json#design_tokens (Hover Text 호환 명세 부재)",
+      "issue": "macOS Hover Text(System Settings > Accessibility > Zoom > Hover Text)는 cursor 아래 텍스트를 큰 패널로 보여준다. fullscreen 풀-블랙 배경 + 흉상 중앙 배치에서 caption / mode chip / wondering log hint 모두 NSAccessibilityHelp 또는 toolTip 미명세 시 Hover Text가 빈 panel을 띄운다.",
+      "evidence": "design-approved.json: caption / chip / hint UI 컴포넌트의 toolTip / accessibilityHelp 명세 없음.",
+      "spec_action_required": "SPEC.md에 모든 텍스트성 UI에 .help() / .accessibilityHint() 의무 명세. 흉상 자체는 hint='Socrates listens and asks back. Press Space to speak.' 권고.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-014",
+      "severity": "medium",
+      "wcag_2_2_reference": "Wondering Log review UI (post-MVP) — 사전 affordance 예약",
+      "where": "idea.spec.json#out_of_scope_v1 와 design-approved.json#core_data_schema_initial.Wonder",
+      "issue": "Wondering log review UI는 post-MVP지만 core_data_schema_initial.Wonder는 이미 정의됨. 추후 review UI를 추가할 때 a11y가 사후 보강이 되지 않도록 schema 단계에서 a11y-friendly 필드를 예약해야 한다 (예: Wonder.userUtterance와 socraticReply의 언어, 자막 표시용 정규화 텍스트).",
+      "evidence": "core_data_schema_initial.Wonder.fields: userUtterance / socraticReply 모두 String. 자막 표시 시 필요한 normalized form, language tag, reading-level 캐시 없음.",
+      "spec_action_required": "SPEC.md core_data 확장 권고: Wonder에 (a) socraticReplyDisplayText (자막용, ellipsis-free, ≤2줄 chunked), (b) language explicit (이미 있음 — 활용), (c) readingLevelGrade Float (Child Mode 필터용), (d) accessibilityNarrative String (VO용 1줄 요약). 이로써 향후 review UI가 NSTableView 또는 List에서 VoiceOver 첫 진입 시 의미있는 라벨을 갖는다.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-015",
+      "severity": "medium",
+      "wcag_2_2_reference": "Apple HIG — Voice Control coexistence with Speech framework",
+      "where": "chosen_preview.json#stack_decisions_locked.stt (SFSpeechRecognizer)",
+      "issue": "macOS Voice Control과 SFSpeechRecognizer는 둘 다 마이크를 사용한다. Voice Control ON 사용자(motor impairment)에게 Speech framework가 마이크를 가로채면 시스템 명령('Open Finder')조차 막힌다. Voice Control 감지 시 push-to-talk 강제(자동 듣기 OFF) 정책이 필요하다.",
+      "evidence": "chosen_preview.json L36: 'macOS Speech framework (SFSpeechRecognizer, on-device only)'. Voice Control 공존 정책 없음.",
+      "spec_action_required": "SPEC.md STT 섹션에 (a) Voice Control 감지: AXIsProcessTrusted / AXUIElementCopyAttributeValue 또는 NSWorkspace voiceControl 키 확인, (b) ON 시 자동 listening OFF, push-to-talk(Space)만 활성, (c) UI에 'Voice Control 호환 모드' 배지 표시.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-016",
+      "severity": "low",
+      "wcag_2_2_reference": "WCAG 2.4.7 Focus Visible (AA) — limited UI but should reserve",
+      "where": "design-approved.json (focus ring style 미명세)",
+      "issue": "fullscreen에서 보이는 focusable element가 거의 없으나, 키보드 사용자가 mode chip 또는 (추가될) STT 토글 버튼으로 Tab navigate할 때 focus ring 스타일이 ink-black bg에서 충분히 보일지 미정. macOS default focus ring(파란색)은 mode_chip_curious_adult cyan과 시각적으로 혼동 가능.",
+      "evidence": "design-approved.json design_tokens에 focus state 토큰 없음. mode_chip_curious_adult oklch(0.65 0.10 200)는 macOS focus ring에 근접한 hue.",
+      "spec_action_required": "SPEC.md design tokens에 focus_ring_color 추가 (예: warm_amber_accent 재사용 → 명도대비 9.63:1 보장), focus_ring_width 3px 이상, NSFocusRingType .exterior 명시.",
+      "owner_when_addressed": "spec-author"
+    }
+  ],
+  "scope_coverage_self_assessment": "Covered: VoiceOver 통합(SC1-004, 007, 012, 015), Reduce Motion fallback 3-tier(SC1-008), Increase Contrast/Reduce Transparency(SC1-010), Larger Text/Dynamic Type(SC1-009, 011), captioning policy(SC1-003, 011), keyboard a11y(SC1-005, 006, 016), color/contrast computed(SC1-001, 002), child-mode a11y defaults(SC1-011), Hover Text(SC1-013), post-MVP wondering log review(SC1-014). Intentionally deferred to other critics: function_call schema 'reading_level' parameter design (→ SC2_api_design, cross-ref in SC1-011), STT failure modes (→ SC3_error_model), Korean/English caption rendering quality (→ SC4_i18n), VoiceOver ducking implementation perf cost (→ SC6_performance), Speech framework permission denial flow (→ SC7_security). Not covered (out of scope): commercial accessibility certifications (Section 508, EN 301 549) — recommend spec-lead consider for Mac App Store EU submission.",
+  "recommended_spec_section_additions": [
+    "SPEC.md §7.1 Accessibility Conformance — WCAG 2.2 AA matrix per UI element with computed contrast ratios",
+    "SPEC.md §7.2 VoiceOver Routing & AVAudioSession Coexistence — required NSAccessibility roles, live-region levels, ducking policy",
+    "SPEC.md §7.3 Reduce Motion 3-Tier Fallback — Tier1 30fps / Tier2 12fps + pulse off / Tier3 static + caption-only",
+    "SPEC.md §7.4 Keyboard Map & Fullscreen Exit Guarantees — full keymap, presentationOptions allow/deny list, Esc invariant",
+    "SPEC.md §7.5 Caption Policy — default-on, system-Live-Captions inheritance, Child Mode forced-on",
+    "SPEC.md §7.6 Child Mode Accessibility Defaults — caption forced, font +20%, viseme Tier2 default, ask_back reading_level cap",
+    "SPEC.md §7.7 High-Contrast & Reduce-Transparency Token Variants — design_tokens delta with _hi_contrast suffix family",
+    "design-tokens delta JSON: focus_ring_color, mode_chip_*_pattern (shape differentiator), user_utterance_dim_high_contrast, all _hi_contrast variants",
+    "openapi.yaml-equivalent (function_call schema): add 'pause_speech' / 'mute_speech' control signatures; add 'reading_level' optional param to ask_back (cross-ref SC2)",
+    "Core Data schema delta: Wonder.socraticReplyDisplayText, Wonder.readingLevelGrade, Wonder.accessibilityNarrative"
+  ],
+  "blocking_count": 7,
+  "high_count": 5,
+  "medium_count": 3,
+  "low_count": 1
+}
