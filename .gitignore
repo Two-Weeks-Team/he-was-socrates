@@ -20,13 +20,18 @@ xcuserdata/
 .swiftpm/
 Package.resolved
 
-# MLX / Model artifacts (do not commit)
+# MLX / Model artifacts (do not commit). Anchor to repo root via leading slash
+# so case-insensitive macOS filesystems don't accidentally match
+# packages/SocraticEngine/Sources/SocraticEngine/Models/ — that's source code.
 *.mlx
 *.gguf
 *.safetensors
 *.bin
-models/
-checkpoints/
+/models/
+/checkpoints/
+
+# Force-track engine source layer that lives at packages/.../Models/
+!packages/SocraticEngine/Sources/SocraticEngine/Models/**
 
 # Audio / Video / large media
 *.wav
