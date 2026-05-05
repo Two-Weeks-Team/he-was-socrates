@@ -29,6 +29,17 @@ public enum PhaseFailureKey {
     /// Recognition or audio engine raised an NSError mid-session.
     public static let audioRuntimeError = "audio.runtime.error"
 
+    /// PR-θ F8: SFSpeechRecognizer for the user's locale does not support
+    /// on-device recognition. The NO-CLOUD invariant forbids the network
+    /// fallback Apple's framework would otherwise use, so the engine
+    /// surfaces this as a hard failure with a recoverable hint pointing
+    /// users at the System Settings → Speech Recognition pane.
+    public static let sttOnDeviceUnsupported = "audio.permission.speech.on-device-unsupported"
+
+    /// PR-θ F9: AVAudioSession-class interruption (incoming call, route
+    /// change, etc.) raised by AVAudioEngine mid-utterance.
+    public static let audioInterrupted = "audio.runtime.interrupted"
+
     // MARK: - Gemma / orchestrator
 
     /// `GemmaService.loadModel` threw — usually missing weights, network
