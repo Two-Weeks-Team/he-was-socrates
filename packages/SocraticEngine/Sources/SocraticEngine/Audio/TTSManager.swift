@@ -133,22 +133,27 @@ public final class TTSManager: NSObject {
         }
         observedAnyPhonemeMarker = false
 
-        // STAGE-5 NOTE (per SPEC.md.iter4-api-correction §S4):
-        // The `write(_:toBufferCallback:)` API on macOS 14+ accepts a
-        // BufferCallback of type `(AVAudioBuffer) -> Void` — markers are NOT
-        // delivered through this callback. Phoneme markers are accessed via
-        // either delegate methods (limited platform availability) or via
-        // `markersForUtterance(_:)` synchronously after speech.
+        // PIPELINE NOTE (per SPEC.md.iter5-phoneme-pipeline-correction.md):
+        // The Stage-5 day-1 ApplePhonemeProbe run produced verdict
+        // "no-markers-anywhere" against every shipped voice on macOS 26.4.1
+        // — the phoneme-marker stream Apple documents on macOS 14+ does
+        // not materialise in practice for any locale. iter5 promotes the
+        // JamoTimeline 15:70:15 fallback (formerly FALLBACK 1.5) to PRIMARY:
         //
-        // For Phase 3 we use:
-        //   1. Plain `synthesizer.speak(utterance)` for normal playback
+        //   1. `synthesizer.speak(utterance)` for normal playback
         //   2. Delegate `willSpeakRangeOfSpeechString` for word boundaries
-        //   3. JamoTimeline fallback for ko-KR viseme schedule (no marker
-        //      pathway needed since we generate the schedule from text)
+        //   3. `didStart` fires `onPhonemeStreamUnavailable` synchronously
+        //      so `EngineCoordinator` can ingest the JamoTimeline schedule
+        //      BEFORE the first audible syllable (PR #10 fix). VisemeDriver
+        //      drives the bust mouth from a host-derived monotonic clock.
         //
-        // Phase 4 day-1 probe (capture-apple-phonemes.swift) will determine
-        // whether `.phoneme` markers are actually emitted on macOS 14+ via
-        // the delegate; if yes, this method gains marker forwarding.
+        // The marker hook stays wired (`onPhonemeMarker`); if a future
+        // macOS version begins emitting `.phoneme` markers the wiring is
+        // ready to consume them, and they'll take precedence over the
+        // host-clock JamoTimeline path.
+        //
+        // See: runs/2026-05-05-spec/spec/SPEC.md.iter5-phoneme-pipeline-correction.md
+        //      runs/2026-05-05-spec/spec/apple-phoneme-availability.json
         synthesizer.speak(utterance)
         #else
         throw EngineError.make(

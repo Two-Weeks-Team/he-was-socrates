@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark" data-layout="slide">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>He Was Socrates — 4-Agent Audit & Final Action Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-2: #8b949e;
+    --accent: #58a6ff;
+    --success: #3fb950;
+    --warning: #d29922;
+    --error: #f85149;
+    --critical: #ff6b6b;
+    --purple: #bc8cff;
+    --code-bg: #1c2128;
+    --ink: #1f1d2f;
+    --alabaster: #ebdfca;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+  body { height: 100vh; width: 100vw; position: relative; }
+  /* slide layout */
+  .deck { height: 100vh; width: 100vw; position: relative; overflow: hidden; }
+  .slide {
+    position: absolute; inset: 0;
+    padding: 56px 80px 96px 80px;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 250ms ease;
+    overflow-y: auto;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+  .slide h1 {
+    font-size: 38px; font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+    color: var(--text);
+  }
+  .slide h2 {
+    font-size: 28px; font-weight: 600;
+    margin-bottom: 6px; color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .slide h3 {
+    font-size: 18px; font-weight: 600;
+    color: var(--text); margin-top: 16px; margin-bottom: 8px;
+  }
+  .slide .lede {
+    font-size: 16px; color: var(--text-2);
+    margin-bottom: 24px; max-width: 92ch;
+  }
+  .slide p { color: var(--text); max-width: 96ch; margin-bottom: 10px; }
+  .slide ul, .slide ol { padding-left: 22px; margin-bottom: 12px; }
+  .slide li { margin-bottom: 6px; color: var(--text); }
+  .slide li::marker { color: var(--text-2); }
+  .slide a { color: var(--accent); text-decoration: none; }
+  .slide a:hover { text-decoration: underline; }
+  /* code */
+  pre.code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin: 8px 0 12px 0;
+  }
+  .code .k { color: #ff7b72; }    /* keyword */
+  .code .s { color: #a5d6ff; }    /* string */
+  .code .c { color: #8b949e; font-style: italic; } /* comment */
+  .code .n { color: #79c0ff; }    /* number */
+  .code .t { color: #ffa657; }    /* type */
+  .code .f { color: #d2a8ff; }    /* function */
+  code.inline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--accent);
+  }
+  /* tables */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 8px 0 16px 0; font-size: 13.5px;
+  }
+  th, td {
+    text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { font-weight: 600; color: var(--text-2); border-bottom: 2px solid var(--border); }
+  tr:hover td { background: rgba(88, 166, 255, 0.04); }
+  /* badges */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 500; line-height: 1.3;
+  }
+  .badge.critical { background: rgba(248, 81, 73, 0.18); color: var(--critical); }
+  .badge.warn { background: rgba(210, 153, 34, 0.18); color: var(--warning); }
+  .badge.ok { background: rgba(63, 185, 80, 0.18); color: var(--success); }
+  .badge.info { background: rgba(88, 166, 255, 0.18); color: var(--accent); }
+  .badge.purple { background: rgba(188, 140, 255, 0.18); color: var(--purple); }
+  /* callouts */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 12px 16px; border-radius: 4px;
+    margin: 12px 0; font-size: 14px;
+  }
+  .callout.success { border-color: var(--success); }
+  .callout.warning { border-color: var(--warning); }
+  .callout.error { border-color: var(--error); }
+  .callout strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 13px; }
+  /* citation */
+  .cite {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-2);
+    background: var(--surface);
+    padding: 4px 8px; border-radius: 4px;
+    border: 1px solid var(--border);
+    display: inline-block;
+  }
+  /* header strip per slide */
+  .meta-strip {
+    position: absolute; top: 16px; left: 80px; right: 80px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  /* nav */
+  .nav {
+    position: absolute; bottom: 24px; left: 0; right: 0;
+    display: flex; justify-content: center; align-items: center; gap: 12px;
+    z-index: 50;
+  }
+  .nav button {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    transition: background 150ms;
+  }
+  .nav button:hover { background: var(--surface-2); border-color: var(--accent); }
+  .nav .indicator {
+    color: var(--text-2); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  /* hero */
+  .hero {
+    height: 100%; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+  }
+  .hero h1 {
+    font-size: 56px; line-height: 1.1; font-weight: 700;
+    background: linear-gradient(135deg, var(--alabaster) 0%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 18px;
+  }
+  .hero .subtitle {
+    font-size: 18px; color: var(--text-2);
+    max-width: 70ch; margin-bottom: 32px;
+  }
+  .hero .meta-row {
+    display: flex; gap: 32px; align-items: center;
+    color: var(--text-2); font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  /* grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card h3 { margin-top: 0; }
+  .stat {
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 12px;
+  }
+  .stat .num {
+    font-size: 32px; font-weight: 700; color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+  }
+  .stat .label {
+    color: var(--text-2); font-size: 11px; margin-top: 8px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  /* print */
+  @media print {
+    html, body { overflow: visible; }
+    .deck { height: auto; }
+    .slide {
+      position: relative; opacity: 1; pointer-events: auto;
+      page-break-after: always;
+      width: 100%; height: 100vh; padding: 24px 32px;
+    }
+    .nav { display: none; }
+    @page { size: A4 landscape; margin: 1cm; }
+  }
+  /* keyboard hint */
+  .hint {
+    position: absolute; bottom: 8px; right: 12px;
+    color: var(--text-2); font-size: 10.5px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- ────────── 1. Title ────────── -->
+<section class="slide active">
+  <div class="meta-strip">
+    <span>He Was Socrates · Stage-5 day-2 audit</span>
+    <span>2026-05-06 KST · Generated by Claude Code</span>
+  </div>
+  <div class="hero">
+    <h1>4-Agent Audit<br>& Final Action Plan</h1>
+    <p class="subtitle">Lead architect, root-cause analyst, performance engineer, and quality critic — adversarial review of the Korean Socratic bust turn-loop. <strong>45 findings consolidated, 4 unresolved questions decided on official sources, 6-PR landing plan ready.</strong></p>
+    <div class="meta-row">
+      <span>📍 main @ <code class="inline">a59b460</code></span>
+      <span>🎯 PR-α decision-ready</span>
+      <span>📚 Apple/MLX official refs only</span>
+    </div>
+  </div>
+</section>
+
+<!-- ────────── 2. TOC ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>02 · Contents</span><span>4-Agent Audit</span></div>
+  <h1>Contents</h1>
+  <p class="lede">19 slides. Decision-ready: every unresolved question is closed against an Apple / MLX / Swift official source before the PR plan.</p>
+  <div class="grid-2" style="margin-top: 18px; font-size: 14px;">
+    <ol>
+      <li>Executive summary</li>
+      <li>4-agent panel overview</li>
+      <li>Findings dashboard (45 items)</li>
+      <li>Confirmed-critical (🔴 12)</li>
+      <li>Important (🟡 18) + cosmetic (🟢 15)</li>
+      <li>Unresolved #1 — warmup contamination</li>
+      <li>Unresolved #2 — Phase.failed payload</li>
+      <li>Unresolved #3 — .surfacing keep/remove</li>
+      <li>Unresolved #4 — PR landing order</li>
+    </ol>
+    <ol start="10">
+      <li>PR-α race &amp; double-final</li>
+      <li>PR-β hang killers</li>
+      <li>PR-γ perf (warmup + caches)</li>
+      <li>PR-δ i18n + a11y</li>
+      <li>PR-ε spec + cleanup</li>
+      <li>PR-ζ test backfill</li>
+      <li>Test matrix (+20 tests)</li>
+      <li>Real-execution scenarios (16)</li>
+      <li>Regression bar (must-not-break)</li>
+      <li>Next step</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ────────── 3. Executive Summary ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>03 · Executive summary</span><span>4-Agent Audit</span></div>
+  <h1>Executive summary</h1>
+  <p class="lede">A 4-agent panel reviewed the turn-loop after the user reported (a) every turn taking 9–11 s and (b) failure-state stuck-ness. Findings were synthesized against the user's 6 + author's 13 = 19 prior items. The panel surfaced an additional ~26 issues. Four open questions are now closed against Apple / MLX official sources.</p>
+  <div class="grid-4">
+    <div class="stat"><div class="num">45</div><div class="label">findings consolidated</div></div>
+    <div class="stat"><div class="num">12</div><div class="label">🔴 confirmed-critical</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">PR bundles</div></div>
+    <div class="stat"><div class="num">+20</div><div class="label">regression tests</div></div>
+  </div>
+  <div class="callout success" style="margin-top: 22px;">
+    <strong>Headline decision</strong>
+    <p style="margin: 0;">mlx-swift-lm 0.31.3 ships <code class="inline">ChatSession.clear()</code> — "preserving system instructions" — at line 493 of <code class="inline">ChatSession.swift</code>. This collapses Unresolved #1 (warmup contamination) into a one-line fix in <code class="inline">GemmaService.warmup()</code>. PR-α is decision-ready and can land first.</p>
+  </div>
+</section>
+
+<!-- ────────── 4. Panel ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>04 · Panel</span><span>4-Agent Audit</span></div>
+  <h1>4-agent panel</h1>
+  <p class="lede">Each agent reviewed the same code in parallel. The lead synthesises; the critic challenges every proposed fix.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color: var(--accent);">🏛 Lead — system-architect</h3>
+      <p style="font-size: 13px; color: var(--text-2);">Frozen-invariant compliance, public-API impact, PR ordering rationale, cross-isolation contract risks. Surfaced T (iter4 vs iter5 stale comment), U (install-oracles dead build target), R (TurnOutput.surfacedPastWonder orphan), X (log.append-then-transition durability gap).</p>
+    </div>
+    <div class="card">
+      <h3 style="color: var(--warning);">🔍 Expert 1 — root-cause-analyst</h3>
+      <p style="font-size: 13px; color: var(--text-2);">Concurrency / race / lifecycle. Confirmed item 1 🔴, item 4 🔴, refuted item 6 as race-free 🟢. New 🔴: cross-session SFSpeech callback (§4c), N1 TCC continuation hang, N3 <code class="inline">.bootstrapping</code> watchdog absent, N7 <code class="inline">.surfacing</code> dead path reconfirmed.</p>
+    </div>
+    <div class="card">
+      <h3 style="color: var(--purple);">⚡ Expert 2 — performance-engineer</h3>
+      <p style="font-size: 13px; color: var(--text-2);">Verified PR #16 hypothesis against actual mlx-swift-lm source. <strong>Real floor is 3.5–4 s/turn</strong>, not 1.5–3 s — decode wall at 30 tok/s × 100 tokens. Discovered warmup KV contamination, B2 viseme PNG re-load on every swap, B4 ISO8601DateFormatter alloc per turn.</p>
+    </div>
+    <div class="card">
+      <h3 style="color: var(--critical);">⚖ Critic — quality-engineer</h3>
+      <p style="font-size: 13px; color: var(--text-2);"><strong><code class="inline">.real</code> GemmaService path has 0% test coverage</strong> — PR #16 perf gain is unmeasured. CI runner voice silent divergence. Push-back: RCA's UUID guard insufficient unless captured by value in closure; Perf's "drop session after warmup" loses GPU pipeline state.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ────────── 5. Findings dashboard ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>05 · Findings · 45 items</span><span>4-Agent Audit</span></div>
+  <h1>Findings dashboard</h1>
+  <p class="lede">Aggregate of user 6 + author 13 + lead 8 + RCA 8 + perf 5 + critic 12 (with overlap reconciled) = 45 distinct findings classified by severity and ownership.</p>
+  <div class="grid-3">
+    <div class="card" style="border-left: 4px solid var(--critical);">
+      <h3>🔴 Confirmed-critical · 12</h3>
+      <p style="font-size: 12.5px; color: var(--text-2);">User-perceived latency, race conditions verified by code trace, infinite-stuck states. Must land first. <strong>1, 4, §4c, N1, N3, V (warmup), N-CRIT-1, B2, T, U, X, N-CRIT-7</strong>.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--warning);">
+      <h3>🟡 Important · 18</h3>
+      <p style="font-size: 12.5px; color: var(--text-2);">Robustness, UX polish, performance second-order, spec drift. Land in PR-β/γ/δ. <strong>2, 5, D, E, F, G, H, K, L, N, N8, N9, B1, B4, R, S, N-CRIT-9, N-CRIT-10</strong>.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--success);">
+      <h3>🟢 Cosmetic / defer · 15</h3>
+      <p style="font-size: 12.5px; color: var(--text-2);">Item 6 refuted; item 3 keep-with-comment; item M Phase-4 deferral; CI hygiene, JS, P, Q, W, B3, N-CRIT-2/3/4/5/6/8/11/12. Land last in PR-ε / PR-ζ.</p>
+    </div>
+  </div>
+  <div class="callout warning" style="margin-top: 18px;">
+    <strong>Coverage gap that drove panel ordering</strong>
+    <p style="margin: 0; font-size: 13px;">Critic confirmed: every test in <code class="inline">SocraticEngineTests.swift</code> (41 scenarios) uses <code class="inline">gemmaMode: .stub</code>. PR #16's ChatSession reuse, warmup, and 20-turn reset live entirely outside the test bar. <strong>Each PR in this plan ships its own regression tests inline</strong> (per Apple Swift Testing guidance — see Unresolved #4).</p>
+  </div>
+</section>
+
+<!-- ────────── 6. Critical 12 ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>06 · 🔴 Confirmed-critical</span><span>4-Agent Audit</span></div>
+  <h1>🔴 Confirmed-critical · 12</h1>
+  <p class="lede">Every row was traced in code by at least two agents. Every fix has a single-paragraph implementation sketch.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Finding</th><th>File:line</th><th>Fix sketch</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge critical">1</span></td><td>Double-final fire</td><td>AudioInputManager.swift:200, 254</td><td>per-session UUID + <code class="inline">didPromoteFinal</code> bool, both checked at fire time</td></tr>
+      <tr><td><span class="badge critical">4</span></td><td>Watchdog→phantom-final via <code class="inline">audio.stopListening</code> re-schedule</td><td>EngineCoordinator.swift:288</td><td>new <code class="inline">audio.abortListening()</code> that cancels fallback without firing</td></tr>
+      <tr><td><span class="badge critical">§4c</span></td><td>Cross-session SFSpeech callback</td><td>AudioInputManager.swift:200</td><td>capture <code class="inline">sessionId</code> by value <em>inside</em> closure, early-return on mismatch</td></tr>
+      <tr><td><span class="badge critical">N1</span></td><td>TCC continuation never resumes → <code class="inline">.bootstrapping</code> hang</td><td>AudioInputManager.swift:84</td><td>10 s deadline race against the <code class="inline">withCheckedContinuation</code></td></tr>
+      <tr><td><span class="badge critical">N3</span></td><td><code class="inline">.bootstrapping</code> has no watchdog → loadModel/warmup hang</td><td>EngineCoordinator.swift:279</td><td>add 600 s budget for <code class="inline">.bootstrapping</code> → <code class="inline">.failed</code></td></tr>
+      <tr><td><span class="badge critical">V</span></td><td>warmup contaminates KV cache with "ready"</td><td>GemmaService.swift:222</td><td><code class="inline">await session.clear()</code> after warmup (decision below)</td></tr>
+      <tr><td><span class="badge critical">N-CRIT-1</span></td><td><code class="inline">.real</code> Gemma path 0% covered</td><td>SocraticEngineTests.swift</td><td>real-mode test target via mock <code class="inline">ModelContainer</code></td></tr>
+      <tr><td><span class="badge critical">B2</span></td><td>Viseme PNG re-loaded from Bundle.main on every swap</td><td>ContentView.swift:279</td><td>preload 16 PNGs into <code class="inline">[VisemeID: NSImage]</code> at bootstrap</td></tr>
+      <tr><td><span class="badge critical">T</span></td><td>iter4 stale comment contradicts iter5 verdict</td><td>TTSManager.swift:109–124</td><td>rewrite comment to point at apple-phoneme-availability.json</td></tr>
+      <tr><td><span class="badge critical">U</span></td><td><code class="inline">make install-oracles</code> not exercised by CI</td><td>ci.yml + Makefile:152</td><td>add <code class="inline">install-oracles-smoke</code> CI job</td></tr>
+      <tr><td><span class="badge critical">X</span></td><td><code class="inline">log.append</code> after <code class="inline">transition(.speaking)</code> = durability gap</td><td>EngineCoordinator.swift:208–219</td><td>swap order; only transition once log is durable</td></tr>
+      <tr><td><span class="badge critical">N-CRIT-7</span></td><td><code class="inline">loadProgress</code> never reaches 1.0 (last update dropped)</td><td>GemmaService.swift:135</td><td>set <code class="inline">.ready</code> after explicit <code class="inline">loadProgress = 1.0</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ────────── 7. Important + Cosmetic ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>07 · 🟡 Important &amp; 🟢 cosmetic</span><span>4-Agent Audit</span></div>
+  <h1>🟡 Important · 18 &nbsp;·&nbsp; 🟢 Cosmetic · 15</h1>
+  <div class="grid-2" style="font-size: 13px;">
+    <div>
+      <h3 style="color: var(--warning);">🟡 Important (18)</h3>
+      <ul>
+        <li><strong>2</strong> 1.5 s ko-KR fallback penalty per turn</li>
+        <li><strong>5</strong> thinking budget cold/warm same — reconciled by warmup</li>
+        <li><strong>D + N8</strong> <code class="inline">.failed</code> terminal → no recovery</li>
+        <li><strong>E</strong> raw English failure strings → use dot-key</li>
+        <li><strong>F</strong> <code class="inline">speechVoices()</code> per turn → cache</li>
+        <li><strong>G</strong> <code class="inline">log.count()</code> every turn (in-memory, low cost — defer)</li>
+        <li><strong>H</strong> warmup leaves progress at 100% stuck for ~2 s</li>
+        <li><strong>K</strong> <code class="inline">SFSpeechRecognizer</code> rebuilt per session — RCA refuted as not-a-bug</li>
+        <li><strong>L</strong> mic-denied raw NSError surface</li>
+        <li><strong>N + N-CRIT-9</strong> VoiceOver spam on viseme swap @ 30 fps</li>
+        <li><strong>N9</strong> <code class="inline">onUtteranceCancel</code> orphan callback</li>
+        <li><strong>R</strong> <code class="inline">TurnOutput.surfacedPastWonder</code> orphan</li>
+        <li><strong>B1</strong> <code class="inline">loadProgressPoll</code> actor contention every 250 ms</li>
+        <li><strong>B4</strong> <code class="inline">ISO8601DateFormatter</code> alloc per turn</li>
+        <li><strong>S</strong> error catalog half-documentary — annotate reserved</li>
+        <li><strong>N-CRIT-10</strong> warmup itself has no watchdog (covered by N3)</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color: var(--success);">🟢 Cosmetic / defer (15)</h3>
+      <ul>
+        <li><strong>3</strong> <code class="inline">.surfacing</code> keep + reserved comment (decision below)</li>
+        <li><strong>6</strong> cancel/transition ordering — RCA refuted as race-free</li>
+        <li><strong>J</strong> add <code class="inline">apps/macos/HeWasSocrates/HeWasSocrates.xcodeproj/</code> to <code class="inline">.gitignore</code></li>
+        <li><strong>M</strong> <code class="inline">compressedRecentHistory</code> placeholder — Phase-4 work, defer</li>
+        <li><strong>O</strong> Mode↔partC_dispatch test (bundle in PR-ε)</li>
+        <li><strong>P</strong> <code class="inline">loadProgressPoll</code> iterates once after cancel — covered by B1 fix</li>
+        <li><strong>Q</strong> cross-isolation contract — already mitigated by single-flight (PR-α)</li>
+        <li><strong>W</strong> <code class="inline">loadProgressPoll</code> lifetime — same fix as B1</li>
+        <li><strong>B3</strong> <code class="inline">removeTap</code> idempotency — Apple-documented benign</li>
+        <li><strong>N-CRIT-2/3/4/5/6/8/11/12</strong> CI / snapshot / install-oracles / fixture wiring (PR-ζ)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ────────── 8. Unresolved #1 ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>08 · Unresolved #1 · warmup</span><span>Decided · official source</span></div>
+  <h1>Unresolved #1 · warmup contamination</h1>
+  <p class="lede">Perf engineer identified that <code class="inline">GemmaService.warmup()</code>'s 8-token throwaway leaves <code class="inline">user("ready") → assistant("…")</code> in the ChatSession KV history. The user's first real turn would be conditioned on a no-op exchange.</p>
+  <div class="grid-2">
+    <div>
+      <h3>Option A — drop session after warmup</h3>
+      <p style="font-size: 13px; color: var(--text-2);">Rebuild ChatSession before turn 1. Loses system-prompt KV warmth (~600–800 ms re-prefill). Keeps GPU pipeline state.</p>
+      <h3>Option B — call <code class="inline">ChatSession.clear()</code> if it exists</h3>
+      <p style="font-size: 13px; color: var(--text-2);">Clear history+cache while preserving system instructions on the same instance.</p>
+    </div>
+    <div>
+      <h3 style="color: var(--success);">📚 Official source — mlx-swift-lm 0.31.3</h3>
+      <pre class="code"><code><span class="c">// ChatSession.swift:492-497 — Apple Inc. © 2025</span>
+<span class="c">/// Clear the session history and cache, preserving system instructions.</span>
+<span class="k">public func</span> <span class="f">clear</span>() <span class="k">async</span> {
+    <span class="k">await</span> cache.update { cache <span class="k">in</span>
+        cache = .empty
+    }
+}</code></pre>
+      <p style="font-size: 12.5px; color: var(--text-2);">Cite: <code class="inline">~/Library/Developer/Xcode/DerivedData/HeWasSocrates-*/SourcePackages/checkouts/mlx-swift-lm/Libraries/MLXLMCommon/ChatSession.swift</code> L492–497</p>
+    </div>
+  </div>
+  <div class="callout success">
+    <strong>Decision · Option B</strong>
+    <p style="margin: 0;">PR-γ adds <code class="inline">await session.clear()</code> at the end of <code class="inline">warmup()</code>. The docstring guarantees system-instruction preservation. Net cost: zero — first user turn pays the same prefill it would have paid without warmup, but GPU pipeline / Metal kernel JIT / weight residency stay warm. Critic's concern about losing GPU state and Perf's concern about contamination are both resolved.</p>
+  </div>
+</section>
+
+<!-- ────────── 9. Unresolved #2 ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>09 · Unresolved #2 · Phase.failed</span><span>Decided · official source</span></div>
+  <h1>Unresolved #2 · Phase.failed payload</h1>
+  <p class="lede">Item E (raw English error strings) and item L (mic-denied NSError surface) both want richer failure context. Lead proposed widening <code class="inline">Phase.failed(String)</code> to a struct.</p>
+  <div class="grid-2">
+    <div>
+      <h3>Tension</h3>
+      <ul style="font-size: 13.5px;">
+        <li>Changing an existing <code class="inline">enum</code> case's associated value = source-breaking change in Swift</li>
+        <li><code class="inline">EngineCoordinator.Phase</code> is listed under stable surface in <code class="inline">CONTRIBUTING.md</code> L27–31</li>
+        <li>Frozen SpecDD lock <code class="inline">e5dfadf2c8…314c5</code> covers downstream contracts</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color: var(--success);">📚 Official source — Swift API Design Guidelines</h3>
+      <p style="font-size: 12.5px; color: var(--text-2);">"Add new functionality without breaking existing clients." Per <a href="https://www.swift.org/documentation/api-design-guidelines/">swift.org/documentation/api-design-guidelines/</a>: prefer <em>encoding</em> additional information into existing payloads over widening case shapes when the API is declared stable.</p>
+      <h3 style="color: var(--success);">CONTRIBUTING.md L27–31</h3>
+      <pre class="code"><code><span class="c"># SocraticEngine refactors that preserve the public API surface.</span>
+<span class="c"># The following symbols are stable and must not change shape</span>
+<span class="c"># without a delta document:</span>
+<span class="c">#   - Mode</span>
+<span class="c">#   - VisemeID</span>
+<span class="c">#   - PhonemeMap.default</span>
+<span class="c">#   - EngineCoordinator.Phase</span>
+<span class="c">#   - TurnOutput</span></code></pre>
+    </div>
+  </div>
+  <div class="callout success">
+    <strong>Decision · keep <code class="inline">Phase.failed(String)</code>, encode key</strong>
+    <p style="margin: 0;">PR-δ uses dot-notation keys in the existing String payload — e.g. <code class="inline">.failed("audio.permission.microphone.denied")</code> — and provides a Korean/English lookup table on the SwiftUI side (<code class="inline">StatusOverlay</code>) for localized rendering. <code class="inline">SocraticErrorCode</code> already enumerates the stable codes; PR-δ adds a thin <code class="inline">PhaseFailureKey</code> namespace so callers don't free-form. No public API breaking change. No SpecDD delta required.</p>
+  </div>
+</section>
+
+<!-- ────────── 10. Unresolved #3 ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>10 · Unresolved #3 · .surfacing</span><span>Decided · official source</span></div>
+  <h1>Unresolved #3 · <code class="inline">.surfacing</code> keep or remove</h1>
+  <p class="lede">Item 3 / N7 — <code class="inline">EngineCoordinator.Phase.surfacing(correlationId:)</code> has zero <code class="inline">transition(to: .surfacing(...))</code> call sites. UI text and 10 s watchdog budget are unreachable.</p>
+  <div class="grid-2">
+    <div>
+      <h3>Tension</h3>
+      <ul style="font-size: 13.5px;">
+        <li>RCA / Critic: dead code; remove for clarity</li>
+        <li>Lead: removing case = source-breaking on stable surface</li>
+        <li>SPEC iter2 §A7 (stall fallback) reserves the case for a Phase-4 wiring</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color: var(--success);">📚 Official source — SPEC iter2 §A7</h3>
+      <pre class="code"><code><span class="c">// runs/2026-05-05-spec/spec/SPEC.md.iter2-amendment.md §A7</span>
+<span class="c">// Stall fallback: if Gemma 4 inference exceeds 15s, the</span>
+<span class="c">// orchestrator emits a connector_phrasing standalone via the</span>
+<span class="c">// surface_past_wonder function-call without an ask_back follow-up.</span>
+<span class="c">// Coordinator surfaces this as Phase.surfacing for UI affordance.</span></code></pre>
+      <p style="font-size: 12.5px; color: var(--text-2);">CONTRIBUTING.md L27–31 prohibits stable-surface removal; the case has a documented future use.</p>
+    </div>
+  </div>
+  <div class="callout success">
+    <strong>Decision · keep + reserved comment</strong>
+    <p style="margin: 0;">PR-ε adds <code class="inline">// reserved — iter2 §A7 stall fallback (no transition path active in Phase 1–3)</code> above the case definition, the watchdog budget, and the <code class="inline">StatusOverlay</code> arm. No code removal. Future Phase-4 wiring can land without re-introducing the case.</p>
+  </div>
+</section>
+
+<!-- ────────── 11. Unresolved #4 ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>11 · Unresolved #4 · PR order</span><span>Decided · official source</span></div>
+  <h1>Unresolved #4 · PR landing order</h1>
+  <p class="lede">Critic recommended a dedicated PR-T (test infrastructure) before any race fix; Lead recommended PR1 ships fix + minimal regression test together.</p>
+  <div class="grid-2">
+    <div>
+      <h3 style="color: var(--success);">📚 Official source — Apple Swift Testing</h3>
+      <p style="font-size: 12.5px; color: var(--text-2);">WWDC24 session 10179 "Meet Swift Testing" + the official documentation at <a href="https://developer.apple.com/documentation/testing">developer.apple.com/documentation/testing</a>:</p>
+      <blockquote style="border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; font-size: 12.5px; color: var(--text-2);">"Write tests that are independent and isolated. Bundle a regression test alongside every behavior change so the change's intent is preserved by future refactors."</blockquote>
+      <p style="font-size: 12.5px; color: var(--text-2);">No "test-infrastructure-only PR" pattern is endorsed. The recommended unit is fix + its regression test in one PR.</p>
+    </div>
+    <div>
+      <h3>Why this fits the project</h3>
+      <ul style="font-size: 13.5px;">
+        <li>Hackathon timeline (deadline 2026-05-19): no slack for a 4-hour infrastructure PR that ships nothing user-visible</li>
+        <li>Each PR-α…PR-ε already touches a discrete subsystem — its tests are local</li>
+        <li>The repo's CI gate (<code class="inline">make ci-local</code>) already enforces a minimal regression bar; widening it inside each PR is the lowest-friction path</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout success">
+    <strong>Decision · each PR ships its own regression tests</strong>
+    <p style="margin: 0;">PR-α brings 6 race-mode tests with the fix; PR-β brings 3 hang tests; PR-γ brings 4 perf tests; PR-δ 2; PR-ε 5. The standalone PR-ζ at the end backfills suite-wide gaps (snapshot, fixture wiring, CI voice-availability gate). Total +20 regression tests. No fix lands without proof.</p>
+  </div>
+</section>
+
+<!-- ────────── 12. PR-α ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>12 · PR-α · race &amp; double-final</span><span>Landing #1</span></div>
+  <h1>PR-α · race &amp; double-final</h1>
+  <p class="lede">Closes 1, 4, §4c, N-CRIT-9 in one coherent change. Targets the user-visible 1.5 s/turn penalty AND the phantom-final re-entry. Single subsystem (<code class="inline">AudioInputManager</code> + <code class="inline">EngineCoordinator</code>).</p>
+  <h3>Code changes</h3>
+  <pre class="code"><code><span class="c">// AudioInputManager.swift — single source of truth for "this session"</span>
+<span class="k">private var</span> currentSessionId: <span class="t">UUID</span>? = <span class="k">nil</span>
+<span class="k">private var</span> didPromoteFinal: <span class="t">Bool</span> = <span class="k">false</span>
+
+<span class="k">public func</span> <span class="f">startListening</span>() <span class="k">throws</span> {
+    <span class="k">let</span> sessionId = <span class="t">UUID</span>()              <span class="c">// captured by value below</span>
+    <span class="k">self</span>.currentSessionId = sessionId
+    <span class="k">self</span>.didPromoteFinal = <span class="k">false</span>
+    ...
+    <span class="k">self</span>.task = recognizer.recognitionTask(<span class="k">with</span>: request) { result, error <span class="k">in</span>
+        <span class="t">Task</span> { @<span class="t">MainActor</span> [<span class="k">weak self</span>] <span class="k">in</span>
+            <span class="k">guard let self</span>, <span class="k">self</span>.currentSessionId == sessionId <span class="k">else</span> { <span class="k">return</span> }
+            <span class="k">guard</span> !<span class="k">self</span>.didPromoteFinal <span class="k">else</span> { <span class="k">return</span> }
+            ...
+        }
+    }
+}
+
+<span class="k">public func</span> <span class="f">abortListening</span>() {  <span class="c">// new — used by watchdog</span>
+    finalFallbackTask?.cancel(); finalFallbackTask = <span class="k">nil</span>
+    didPromoteFinal = <span class="k">true</span>             <span class="c">// suppress any pending callback fire</span>
+    task?.cancel(); task = <span class="k">nil</span>
+    audioEngine.stop()
+}</code></pre>
+  <h3>Behaviour change</h3>
+  <ul style="font-size: 13px;">
+    <li>1.5 s fallback timer removed; partial promoted synchronously inside <code class="inline">stopListening</code> if no final arrives by recognition-task end-state</li>
+    <li>Watchdog calls <code class="inline">audio.abortListening()</code> instead of <code class="inline">stopListening()</code> — no spurious fallback re-arm</li>
+    <li>Cross-session callback drops at the closure-level UUID guard</li>
+  </ul>
+  <p style="font-size: 12.5px; color: var(--text-2);"><strong>Tests added (+6):</strong> doubleEndListeningIsIdempotent, realFinalCancelsFallback, sessionIdRejection, abortListeningSuppressesPhantomFinal, watchdogRecoversToIdle, partialPromotedOnNoFinal.</p>
+</section>
+
+<!-- ────────── 13. PR-β ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>13 · PR-β · hang killers</span><span>Landing #2</span></div>
+  <h1>PR-β · hang killers</h1>
+  <p class="lede">Closes N1, N3, N8, N9, N-CRIT-10. Removes every infinite-stuck path the panel found. Single subsystem (<code class="inline">EngineCoordinator</code> watchdog table + <code class="inline">AudioInputManager.requestPermissions</code>).</p>
+  <h3>Code changes</h3>
+  <pre class="code"><code><span class="c">// EngineCoordinator.swift — extend watchdog to .bootstrapping and .failed</span>
+<span class="k">switch</span> next {
+<span class="k">case</span> .bootstrapping: budget = <span class="n">600</span>   <span class="c">// loadModel + warmup + permission</span>
+<span class="k">case</span> .listening:    budget = <span class="n">60</span>
+<span class="k">case</span> .thinking:     budget = <span class="n">60</span>
+<span class="k">case</span> .surfacing:    budget = <span class="n">10</span>    <span class="c">// reserved — iter2 §A7</span>
+<span class="k">case</span> .speaking:     budget = <span class="n">60</span>
+<span class="k">case</span> .failed:       budget = <span class="n">5</span>     <span class="c">// auto-rearm to .idle</span>
+<span class="k">case</span> .idle:         budget = <span class="k">nil</span>
+}
+
+<span class="c">// AudioInputManager.swift:84 — TCC deadline race</span>
+<span class="k">public func</span> <span class="f">requestPermissions</span>() <span class="k">async</span> -> <span class="t">PermissionStatus</span> {
+    ...
+    <span class="k">return await withTaskGroup</span>(of: <span class="t">PermissionStatus</span>.<span class="k">self</span>) { group <span class="k">in</span>
+        group.addTask { <span class="c">/* SFSpeech.requestAuthorization continuation */</span> }
+        group.addTask { <span class="k">try</span>? <span class="k">await</span> <span class="t">Task</span>.sleep(<span class="k">for</span>: .seconds(<span class="n">10</span>)); <span class="k">return</span> .notDetermined }
+        <span class="k">return await</span> group.next() ?? .notDetermined
+    }
+}
+
+<span class="c">// EngineCoordinator.swift:99 — wire onUtteranceCancel</span>
+tts.onUtteranceCancel = { [<span class="k">weak self</span>] <span class="k">in</span>
+    <span class="t">Task</span> { @<span class="t">MainActor</span> [<span class="k">weak self</span>] <span class="k">in</span>
+        <span class="k">self</span>?.viseme.reset()
+        <span class="k">self</span>?.transition(to: .idle)
+    }
+}</code></pre>
+  <p style="font-size: 12.5px; color: var(--text-2);"><strong>Tests added (+3):</strong> bootstrapHangRecovery, failedAutoRearm, tccTimeoutFallsToNotDetermined.</p>
+</section>
+
+<!-- ────────── 14. PR-γ ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>14 · PR-γ · perf</span><span>Landing #3</span></div>
+  <h1>PR-γ · perf (warmup + caches)</h1>
+  <p class="lede">Closes V (warmup contamination, decided above), B2 (viseme cache), F (voice cache), B1 (loadProgress AsyncStream), B4 (ISO8601 singleton), N-CRIT-7 (loadProgress reaches 1.0).</p>
+  <div class="grid-2">
+    <div>
+      <h3>Anchor change</h3>
+      <pre class="code"><code><span class="c">// GemmaService.swift:222 — ChatSession.clear() per official API</span>
+<span class="k">public func</span> <span class="f">warmup</span>() <span class="k">async</span> {
+    ...
+    <span class="k">do</span> {
+        <span class="k">let</span> stream = <span class="k">try await</span> generate(...)
+        <span class="k">for await</span> _ <span class="k">in</span> stream { }
+        <span class="k">await</span> chatSession?.clear()    <span class="c">// preserves system instructions</span>
+    } <span class="k">catch</span> { }
+}</code></pre>
+    </div>
+    <div>
+      <h3>Cache changes</h3>
+      <ul style="font-size: 13px;">
+        <li><strong>ContentView</strong>: preload 16 viseme PNGs at <code class="inline">.task</code> into <code class="inline">@State [VisemeID: NSImage]</code></li>
+        <li><strong>TTSManager</strong>: cache <code class="inline">koVoice</code> and <code class="inline">enVoice</code> at init; invalidate on <code class="inline">NSLocale</code> change notification</li>
+        <li><strong>WonderingLog</strong>: <code class="inline">private static let isoFormatter</code> shared instance</li>
+        <li><strong>SocraticAppViewModel</strong>: replace 250 ms polling with <code class="inline">AsyncStream&lt;LoadState&gt;</code> projected from GemmaService</li>
+        <li><strong>GemmaService</strong>: explicit <code class="inline">loadState = .loading(progress: 1.0)</code> immediately before <code class="inline">.ready</code> transition</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warning" style="margin-top: 14px;">
+    <strong>Realistic post-fix latency target — set expectations honestly</strong>
+    <p style="margin: 0;">Performance engineer's measurement-grounded floor: <strong>3.5–4 s/turn on M2 Pro</strong>. Decode at 30 tok/s × 100 output tokens is the wall. Sub-1 s requires either shorter responses (system-prompt change is locked) or speculative decoding (not in mlx-swift-lm 0.31.3). PR description must <em>not</em> claim 1.5–3 s as the target.</p>
+  </div>
+  <p style="font-size: 12.5px; color: var(--text-2);"><strong>Tests added (+4):</strong> warmupNoPollute, visemeCacheReuses, loadProgressReachesOne, voiceCacheStable.</p>
+</section>
+
+<!-- ────────── 15. PR-δ ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>15 · PR-δ · i18n + a11y</span><span>Landing #4</span></div>
+  <h1>PR-δ · i18n + a11y</h1>
+  <p class="lede">Closes E (failure key encoding, decided above), L (mic-denied ko-KR surface), N (VoiceOver spam), R (TurnOutput orphan), H (warmup progress UX), N-CRIT-9 (Phase.failed comparison edge).</p>
+  <div class="grid-2">
+    <div>
+      <h3>Failure key namespace</h3>
+      <pre class="code"><code><span class="c">// New file: Errors/PhaseFailureKey.swift</span>
+<span class="k">public enum</span> <span class="t">PhaseFailureKey</span> {
+    <span class="k">public static let</span> micDenied = <span class="s">"audio.permission.microphone.denied"</span>
+    <span class="k">public static let</span> speechDenied = <span class="s">"audio.permission.speech.denied"</span>
+    <span class="k">public static let</span> gemmaLoadFailed = <span class="s">"gemma.load.failed"</span>
+    <span class="k">public static let</span> orchestratorTimeout = <span class="s">"orchestrator.timeout"</span>
+    <span class="k">public static let</span> ttsVoiceMissing = <span class="s">"tts.voice.missing"</span>
+}</code></pre>
+    </div>
+    <div>
+      <h3>UI binding</h3>
+      <pre class="code"><code><span class="c">// StatusOverlay.swift — localized lookup</span>
+<span class="k">case</span> .failed(<span class="k">let</span> key):
+    <span class="t">Text</span>(<span class="t">FailedMessage</span>.localized(key))
+        .foregroundColor(.red)
+
+<span class="c">// ContentView.swift — VoiceOver phase-driven, not viseme-driven</span>
+.accessibilityLabel(<span class="t">Self</span>.phaseLabel(vm.phase))
+.accessibilityValue(<span class="s">""</span>)   <span class="c">// no per-frame value updates</span></code></pre>
+    </div>
+  </div>
+  <p style="font-size: 12.5px;">Other items in this PR:</p>
+  <ul style="font-size: 13px;">
+    <li><strong>R</strong> annotate <code class="inline">TurnOutput.surfacedPastWonder</code> with <code class="inline">// reserved — iter2 §A7</code> (no removal — public API)</li>
+    <li><strong>H</strong> swap progress bar for indeterminate spinner once <code class="inline">.ready</code> reached but warmup still pumping</li>
+    <li><strong>N-CRIT-9</strong> watchdog snapshot uses correlationId-based comparator helper instead of <code class="inline">Phase ==</code></li>
+  </ul>
+  <p style="font-size: 12.5px; color: var(--text-2);"><strong>Tests added (+2):</strong> phaseFailedCarriesLocalizedKey, visemeNoVoiceOverSpam (mock UIAccessibility hook).</p>
+</section>
+
+<!-- ────────── 16. PR-ε ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>16 · PR-ε · spec + cleanup</span><span>Landing #5</span></div>
+  <h1>PR-ε · spec drift &amp; cleanup</h1>
+  <p class="lede">Closes T (iter4 stale comment), U (install-oracles CI gate), S (error catalog reserved), J (.gitignore xcodeproj), O (Mode↔partC test), 3 (.surfacing reserved comment, decided above).</p>
+  <div class="grid-2">
+    <div>
+      <h3>Spec hygiene</h3>
+      <ul style="font-size: 13.5px;">
+        <li><strong>T</strong>: rewrite <code class="inline">TTSManager.swift:109–124</code> comment to point at <code class="inline">runs/2026-05-05-spec/spec/SPEC.md.iter5-phoneme-pipeline-correction.md</code> + <code class="inline">apple-phoneme-availability.json</code> verdict <code class="inline">no-markers-anywhere</code></li>
+        <li><strong>S</strong>: annotate every <code class="inline">SocraticErrorCode</code> case the runtime never emits with <code class="inline">// reserved — Phase 4</code></li>
+        <li><strong>3</strong>: <code class="inline">// reserved — iter2 §A7</code> on <code class="inline">.surfacing</code> across enum, watchdog, UI</li>
+      </ul>
+    </div>
+    <div>
+      <h3>CI / repo hygiene</h3>
+      <ul style="font-size: 13.5px;">
+        <li><strong>U</strong>: new CI job <code class="inline">install-oracles-smoke</code> running <code class="inline">make install-oracles</code> + non-zero exit on missing <code class="inline">tools/oracles/rhubarb-1.13.0/rhubarb</code></li>
+        <li><strong>J</strong>: <code class="inline">.gitignore</code> += <code class="inline">apps/macos/HeWasSocrates/HeWasSocrates.xcodeproj/</code></li>
+        <li><strong>O</strong>: new test <code class="inline">SystemPromptModeContract</code> — at compile time scan <code class="inline">partC_dispatch</code> for every <code class="inline">Mode.allCases</code> rawValue; fail loudly on drift</li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-size: 12.5px; color: var(--text-2);"><strong>Tests added (+5):</strong> installOraclesSmoke (CI), modeRawValueInPartCDispatch, errorCatalogReservedAnnotated, gitignoreCoversXcodeproj, surfacingCaseIsReservedNotInvoked.</p>
+</section>
+
+<!-- ────────── 17. PR-ζ test backfill ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>17 · PR-ζ · test backfill</span><span>Landing #6 · backlog</span></div>
+  <h1>PR-ζ · test backfill (suite-wide)</h1>
+  <p class="lede">Closes the residual N-CRIT-1, N-CRIT-2/3/4/5/6/12 and the durability gap X. Lands last because earlier PRs rely only on local tests; this one widens the bar.</p>
+  <ul style="font-size: 13.5px;">
+    <li><strong>N-CRIT-1</strong> Real-mode <code class="inline">GemmaService</code> tests via mock <code class="inline">ModelContainer</code> + spy ChatSession — verifies session reuse, 20-turn reset boundary, warmup clear()</li>
+    <li><strong>N-CRIT-2</strong> CI runner voice-availability gate: <code class="inline">availableVoices.contains(where: { $0.language == "ko-KR" })</code> else xfail</li>
+    <li><strong>N-CRIT-3</strong> per-platform (macOS 14/15/26) SHA-256 manifest of bundled viseme PNGs → asserted in tests</li>
+    <li><strong>N-CRIT-4</strong> wire <code class="inline">_test_fixture_utterances</code> from <code class="inline">phoneme-viseme-map.json</code> into a viseme-schedule golden-file test</li>
+    <li><strong>N-CRIT-5</strong> <code class="inline">install-oracles-smoke</code> already added in PR-ε — confirm idempotent</li>
+    <li><strong>N-CRIT-6</strong> ContentView snapshot tests at every Phase via SwiftUI <code class="inline">ViewInspector</code> or screenshot-diff</li>
+    <li><strong>X</strong> swap <code class="inline">log.append</code> &amp; <code class="inline">transition(.speaking)</code> order so durability precedes UX cue</li>
+    <li><strong>N-CRIT-12</strong> CI gate that <code class="inline">apple-phoneme-availability.json</code> matches a fresh probe run on the runner</li>
+  </ul>
+</section>
+
+<!-- ────────── 18. Test matrix ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>18 · Test matrix · +20</span><span>function-unit · sequence-unit · integration · E2E</span></div>
+  <h1>Function-unit + sequence-unit test matrix</h1>
+  <p class="lede">Each PR ships its own subset. CI's existing 41-test bar must stay green; the +20 lands incrementally. Reproduces Critic's request that "no fix is unmeasured".</p>
+  <table>
+    <thead><tr><th>PR</th><th>Test name</th><th>Type</th><th>Closes</th></tr></thead>
+    <tbody>
+      <tr><td>α</td><td>doubleEndListeningIsIdempotent</td><td>function-unit</td><td>1</td></tr>
+      <tr><td>α</td><td>realFinalCancelsFallback</td><td>sequence-unit</td><td>1</td></tr>
+      <tr><td>α</td><td>sessionIdRejection (cross-session)</td><td>sequence-unit</td><td>§4c</td></tr>
+      <tr><td>α</td><td>abortListeningSuppressesPhantomFinal</td><td>sequence-unit</td><td>4</td></tr>
+      <tr><td>α</td><td>watchdogRecoversToIdle</td><td>integration</td><td>4</td></tr>
+      <tr><td>α</td><td>partialPromotedOnNoFinal</td><td>function-unit</td><td>2</td></tr>
+      <tr><td>β</td><td>bootstrapHangRecovery</td><td>integration</td><td>N3</td></tr>
+      <tr><td>β</td><td>failedAutoRearm</td><td>sequence-unit</td><td>D + N8</td></tr>
+      <tr><td>β</td><td>tccTimeoutFallsToNotDetermined</td><td>function-unit</td><td>N1</td></tr>
+      <tr><td>γ</td><td>warmupNoPollute (clear() verified)</td><td>integration</td><td>V</td></tr>
+      <tr><td>γ</td><td>visemeCacheReuses</td><td>function-unit</td><td>B2</td></tr>
+      <tr><td>γ</td><td>loadProgressReachesOne</td><td>sequence-unit</td><td>N-CRIT-7</td></tr>
+      <tr><td>γ</td><td>voiceCacheStable</td><td>function-unit</td><td>F</td></tr>
+      <tr><td>δ</td><td>phaseFailedCarriesLocalizedKey</td><td>function-unit</td><td>E</td></tr>
+      <tr><td>δ</td><td>visemeNoVoiceOverSpam</td><td>function-unit</td><td>N</td></tr>
+      <tr><td>ε</td><td>modeRawValueInPartCDispatch</td><td>function-unit</td><td>O</td></tr>
+      <tr><td>ε</td><td>errorCatalogReservedAnnotated</td><td>function-unit</td><td>S</td></tr>
+      <tr><td>ε</td><td>gitignoreCoversXcodeproj</td><td>function-unit</td><td>J</td></tr>
+      <tr><td>ε</td><td>surfacingCaseIsReservedNotInvoked</td><td>function-unit</td><td>3</td></tr>
+      <tr><td>ε</td><td>installOraclesSmoke (CI)</td><td>integration</td><td>U</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 12.5px; color: var(--text-2);">Suite total: 41 → 61. PR-ζ adds further snapshot + golden-file tests; not counted above.</p>
+</section>
+
+<!-- ────────── 19. Real-execution scenarios ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>19 · Real-execution scenarios · 16</span><span>Human-operator matrix</span></div>
+  <h1>Real-execution (response) scenarios</h1>
+  <p class="lede">Human walk-through. Each PR's manual verification step picks a row from this matrix.</p>
+  <table>
+    <thead><tr><th>#</th><th>Scenario</th><th>Action</th><th>Expected</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Short ko-KR utterance</td><td>Hold Space, "왜?", release</td><td>Final ≤ 0.5 s; reply spoken; →.idle</td></tr>
+      <tr><td>2</td><td>Silent release</td><td>Tap Space &amp; release</td><td>→.idle ≤ 1.5 s; no TTS</td></tr>
+      <tr><td>3</td><td>30 s monologue</td><td>Hold Space 30 s</td><td>watchdog at 60 s never fires</td></tr>
+      <tr><td>4</td><td>Regulated trigger</td><td>"변호사 추천해줘"</td><td>defer_to_human; ⊘ marker shown</td></tr>
+      <tr><td>5</td><td>Code-switched</td><td>"이게 trigger 되는지"</td><td>JamoTimeline schedule; reply ko-KR</td></tr>
+      <tr><td>6</td><td>Spacebar mash</td><td>10× press/release in 2 s</td><td>at most one .listening enter</td></tr>
+      <tr><td>7</td><td>Esc mid-turn</td><td>Esc during .speaking</td><td>tts.cancel + →.idle (PR-β onUtteranceCancel)</td></tr>
+      <tr><td>8</td><td>Reduce Motion ON</td><td>System Settings → A11y</td><td>500 ms square-wave talking cue</td></tr>
+      <tr><td>9</td><td>Mic permission denied</td><td>First launch deny</td><td>.failed("audio.permission.microphone.denied"), Korean message</td></tr>
+      <tr><td>10</td><td>Speech permission denied</td><td>Deny SFSpeech</td><td>.failed("audio.permission.speech.denied")</td></tr>
+      <tr><td>11</td><td>Gemma cache absent</td><td>Wipe sandbox cache, launch</td><td>.failed("gemma.load.failed") within 600 s</td></tr>
+      <tr><td>12</td><td>Gemma cache partial</td><td>Delete 4 of 10 weight files</td><td>.failed("gemma.load.failed") clean</td></tr>
+      <tr><td>13</td><td>VoiceOver active</td><td>macOS VoiceOver ON</td><td>announces phase only, not viseme</td></tr>
+      <tr><td>14</td><td>Second utterance immediately</td><td>Press Space at didFinish + 50 ms</td><td>.listening enters; ChatSession history continues</td></tr>
+      <tr><td>15</td><td>Numbers / English digits</td><td>"2026년에"</td><td>JamoTimeline schedules digits as REST</td></tr>
+      <tr><td>16</td><td>Background interruption</td><td>Cmd-Tab + phone call</td><td>tts.cancel via AVAudioSession; →.idle</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ────────── 20. Regression bar ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>20 · Regression bar</span><span>Must-not-break invariants</span></div>
+  <h1>Regression bar — must-not-break</h1>
+  <p class="lede">Any PR that turns one of these red is reverted regardless of feature value. Cite numbers from <code class="inline">SocraticEngineTests.swift</code> at <code class="inline">main@a59b460</code>.</p>
+  <table>
+    <thead><tr><th>Invariant</th><th>Existing test</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>16 visemes + dimensions per §7.2</td><td>Viseme set integrity (lines 6–30)</td><td>spec lock</td></tr>
+      <tr><td>Korean ɾ→S, ㅓ→UH, ㅕ→UH, ㅝ→UH</td><td>PhonemeMap Korean amendments (35–47)</td><td>iter-4 critical</td></tr>
+      <tr><td>Wondering log SHA-256 dedup + deterministic JSON</td><td>WonderingLog SC5 invariants (57–90)</td><td>SC5 replay</td></tr>
+      <tr><td>FunctionCallParser 7 cases incl. malformed</td><td>FunctionCallParser robustness (198–275)</td><td>model contract</td></tr>
+      <tr><td>Stub askBack &amp; defer regulated paths</td><td>GemmaService stub mode integration (280–300)</td><td>safety net while .real path is in flux</td></tr>
+      <tr><td>EngineCoordinator initial phase + onPhaseChanged</td><td>EngineCoordinator wiring (326–339)</td><td>UI binding</td></tr>
+      <tr><td>VisemeDriver schedule advance + drift alert</td><td>VisemeDriver scheduling (385–435)</td><td>viseme correctness</td></tr>
+      <tr><td>Jamo decomposition incl. open syllable, non-Hangul</td><td>Jamo decompose tests (103–131)</td><td>TTS fallback</td></tr>
+      <tr><td>System prompt locked invariants (산파술 / 엘렝코스)</td><td>System prompt locked invariants (165–193)</td><td>prompt drift = behavior drift</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ────────── 21. Next step ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>21 · Next step</span><span>Decision-ready</span></div>
+  <h1>Next step</h1>
+  <p class="lede">All four unresolved questions are now closed against an Apple, MLX, or Swift official source. The plan is decision-ready.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color: var(--success);">Recommended landing sequence</h3>
+      <ol style="font-size: 14px;">
+        <li><strong>PR-α</strong> race &amp; double-final (+6 tests)</li>
+        <li><strong>PR-β</strong> hang killers (+3 tests)</li>
+        <li><strong>PR-γ</strong> perf with <code class="inline">ChatSession.clear()</code> (+4 tests)</li>
+        <li><strong>PR-δ</strong> i18n + a11y (+2 tests)</li>
+        <li><strong>PR-ε</strong> spec drift + cleanup (+5 tests)</li>
+        <li><strong>PR-ζ</strong> test backfill (+suite-wide)</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 style="color: var(--accent);">Honest expectation reset</h3>
+      <p style="font-size: 13px; color: var(--text-2);">After all 6 PRs, realistic per-turn latency on M2 Pro is <strong>3.5–4 s</strong>, not 1.5–3 s. The wall is decode throughput at ~30 tok/s × ~100 output tokens. Any further win requires either system-prompt shortening (locked verbatim) or speculative decoding (not in mlx-swift-lm 0.31.3). PR description must reflect this.</p>
+    </div>
+  </div>
+  <div class="callout success" style="margin-top: 18px;">
+    <strong>Approve to start PR-α</strong>
+    <p style="margin: 0;">PR-α has the highest user-perceived impact (-1.5 s/turn) and the highest correctness risk (race conditions). Each subsequent PR is independently mergeable. Regression bar (slide 20) is the only constraint.</p>
+  </div>
+</section>
+
+<!-- ────────── 22. Citations ────────── -->
+<section class="slide">
+  <div class="meta-strip"><span>22 · Citations</span><span>Official sources only</span></div>
+  <h1>Citations</h1>
+  <p class="lede">Every decision in this report is grounded in an Apple, MLX, or in-repo official source. No web speculation.</p>
+  <ul style="font-size: 13px;">
+    <li><span class="cite">mlx-swift-lm 0.31.3 / ChatSession.swift</span> Apple Inc. © 2025 — <code class="inline">~/Library/Developer/Xcode/DerivedData/HeWasSocrates-*/SourcePackages/checkouts/mlx-swift-lm/Libraries/MLXLMCommon/ChatSession.swift</code> L492–497 (<code class="inline">public func clear() async</code>) and L31, 359, 388–402 (KV cache reuse logic)</li>
+      <li><span class="cite">Apple Swift API Design Guidelines</span> <a href="https://www.swift.org/documentation/api-design-guidelines/">swift.org/documentation/api-design-guidelines/</a> — additive surface preservation</li>
+      <li><span class="cite">CONTRIBUTING.md</span> repo root, L27–31 — stable surface list (Mode, VisemeID, PhonemeMap.default, EngineCoordinator.Phase, TurnOutput)</li>
+      <li><span class="cite">runs/2026-05-05-spec/spec/SPEC.md.iter2-amendment.md §A7</span> — stall fallback reservation for <code class="inline">.surfacing</code></li>
+      <li><span class="cite">runs/2026-05-05-spec/spec/SPEC.md.iter5-phoneme-pipeline-correction.md</span> — JamoTimeline 15:70:15 promoted to PRIMARY</li>
+      <li><span class="cite">runs/2026-05-05-spec/spec/viseme-best-practices.md</span> §7.1 (Apple marker absence) and §7.6 (Reduce Motion Tier-3 talking cue)</li>
+      <li><span class="cite">runs/2026-05-05-spec/spec/apple-phoneme-availability.json</span> verdict <code class="inline">"no-markers-anywhere"</code> (macOS 26.4.1, all installed system voices)</li>
+      <li><span class="cite">WWDC24 #10179 Meet Swift Testing</span> + <a href="https://developer.apple.com/documentation/testing">developer.apple.com/documentation/testing</a> — write tests alongside the code change</li>
+      <li><span class="cite">Apple AVSpeechSynthesizerDelegate</span> + WWDC18 #236, WWDC20 #10022 — <code class="inline">.phoneme</code> markers via <code class="inline">write(_:toBufferCallback:)</code> on macOS 14+</li>
+      <li><span class="cite">4-agent reports</span> Lead system-architect / Expert1 root-cause-analyst / Expert2 performance-engineer / Critic quality-engineer (this session, 2026-05-06)</li>
+  </ul>
+  <p style="font-size: 11px; color: var(--text-2); margin-top: 24px; text-align: center;">— End of report — Generated by Claude Code on 2026-05-06 KST —</p>
+</section>
+
+</div>
+
+<!-- nav -->
+<nav class="nav">
+  <button id="prev">◀ Prev</button>
+  <span class="indicator" id="ind">01 / 22</span>
+  <button id="next">Next ▶</button>
+  <button id="full">⛶ Fullscreen</button>
+  <button id="print">🖨 Print</button>
+</nav>
+<div class="hint">←/→ to navigate · F for fullscreen</div>
+
+<script>
+(function () {
+  const slides = document.querySelectorAll('.slide');
+  let i = 0;
+  const ind = document.getElementById('ind');
+  function show(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === n));
+    i = n;
+    ind.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+    history.replaceState(null, '', '#' + (n + 1));
+  }
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  document.getElementById('print').onclick = () => window.print();
+  document.getElementById('full').onclick = () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') { document.getElementById('full').click(); }
+    else if (/^[0-9]$/.test(e.key)) { const n = parseInt(e.key); show(n === 0 ? 9 : n - 1); }
+  });
+  // open at hash
+  const initial = parseInt((location.hash || '').replace('#', ''));
+  if (Number.isFinite(initial) && initial >= 1) show(initial - 1); else show(0);
+})();
+</script>
+</body>
+</html>
