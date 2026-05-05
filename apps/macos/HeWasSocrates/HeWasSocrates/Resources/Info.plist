@@ -8,6 +8,15 @@
 	<key>CFBundleDisplayName</key>
 	<string>He Was Socrates</string>
 
+	<!-- PR-ι F18: CFBundleSpokenName tells VoiceOver how to pronounce
+	     the app name in announcements. Without it VoiceOver reads
+	     "Socrates" letter-perfect (mis-pronounced "soh-krayts"). With
+	     this key it speaks the dictionary pronunciation. Apple Bundle
+	     reference: developer.apple.com/documentation/bundleresources/
+	     information_property_list/cfbundlespokenname -->
+	<key>CFBundleSpokenName</key>
+	<string>He Was SOCK-ruh-teez</string>
+
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 
