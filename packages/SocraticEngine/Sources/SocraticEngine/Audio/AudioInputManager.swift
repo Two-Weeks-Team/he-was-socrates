@@ -145,17 +145,29 @@ public final class AudioInputManager: NSObject {
         self.request = request
 
         // Wire up audio engine input node tap.
+        // Capture `request` directly instead of `self`, so the closure stays
+        // nonisolated. AVAudioEngine invokes this callback on a realtime
+        // audio queue (CADeprecated::RealtimeMessenger); a MainActor-isolated
+        // closure would trip `_swift_task_checkIsolatedSwift` →
+        // `dispatch_assert_queue_fail` → SIGTRAP on the first audio buffer.
+        // SFSpeechAudioBufferRecognitionRequest.append is thread-safe.
         let inputNode = audioEngine.inputNode
         let format = inputNode.outputFormat(forBus: 0)
         inputNode.removeTap(onBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.request?.append(buffer)
+        let requestRef = request  // local capture, no `self`
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            requestRef.append(buffer)
         }
 
         audioEngine.prepare()
         try audioEngine.start()
 
-        self.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+        // SFSpeechRecognitionTask invokes its callback on an arbitrary queue
+        // too. We don't capture `self` directly in the outer closure — we
+        // hop to MainActor via `Task { @MainActor in ... }` for the actor-
+        // isolated state writes. The capture list pulls `weak self` ONLY
+        // into the inner Task body, not the outer recognition closure.
+        self.task = recognizer.recognitionTask(with: request) { result, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 if let result {
