@@ -1,4 +1,5 @@
 import Foundation
+
 #if canImport(QuartzCore)
 import QuartzCore
 #endif
@@ -36,7 +37,8 @@ public final class VisemeDriver {
     public var onVisemeChanged: ((VisemeID) -> Void)?
 
     /// Fired when a viseme swap was scheduled but ran late by > drift threshold.
-    public var onDriftAlert: ((_ visemeID: VisemeID, _ scheduledMs: Double, _ actualMs: Double) -> Void)?
+    public var onDriftAlert:
+        ((_ visemeID: VisemeID, _ scheduledMs: Double, _ actualMs: Double) -> Void)?
 
     private let phonemeMap: PhonemeMap
     private var pendingNextViseme: VisemeID?
@@ -47,6 +49,16 @@ public final class VisemeDriver {
 
     /// Audio playback clock in milliseconds. Host updates this as TTS plays.
     public private(set) var audioClockMs: Double = 0
+
+    /// Reference host time captured by `notePlaybackStarted()`. The tick loop
+    /// derives `audioClockMs` from `(systemUptime - playbackStartHostTime) *
+    /// 1000` whenever the host has not provided an explicit clock update.
+    /// This makes the schedule drive lip-sync even when the TTS pipeline
+    /// can't emit playback-time callbacks (current `AVSpeechSynthesizer` on
+    /// macOS 26 emits zero phoneme markers AND no time updates — verdict
+    /// "no-markers-anywhere" in spec/apple-phoneme-availability.json).
+    private var playbackStartHostTime: TimeInterval?
+    private var hasExplicitAudioClock: Bool = false
 
     private var timer: Timer?
 
@@ -65,7 +77,8 @@ public final class VisemeDriver {
         guard !isRunning else { return }
         isRunning = true
         let interval = 1.0 / renderRate
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] timer in
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) {
+            [weak self] timer in
             // Self-invalidate when the driver is deallocated.
             guard self != nil else {
                 timer.invalidate()
@@ -99,6 +112,8 @@ public final class VisemeDriver {
         nextScheduleIndex = 0
         audioClockMs = 0
         pendingNextViseme = .REST
+        playbackStartHostTime = nil
+        hasExplicitAudioClock = false
     }
 
     // MARK: - Ingestion
@@ -129,17 +144,31 @@ public final class VisemeDriver {
     /// Host (TTSManager) calls this when TTS begins.
     public func notePlaybackStarted() {
         audioClockMs = 0
+        playbackStartHostTime = ProcessInfo.processInfo.systemUptime
+        hasExplicitAudioClock = false
     }
 
     /// Host calls this every frame with the current TTS audio playback offset.
+    /// If the host doesn't provide updates, the tick loop falls back to a
+    /// host-clock derivation seeded by `notePlaybackStarted()`.
     public func updateAudioClock(_ ms: Double) {
         audioClockMs = ms
+        hasExplicitAudioClock = true
     }
 
     // MARK: - Tick
 
     /// Advance one render frame.
     public func tick() {
+        // If the host pipeline does not feed an explicit audio clock (true
+        // for AVSpeechSynthesizer on current macOS — see header note), we
+        // derive one from the host monotonic clock anchored at the last
+        // `notePlaybackStarted()` call. Explicit `updateAudioClock(_:)` wins
+        // when present, preserving the existing test contract.
+        if !hasExplicitAudioClock, let start = playbackStartHostTime {
+            audioClockMs = (ProcessInfo.processInfo.systemUptime - start) * 1000.0
+        }
+
         // Promote any scheduled viseme whose audio offset has been reached.
         while nextScheduleIndex < schedule.count {
             let next = schedule[nextScheduleIndex]
@@ -160,8 +189,9 @@ public final class VisemeDriver {
         }
 
         if holdFramesRemaining == 0,
-           let next = pendingNextViseme,
-           next != currentViseme {
+            let next = pendingNextViseme,
+            next != currentViseme
+        {
             currentViseme = next
             pendingNextViseme = nil
             holdFramesRemaining = Self.minHoldFrames

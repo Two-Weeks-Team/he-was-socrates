@@ -48,6 +48,24 @@ public final class AudioInputManager: NSObject {
         super.init()
     }
 
+    // MARK: - Audio tap installer (nonisolated)
+
+    /// Installs an audio buffer tap on `inputNode` whose closure forwards
+    /// every buffer into `request`. Declared `nonisolated` (and `static`)
+    /// so the closure literal is built outside any actor isolation context;
+    /// AVAudioEngine then invokes it freely from its realtime queue.
+    /// SFSpeechAudioBufferRecognitionRequest.append is thread-safe per
+    /// Apple's documentation.
+    nonisolated private static func installNonisolatedTap(
+        onInputNode inputNode: AVAudioInputNode,
+        format: AVAudioFormat,
+        request: SFSpeechAudioBufferRecognitionRequest
+    ) {
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            request.append(buffer)
+        }
+    }
+
     // MARK: - Permissions
 
     public func requestPermissions() async -> PermissionStatus {
@@ -144,20 +162,22 @@ public final class AudioInputManager: NSObject {
         request.shouldReportPartialResults = true
         self.request = request
 
-        // Wire up audio engine input node tap.
-        // Capture `request` directly instead of `self`, so the closure stays
-        // nonisolated. AVAudioEngine invokes this callback on a realtime
-        // audio queue (CADeprecated::RealtimeMessenger); a MainActor-isolated
-        // closure would trip `_swift_task_checkIsolatedSwift` →
-        // `dispatch_assert_queue_fail` → SIGTRAP on the first audio buffer.
+        // Wire up audio engine input node tap. AVAudioEngine invokes this
+        // callback on a realtime audio queue (CADeprecated::RealtimeMessenger);
+        // a MainActor-isolated closure would trip
+        // `_swift_task_checkIsolatedSwift` → `dispatch_assert_queue_fail` →
+        // SIGTRAP on the first audio buffer.
+        //
+        // Just capturing `request` instead of `self` is NOT enough — closures
+        // declared inside a @MainActor method inherit the actor isolation of
+        // the enclosing function regardless of capture list. We delegate the
+        // tap installation to a `nonisolated` helper so the closure literal
+        // itself is built in a nonisolated context.
         // SFSpeechAudioBufferRecognitionRequest.append is thread-safe.
         let inputNode = audioEngine.inputNode
         let format = inputNode.outputFormat(forBus: 0)
         inputNode.removeTap(onBus: 0)
-        let requestRef = request  // local capture, no `self`
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
-            requestRef.append(buffer)
-        }
+        Self.installNonisolatedTap(onInputNode: inputNode, format: format, request: request)
 
         audioEngine.prepare()
         try audioEngine.start()
