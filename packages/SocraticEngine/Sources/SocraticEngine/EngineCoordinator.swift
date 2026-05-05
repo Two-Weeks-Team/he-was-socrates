@@ -1,4 +1,5 @@
 import Foundation
+
 #if canImport(AVFAudio)
 import AVFAudio
 #endif
@@ -204,13 +205,15 @@ public final class EngineCoordinator {
             return
         }
 
-        let storedWonder = await log.append(Wonder(
-            userUtterance: trimmed,
-            socraticReply: output.socraticReply,
-            mode: output.mode.mode,
-            modeConfidence: output.mode.confidence,
-            language: language
-        ))
+        let storedWonder = await log.append(
+            Wonder(
+                userUtterance: trimmed,
+                socraticReply: output.socraticReply,
+                mode: output.mode.mode,
+                modeConfidence: output.mode.confidence,
+                language: language
+            )
+        )
         _ = storedWonder
 
         transition(to: .speaking(reply: output.socraticReply, deferred: output.deferred))
@@ -237,11 +240,48 @@ public final class EngineCoordinator {
         return "(\(count) past wonders, surface available)"
     }
 
-    // MARK: - Phase transition
+    // MARK: - Phase transition + watchdog
+
+    /// Outstanding watchdog that fires if the current phase hasn't ended
+    /// within its expected window. Recovers to `.idle` so the user can
+    /// press Spacebar again. Cancelled on every phase change.
+    private var phaseWatchdog: Task<Void, Never>?
 
     private func transition(to next: Phase) {
         guard phase != next else { return }
         phase = next
         onPhaseChanged?(next)
+        scheduleWatchdog(for: next)
+    }
+
+    /// Phase budgets:
+    ///   listening — user holds Space; STT can lag a beat
+    ///   thinking  — first Gemma turn includes a one-time MLX warmup,
+    ///               subsequent turns are seconds. 60s window covers both.
+    ///   surfacing — pure-engine search over the wondering log
+    ///   speaking  — TTS playback for a long Socratic question
+    /// idle / bootstrapping / failed have no watchdog.
+    private func scheduleWatchdog(for next: Phase) {
+        phaseWatchdog?.cancel()
+        let budget: TimeInterval?
+        switch next {
+        case .listening: budget = 60
+        case .thinking: budget = 60
+        case .surfacing: budget = 10
+        case .speaking: budget = 60
+        case .idle, .bootstrapping, .failed:
+            budget = nil
+        }
+        guard let budget else { return }
+        let snapshot = next
+        phaseWatchdog = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(budget * 1_000_000_000))
+            guard let self else { return }
+            guard self.phase == snapshot else { return }
+            self.tts.cancel()
+            self.viseme.reset()
+            self.audio.stopListening()
+            self.transition(to: .idle)
+        }
     }
 }
