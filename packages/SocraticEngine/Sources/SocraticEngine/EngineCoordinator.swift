@@ -26,8 +26,16 @@ public final class EngineCoordinator {
         case idle
         case listening
         case thinking(correlationId: UUID)
+        // Reserved — iter2 §A7 stall-fallback. No `transition(to: .surfacing(...))`
+        // call site exists in Phase 1–3; the case + its watchdog budget are
+        // preserved per CONTRIBUTING.md L27-31 stable-surface rule for the
+        // Phase-4 wiring of the surface_past_wonder + ask_back composite turn.
         case surfacing(correlationId: UUID)
         case speaking(reply: String, deferred: Bool)
+        // PR-δ: payload is a `PhaseFailureKey` dot-notation string; the
+        // SwiftUI `FailedMessage` table renders the localized title +
+        // optional recovery hint. The `String` shape is retained because
+        // changing it would be a source-breaking enum-payload change.
         case failed(String)
     }
 

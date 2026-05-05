@@ -145,3 +145,30 @@ jobs:
 
       - name: Run gitleaks (uses .gitleaks.toml at repo root)
         run: gitleaks detect --no-banner --source . --redact
+
+  # -------------------------------------------------------------------------
+  # 5) Build-time test oracles (Rhubarb + g2pK) install smoke per
+  #    viseme-best-practices.md §7.7. Confirms the install script keeps
+  #    working as the GitHub Actions environment evolves; doesn't require
+  #    the oracles for any other gate, just guards the install path.
+  # -------------------------------------------------------------------------
+  install-oracles-smoke:
+    name: install-oracles smoke
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run install-oracles (Rhubarb + g2pK)
+        # ORACLES_SKIP_G2PK=1 because the runner doesn't have the Korean
+        # MeCab dictionaries pre-installed and `pip install g2pk` would
+        # need ~5 minutes of extra brew setup. Rhubarb (the en-US
+        # build-time oracle) is the path that actually drifts; we
+        # validate it here.
+        run: ORACLES_SKIP_G2PK=1 make install-oracles
+
+      - name: Verify Rhubarb binary
+        run: |
+          test -x tools/oracles/rhubarb-1.13.0/rhubarb
+          tools/oracles/rhubarb-1.13.0/rhubarb --version

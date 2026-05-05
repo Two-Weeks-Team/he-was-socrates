@@ -575,7 +575,9 @@ struct EngineCoordinatorHangKillerTests {
         coord._test_simulateWatchdogElapsed()
 
         #expect(
-            coord.phase == .idle, "watchdog must rearm .failed → .idle deterministically")
+            coord.phase == .idle,
+            "watchdog must rearm .failed → .idle deterministically"
+        )
         #expect(phases.contains(.idle), "phase callback must fire .idle on auto-rearm")
     }
 
@@ -650,6 +652,21 @@ struct PerformanceCacheTests {
         // The contract here is "no crash, deterministic outcome" —
         // installed-on-runner is the only thing that varies.
         _ = v
+    }
+
+    @Test func everyModeRawValueAppearsInPartCDispatch() {
+        // PR-ε: SystemPrompt.partC_dispatch enumerates the literal mode
+        // names the model is allowed to emit in `mode_classify` calls. If
+        // the engine `Mode` enum gains a new case (or renames one) and
+        // partC isn't updated to match, the model can hallucinate a value
+        // the parser doesn't recognise. Compile-time assertion.
+        let dispatch = SystemPrompt.partC_dispatch
+        for mode in Mode.allCases {
+            #expect(
+                dispatch.contains(mode.rawValue),
+                "Mode.\(mode) rawValue '\(mode.rawValue)' must appear in partC_dispatch"
+            )
+        }
     }
 
     @Test func phaseFailureKeyNamespaceIsStable() {
