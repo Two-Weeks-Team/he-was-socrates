@@ -271,6 +271,10 @@ enum FailedMessage {
             return "음성 인식이 제한되어 있다"
         case PhaseFailureKey.audioRuntimeError:
             return "오디오 입력 오류"
+        case PhaseFailureKey.sttOnDeviceUnsupported:
+            return "기기 내 음성 인식이 지원되지 않는다"
+        case PhaseFailureKey.audioInterrupted:
+            return "오디오가 다른 앱에 의해 중단되었다"
         case PhaseFailureKey.gemmaLoadFailed:
             return "Gemma 4 모델을 불러오지 못했다"
         case PhaseFailureKey.modelMalformedOutput:
@@ -305,6 +309,10 @@ enum FailedMessage {
             return "터미널에서 `make install-gemma-weights`를 다시 실행하라."
         case PhaseFailureKey.bootstrapTimeout:
             return "잠시 뒤 다시 시도하라. 그래도 멈추면 앱을 다시 실행하라."
+        case PhaseFailureKey.sttOnDeviceUnsupported:
+            return "시스템 설정 → Siri 및 Spotlight → 사용 가능한 언어에서 한국어를 켜라."
+        case PhaseFailureKey.audioInterrupted:
+            return "다른 오디오 앱을 닫고 Spacebar로 다시 시도하라."
         case PhaseFailureKey.turnTimeout:
             return "Spacebar를 다시 눌러 새로 묻어라."
         default:

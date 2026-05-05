@@ -703,6 +703,38 @@ struct PerformanceCacheTests {
         }
     }
 
+    @Test func failureKeyMapsLSRErrorTo_sttOnDeviceUnsupported() {
+        // PR-θ F9: kLSRErrorDomain code 1101 is the documented error
+        // for "Siri & Dictation disabled / no on-device assets".
+        let err = NSError(
+            domain: "kLSRErrorDomain",
+            code: 1101,
+            userInfo: [:]
+        )
+        let key = EngineCoordinator.failureKey(for: err)
+        #expect(key == PhaseFailureKey.sttOnDeviceUnsupported)
+    }
+
+    @Test func failureKeyMapsAVAudioInterruptionTo_audioInterrupted() {
+        let err = NSError(
+            domain: "AVFAudioErrorDomain",
+            code: 561_017_449,
+            userInfo: [:]
+        )
+        let key = EngineCoordinator.failureKey(for: err)
+        #expect(key == PhaseFailureKey.audioInterrupted)
+    }
+
+    @Test func failureKeyDefaultsTo_audioRuntimeError() {
+        let err = NSError(
+            domain: "SomeUnknownDomain",
+            code: 42,
+            userInfo: [:]
+        )
+        let key = EngineCoordinator.failureKey(for: err)
+        #expect(key == PhaseFailureKey.audioRuntimeError)
+    }
+
     @Test func phaseFailureKeyNamespaceIsStable() {
         // Stability bar — these strings are part of the cross-layer
         // contract between the engine (Phase.failed payloads) and the

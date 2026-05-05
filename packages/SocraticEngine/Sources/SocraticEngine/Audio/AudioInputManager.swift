@@ -225,6 +225,23 @@ public final class AudioInputManager: NSObject {
                 descriptionEN: "Speech recognition model for \(bcp47) is not installed."
             )
         }
+        // PR-θ F8: NO-CLOUD invariant means we cannot fall back to network
+        // recognition. If `supportsOnDeviceRecognition` is false for this
+        // locale, setting `requiresOnDeviceRecognition = true` later (line
+        // ~233) produces kLSRErrorDomain code 1101 at the first audio
+        // buffer — surfaced as a generic runtime error mid-utterance.
+        // Apple Speech docs document `supportsOnDeviceRecognition` as the
+        // precheck. We fail early with a specific code so the host can
+        // render the recovery hint in `FailedMessage`.
+        guard recognizer.supportsOnDeviceRecognition else {
+            throw EngineError.make(
+                domain: SocraticErrorDomain.stt,
+                code: .sttLocaleModelMissing,
+                descriptionKO: "\(bcp47) 음성 모델의 기기 내 처리를 지원하지 않습니다.",
+                descriptionEN:
+                    "On-device recognition not supported for \(bcp47). NO-CLOUD invariant prevents network fallback."
+            )
+        }
         self.recognizer = recognizer
 
         let request = SFSpeechAudioBufferRecognitionRequest()

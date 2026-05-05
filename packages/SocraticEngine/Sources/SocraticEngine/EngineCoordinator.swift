@@ -93,14 +93,17 @@ public final class EngineCoordinator {
                 self?.onPartialTranscript?(partial)
             }
         }
-        audio.onError = { [weak self] _ in
-            // PR-δ: encode failure as a stable key; the SwiftUI layer
-            // (FailedMessage) renders the localized title + recovery
-            // hint. The raw NSError context is dropped here on purpose
-            // — production telemetry should hook the audio.onError edge
-            // directly when SC7 logging lands.
+        audio.onError = { [weak self] err in
+            // PR-θ F9: route by NSError domain/code so the user sees the
+            // most-specific recovery hint available.
+            //   kLSRErrorDomain code 1101 → "Siri & Dictation disabled /
+            //                               no on-device assets" → the
+            //                               sttOnDeviceUnsupported key.
+            //   AVAudioSession interruption codes → audio.runtime.interrupted.
+            //   default → existing audio.runtime.error.
+            let key = Self.failureKey(for: err)
             Task { @MainActor [weak self] in
-                self?.transition(to: .failed(PhaseFailureKey.audioRuntimeError))
+                self?.transition(to: .failed(key))
             }
         }
 
@@ -370,6 +373,26 @@ public final class EngineCoordinator {
             self.audio.abortListening()
             self.transition(to: .idle)
         }
+    }
+
+    /// PR-θ F9: map an `NSError` raised on the audio path to the most
+    /// specific `PhaseFailureKey`. Apple's CFErrorDomains for the Speech
+    /// framework are stable per the public reference; the codes used
+    /// below match the framework's documented error space.
+    nonisolated static func failureKey(for err: NSError) -> String {
+        if err.domain == "kLSRErrorDomain" && err.code == 1101 {
+            // "Siri & Dictation disabled" or "Speech recognition assets
+            // not installed for this locale" — most common cause of an
+            // audio-path failure on a sandboxed NO-CLOUD app.
+            return PhaseFailureKey.sttOnDeviceUnsupported
+        }
+        // AVFoundation's runtime audio interruption surfaces a code
+        // matching `AVAudioSession.InterruptionType.began` family on iOS;
+        // on macOS the corresponding events come via AVAudioEngine.
+        if err.domain.contains("AVAudio") || err.domain == "AVFAudioErrorDomain" {
+            return PhaseFailureKey.audioInterrupted
+        }
+        return PhaseFailureKey.audioRuntimeError
     }
 
     // MARK: - Test seams (PR-β)
