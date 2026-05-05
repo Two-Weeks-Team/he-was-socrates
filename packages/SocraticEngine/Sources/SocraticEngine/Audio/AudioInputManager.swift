@@ -1,4 +1,5 @@
 import Foundation
+
 #if canImport(Speech)
 import Speech
 #endif
@@ -36,12 +37,12 @@ public final class AudioInputManager: NSObject {
     public var onPartialTranscript: ((String) -> Void)?
     public var onError: ((NSError) -> Void)?
 
-#if canImport(Speech) && canImport(AVFAudio)
+    #if canImport(Speech) && canImport(AVFAudio)
     private var recognizer: SFSpeechRecognizer?
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
-#endif
+    #endif
 
     public override init() {
         super.init()
@@ -51,7 +52,7 @@ public final class AudioInputManager: NSObject {
 
     public func requestPermissions() async -> PermissionStatus {
         state = .requestingPermissions
-#if canImport(Speech) && canImport(AVFAudio)
+        #if canImport(Speech) && canImport(AVFAudio)
         // 1. Microphone permission via AVAudioApplication (macOS 14+).
         if #available(macOS 14.0, *) {
             let micGranted = await AVAudioApplication.requestRecordPermission()
@@ -62,7 +63,8 @@ public final class AudioInputManager: NSObject {
                     descriptionKO: "마이크 사용 권한이 거부되었습니다.",
                     descriptionEN: "Microphone permission denied.",
                     recoverySuggestionKO: "시스템 설정 > 개인 정보 보호 및 보안 > 마이크에서 권한을 허용해주세요.",
-                    recoverySuggestionEN: "Allow microphone access in System Settings > Privacy & Security > Microphone."
+                    recoverySuggestionEN:
+                        "Allow microphone access in System Settings > Privacy & Security > Microphone."
                 )
                 state = .failed("mic-denied")
                 onError?(err)
@@ -70,12 +72,23 @@ public final class AudioInputManager: NSObject {
             }
         }
 
-        // 2. Speech recognition authorization.
-        let speechStatus = await withCheckedContinuation { (cont: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
-            SFSpeechRecognizer.requestAuthorization { status in
-                cont.resume(returning: status)
+        // 2. Speech recognition authorization. The TCC callback fires on a
+        // background queue (com.apple.root.default-qos); under Swift 6 strict
+        // concurrency, calling `withCheckedContinuation` from a MainActor
+        // method makes the resulting continuation MainActor-isolated, so
+        // resuming it from the TCC background queue trips
+        // `_swift_task_checkIsolatedSwift` → dispatch_assert_queue_fail →
+        // SIGTRAP at first launch. We move the call into `Task.detached` so
+        // the continuation runs in a nonisolated context; we re-enter
+        // MainActor naturally on the surrounding `await`.
+        let speechStatus: SFSpeechRecognizerAuthorizationStatus = await Task.detached {
+            await withCheckedContinuation {
+                (cont: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
+                SFSpeechRecognizer.requestAuthorization { status in
+                    cont.resume(returning: status)
+                }
             }
-        }
+        }.value
         switch speechStatus {
         case .authorized:
             state = .ready
@@ -87,7 +100,8 @@ public final class AudioInputManager: NSObject {
                 descriptionKO: "음성 인식 권한이 거부되었습니다.",
                 descriptionEN: "Speech recognition permission denied.",
                 recoverySuggestionKO: "시스템 설정 > 개인 정보 보호 및 보안 > 음성 인식에서 권한을 허용해주세요.",
-                recoverySuggestionEN: "Allow speech recognition in System Settings > Privacy & Security > Speech Recognition."
+                recoverySuggestionEN:
+                    "Allow speech recognition in System Settings > Privacy & Security > Speech Recognition."
             )
             state = .failed("speech-denied")
             onError?(err)
@@ -101,16 +115,16 @@ public final class AudioInputManager: NSObject {
         @unknown default:
             return .denied(reason: "unknown")
         }
-#else
+        #else
         state = .failed("platform-unsupported")
         return .denied(reason: "Speech framework unavailable on this platform")
-#endif
+        #endif
     }
 
     // MARK: - Listening
 
     public func startListening() throws {
-#if canImport(Speech) && canImport(AVFAudio)
+        #if canImport(Speech) && canImport(AVFAudio)
         guard state == .ready || state == .idle else { return }
 
         let bcp47 = (locale == .auto ? Language.ko : locale).bcp47
@@ -126,7 +140,7 @@ public final class AudioInputManager: NSObject {
         self.recognizer = recognizer
 
         let request = SFSpeechAudioBufferRecognitionRequest()
-        request.requiresOnDeviceRecognition = true        // NO-CLOUD INVARIANT
+        request.requiresOnDeviceRecognition = true  // NO-CLOUD INVARIANT
         request.shouldReportPartialResults = true
         self.request = request
 
@@ -159,18 +173,18 @@ public final class AudioInputManager: NSObject {
         }
 
         state = .listening(startedAt: Date())
-#else
+        #else
         throw EngineError.make(
             domain: SocraticErrorDomain.stt,
             code: .sttLocaleModelMissing,
             descriptionKO: "음성 프레임워크 사용 불가.",
             descriptionEN: "Speech framework unavailable."
         )
-#endif
+        #endif
     }
 
     public func stopListening() {
-#if canImport(Speech) && canImport(AVFAudio)
+        #if canImport(Speech) && canImport(AVFAudio)
         state = .finalizing
         request?.endAudio()
         audioEngine.inputNode.removeTap(onBus: 0)
@@ -180,6 +194,6 @@ public final class AudioInputManager: NSObject {
         task?.finish()
         // Result delivery happens asynchronously via the recognitionTask callback.
         state = .ready
-#endif
+        #endif
     }
 }
