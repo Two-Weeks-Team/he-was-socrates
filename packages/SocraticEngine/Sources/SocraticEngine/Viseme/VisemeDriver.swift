@@ -169,6 +169,28 @@ public final class VisemeDriver {
             audioClockMs = (ProcessInfo.processInfo.systemUptime - start) * 1000.0
         }
 
+        // Reduce Motion Tier 3 talking cue (viseme-best-practices.md §7.6 +
+        // WCAG 2.3.3 "Animation from Interactions"): when Reduce Motion is on
+        // AND an utterance is playing, swap REST ↔ AA on a 500 ms square wave
+        // instead of running phoneme-driven swaps. The user still sees the
+        // bust "talking" but at a non-phoneme cadence that won't trigger
+        // motion sensitivity. When playback isn't active, hold REST.
+        if reduceMotion {
+            let isSpeaking = playbackStartHostTime != nil
+            let target: VisemeID
+            if isSpeaking {
+                let halfCycles = Int(floor(audioClockMs / 500.0))
+                target = (halfCycles % 2 == 0) ? .AA : .REST
+            } else {
+                target = .REST
+            }
+            if target != currentViseme {
+                currentViseme = target
+                onVisemeChanged?(currentViseme)
+            }
+            return
+        }
+
         // Promote any scheduled viseme whose audio offset has been reached.
         while nextScheduleIndex < schedule.count {
             let next = schedule[nextScheduleIndex]

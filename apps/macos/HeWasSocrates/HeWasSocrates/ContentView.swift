@@ -125,6 +125,14 @@ final class SocraticAppViewModel: ObservableObject {
         guard !bootstrapStarted else { return }
         bootstrapStarted = true
 
+        // Apply system Reduce Motion at bootstrap. VisemeDriver runs the
+        // §7.6 Tier-3 talking cue (500 ms square wave) instead of phoneme-
+        // driven swaps when this is on. Re-evaluating on every utterance
+        // would be churn; users typically toggle this rarely.
+        coordinator.viseme.setReduceMotion(
+            NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        )
+
         loadProgressPoll = Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
