@@ -205,6 +205,35 @@ public actor GemmaService {
     /// Drop any cached ChatSession so the next `generate(...)` rebuilds it
     /// with whatever system prompt is passed in. Use when the host wants a
     /// clean slate (e.g. on `EngineCoordinator.shutdown()`).
+    // MARK: - Test seams (PR-ζ)
+    //
+    // `@testable import SocraticEngine` reaches these. Lets tests assert
+    // ChatSession lifecycle invariants without standing up a real
+    // mlx-swift-lm ModelContainer (which would require either a mock
+    // protocol that doesn't exist in the upstream library or shipping
+    // a 4 GB weights file in the test target).
+
+    /// `true` once a ChatSession has been built (lazy-init via
+    /// `ensureChatSession`). Drops back to `false` after `resetSession()`
+    /// or `warmup()` (per PR-γ contamination fix).
+    internal var _test_chatSessionExists: Bool {
+        #if canImport(MLXLLM)
+        return chatSession != nil
+        #else
+        return false
+        #endif
+    }
+
+    /// Per-session turn counter. Resets to 0 when a fresh ChatSession is
+    /// built (turn 21 boundary or after `resetSession()` / `warmup()`).
+    internal var _test_sessionTurnCount: Int {
+        #if canImport(MLXLLM)
+        return sessionTurnCount
+        #else
+        return 0
+        #endif
+    }
+
     public func resetSession() {
         #if canImport(MLXLLM)
         chatSession = nil

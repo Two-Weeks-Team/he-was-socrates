@@ -172,3 +172,16 @@ jobs:
         run: |
           test -x tools/oracles/rhubarb-1.14.0/rhubarb
           tools/oracles/rhubarb-1.14.0/rhubarb --version
+
+      - name: Sanity-check apple-phoneme-availability.json shape
+        # PR-ζ guard against empirical-probe artifact drift. The iter5
+        # SPEC delta + TTSManager pipeline comments depend on this JSON
+        # always carrying `verdict`, `voices`, and `fixtures` keys; if a
+        # contributor commits a malformed update this catches it.
+        run: |
+          set -e
+          FILE=runs/2026-05-05-spec/spec/apple-phoneme-availability.json
+          test -f "$FILE"
+          python3 -m json.tool "$FILE" >/dev/null
+          jq -e '.verdict and .voices and .fixtures' "$FILE" >/dev/null
+          echo "✓ apple-phoneme-availability.json shape ok"

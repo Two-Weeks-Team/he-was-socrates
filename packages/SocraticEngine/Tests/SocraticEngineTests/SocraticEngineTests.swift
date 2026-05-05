@@ -669,6 +669,40 @@ struct PerformanceCacheTests {
         }
     }
 
+    @Test func testFixtureUtterancesProduceCompleteSchedules() {
+        // PR-ζ: golden-style coverage. The test-fixture utterances pinned
+        // in `runs/2026-05-05-spec/spec/phoneme-viseme-map.json:_test_fixture_utterances`
+        // must each produce a non-empty JamoTimeline schedule that spans
+        // the full estimated TTS duration. If a future change to
+        // PhonemeMap or JamoTimeline drops fixtures into REST-only or
+        // produces gaps, this test fails before the regression ships.
+        let fixtures = [
+            "왜 어떤 노래는 들으면 우는지",
+            "얼음이 미끄러워요",
+            "그 노래를 처음 들은 건 누구와 함께였나요",
+            "이게 왜 trigger 되는지 모르겠어",
+            "내가 왜 이 decision을 미루지",
+        ]
+        for utter in fixtures {
+            let estimatedMs = TTSManager.estimateDurationMs(text: utter, language: .ko)
+            let schedule = JamoTimeline.buildSchedule(
+                text: utter,
+                totalDurationMs: estimatedMs
+            )
+            #expect(!schedule.isEmpty, "fixture '\(utter)' produced empty schedule")
+            #expect(schedule.first?.startMs == 0)
+            let actualEnd = schedule.last?.endMs ?? -1
+            #expect(
+                abs(actualEnd - estimatedMs) < 1.0,
+                "schedule end must equal totalDurationMs (within 1ms)"
+            )
+            // At least one viseme should NOT be REST — otherwise the bust
+            // would never move (regression detector for unmapped jamo).
+            let nonRestCount = schedule.filter { $0.viseme != .REST }.count
+            #expect(nonRestCount > 0, "fixture '\(utter)' yields all-REST schedule")
+        }
+    }
+
     @Test func phaseFailureKeyNamespaceIsStable() {
         // Stability bar — these strings are part of the cross-layer
         // contract between the engine (Phase.failed payloads) and the
@@ -697,6 +731,19 @@ struct PerformanceCacheTests {
             correlationId: UUID()
         )
         #expect(out.surfacedPastWonder == "stub-surface")
+    }
+
+    @Test func gemmaStubChatSessionStateRemainsEmpty() async {
+        // Stub mode does not touch ChatSession. After loadModel + warmup
+        // + a runTurn, the test seams must show no session was built.
+        let svc = GemmaService(mode: .stub)
+        try? await svc.loadModel()
+        await svc.warmup()
+        _ = try? await svc.runTurn(systemPrompt: SystemPrompt.composed, userTurn: "왜?")
+        let exists = await svc._test_chatSessionExists
+        let count = await svc._test_sessionTurnCount
+        #expect(exists == false)
+        #expect(count == 0)
     }
 
     @Test func gemmaWarmupOnStubIsNoOp() async {
