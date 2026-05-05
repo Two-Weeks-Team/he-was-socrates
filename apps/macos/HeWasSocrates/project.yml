@@ -19,7 +19,15 @@ configFiles:
 
 settings:
   base:
-    SWIFT_VERSION: "5.9"
+    # PR-κ F15: bumped from "5.9" to "6.1" so the app target compiles
+    # under the same strict-concurrency mode as the SocraticEngine
+    # package (Package.swift declares swift-tools-version: 6.1 and
+    # SWIFT_STRICT_CONCURRENCY: complete). Mismatched modes silently
+    # demote engine warnings to compile-time accepts in the app target,
+    # which masks real Sendable violations. Apple Swift evolution
+    # guidance + Swift Forums consensus is to align language modes
+    # across the same workspace once the engine is on 6.1.
+    SWIFT_VERSION: "6.1"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     GENERATE_INFOPLIST_FILE: NO
