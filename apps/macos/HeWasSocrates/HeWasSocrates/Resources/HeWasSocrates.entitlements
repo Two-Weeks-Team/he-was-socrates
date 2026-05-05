@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Sandbox per runs/2026-05-05-spec/spec/entitlements.plist.md
+	     and SC7-001 enumeration. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- NO-CLOUD INVARIANT — DO NOT ADD network entitlements. -->
+	<!-- com.apple.security.network.client = INTENTIONALLY ABSENT -->
+	<!-- com.apple.security.network.server = INTENTIONALLY ABSENT -->
+
+	<!-- Audio input for STT. -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+
+	<!-- User-selected file read-write (for wondering log JSON export only). -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+
+	<!-- Downloads folder (for ad-hoc export convenience). -->
+	<key>com.apple.security.files.downloads.read-write</key>
+	<true/>
+
+	<!-- Hardened runtime defaults. We deliberately do NOT set
+	     com.apple.security.cs.allow-jit so that the runtime stays as locked
+	     down as possible. MLX-Swift may need allow-unsigned-executable-memory
+	     for inference paths — verify at Phase 4 and revisit. -->
+
+	<!-- Apple Events: not needed (we don't drive other apps). -->
+
+	<!-- Hardware: GPU access is implicit via Metal/MLX, no entitlement
+	     required for inference. -->
+</dict>
+</plist>

@@ -73,3 +73,22 @@ logs/
 tmp/
 temp/
 .cache/
+
+# Build venv (ephemeral, regenerate via make assets)
+.venv-build/
+.venv/
+
+# Swift build artifacts (regenerable via `swift build`)
+**/.build/
+
+# PreviewForge plugin sentinel files (zero-byte, created by hooks)
+runs/.last-check.*
+
+# User-specific preview editor config (writable via /api/config)
+assets/.preview-config.json
+
+# Generated visualization PNGs (regenerable; HTML editor + canonical visemes are committed)
+assets/preview/*.png
+
+# Force-track the canonical asset manifest
+!assets/.build-manifest.json

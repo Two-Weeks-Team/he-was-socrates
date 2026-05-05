@@ -1,0 +1,230 @@
+{
+  "critic_id": "SC6",
+  "domain": "performance",
+  "phase": "PRE_AUTHOR",
+  "audit_target": "locked upstream artifacts (idea.spec.json + chosen_preview.json + design-approved.json + assets/SOURCE.md) — no openapi/spec author draft yet",
+  "scope_translation_note": "Standard SC6 lens (N+1 / pagination / cache / compression / connection pool) does not apply to a fully on-device macOS native app with zero network egress (RP M07 + idea.spec.json no_go: 'any cloud network call'). Translated to: cold-start latency, model loading, TTFT, frame-rate stability, RAM headroom, thermal throttling, GPU contention, audio routing latency, demo-day reliability checklist.",
+  "run_id": "2026-05-05-spec",
+  "captured_kst": "2026-05-05T15:35+09:00",
+  "severity_summary": {
+    "blocking": 5,
+    "high": 7,
+    "medium": 5,
+    "low": 2,
+    "total": 19
+  },
+  "findings": [
+    {
+      "id": "SC6-01",
+      "severity": "blocking",
+      "perf_axis": "ttft",
+      "where": "idea.spec.json#success_criteria.demo_day_metrics[0]: 'TTFT (time to first viseme): ≤ 8s on M2/M3, ≤ 12s on M1'",
+      "issue": "TTFT is undefined: does the budget start at user utterance-end, at app launch (cold), or at the moment the model is warm-loaded? Cold start on a 3.97 GB MLX-quantized E4B with macOS file-cache pressure is ~3–5 s for weight-load alone, plus ~0.5–1 s for KV-cache init, before any user input. If the budget includes app cold-start, 8 s on M2 base is unachievable. If the budget is post-warm only, the spec must say so and define the warm-up flow. Without this distinction, the metric is unfalsifiable and demo-day pass/fail is arbitrary.",
+      "evidence": "Apple MLX-Swift gemma-* loading benchmarks (community-reported): 3–5 s weight load on M2 base from warm filesystem cache, 5–8 s from cold disk. Korean utterance ~30–50 tokens × 80 tok/s ≈ 0.4–0.6 s decode. AVSpeechSynthesizer prepare ~0.3 s. espeak-ng dictionary lazy-load on first call ~0.1–0.2 s. Speech framework end-of-utterance debounce ~1.5–2.5 s (industry default). Sum if cold: 5+1+2+0.5+0.3+0.2 = ~9 s before viseme #1 — already over budget on M2 base before any margin.",
+      "recommended_target_or_action": "Split the metric into three numbers: (a) cold app-launch to ready-prompt UI ≤ 6 s on M2, (b) warm TTFT (utterance-end → first viseme) ≤ 4 s on M2, (c) warm TTFT ≤ 6 s on M1 (gracefully degraded). Treat the demo-day target as warm only; mandate a splash/preload phase on app launch.",
+      "spec_action_required": "SPEC.md must (i) define a 'TTFT phase diagram' (utterance-end → STT-finalize → mode_classify dispatch → ask_back inference → g2p → first viseme PNG paint) with per-stage budgets that sum to ≤ warm TTFT; (ii) declare warm vs cold distinction and which is the demo-day metric; (iii) specify model preload at app launch behind splash.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-02",
+      "severity": "blocking",
+      "perf_axis": "hardware_matrix",
+      "where": "idea.spec.json#success_criteria.demo_day_metrics[0] 'M2/M3' is too coarse",
+      "issue": "M2 family spans 5+ chips (M2, M2 Pro, M2 Max, M2 Ultra, M2 in MacBook Air) with ~2× spread in inference throughput AND a binary cooling distinction (Air = fanless, Pro/Mini/Studio = active cooling). Sustained 5-min E4B Q4 inference on a fanless MacBook Air will thermal-throttle by minute 3, dropping tok/s ~30–50%, which directly inflates TTFT for later turns. The spec currently allows demo-day on a MacBook Air, which is the highest-risk Apple Silicon SKU for this workload.",
+      "evidence": "Public M2 Air thermal benchmarks (Notebookcheck, Andrei Frumusanu reviews): sustained GPU + Neural Engine load at 100% degrades to 60–70% of peak after ~3 min. The video script targets 3 min total demo, which is on the edge of the throttle window — a single retake during shooting overruns it.",
+      "recommended_target_or_action": "Declare a demo-day hardware matrix: REQUIRED = MacBook Pro M2 Pro/Max OR Mac mini M2/M2 Pro OR Mac Studio (all actively cooled, ≥ 16 GB unified memory, ≥ 256 GB free disk). DEGRADED = MacBook Air M2 (warn-only, smaller TTFT margin). UNSUPPORTED = M1 8 GB, any Intel.",
+      "spec_action_required": "SPEC.md 'Hardware Support Matrix' section with REQUIRED/DEGRADED/UNSUPPORTED tiers, per-tier TTFT targets, and demo-day rehearsal mandate on REQUIRED tier with a backup machine of identical config.",
+      "owner_when_addressed": "spec-author + hardware-owner (Two-Weeks-Team)"
+    },
+    {
+      "id": "SC6-03",
+      "severity": "blocking",
+      "perf_axis": "ram",
+      "where": "idea.spec.json#ai_capability_required.load_bearing_features[1]: '256K context — multi-year wondering log compression and selective injection'",
+      "issue": "M01 is locked load-bearing, but a literal 256K-token KV cache for E4B at FP16 dominates RAM well above the model weights. Rough math: E4B has ~32 layers, hidden ~2304, KV-heads ~4, head-dim ~256; at 256K tokens × 32 × 2 (K+V) × 4 × 256 × 2 bytes ≈ 8.6 GB KV alone, on top of 3.97 GB weights → ~12.5 GB working set before macOS overhead. This OOMs every 8 GB Mac and stresses 16 GB Macs. Even with FP8/INT4 KV quantization (~2.1 GB) the total approaches 6 GB before macOS. The 'multi-year wondering log directly injected' framing is likely infeasible on consumer M2 hardware and must be revised to 'compressed summary + selective recall via surface_past_wonder' — which is what the function-call schema already implies, but the text in idea.spec.json contradicts it.",
+      "evidence": "MLX-Swift KV cache memory model (public Apple sample: mlx-swift-examples LLMEval). Apple Silicon unified memory: ML workloads compete with WindowServer + display compositor; macOS aborts processes exceeding ~70–75% of physical RAM under sustained pressure.",
+      "recommended_target_or_action": "Revise M01 wording from '256K context — multi-year wondering log direct injection' to '256K context CAPABILITY enables long-summary recall via surface_past_wonder; live context window cap = 32K tokens; older entries compressed to ≤200-char summaries (matches Wonder.thinkingTraceCompressed pattern in design-approved.json line 84).' Declare KV cache dtype, max live tokens, and RAM ceiling.",
+      "spec_action_required": "SPEC.md must declare: (a) live context budget per turn (e.g. 32K tokens), (b) KV cache dtype (recommend INT8 minimum), (c) RAM ceiling at peak inference (target ≤ 7 GB on 16 GB Mac), (d) compression strategy for the wondering log (semantic clusters + 200-char summaries), (e) how M01 ablation table demonstrates 256K is load-bearing without claiming all tokens are live.",
+      "owner_when_addressed": "spec-author + spec-lead (touches M01 mitigation wording)"
+    },
+    {
+      "id": "SC6-04",
+      "severity": "blocking",
+      "perf_axis": "drift",
+      "where": "idea.spec.json#success_criteria.demo_day_metrics[1]: 'viseme-audio drift: ≤ 50ms RMS' vs assets/SOURCE.md line 53–54 (heavy beard occlusion)",
+      "issue": "50 ms RMS is loose for film/TV (typical ≤40 ms hard, ≤25 ms target) and worse for a closeup-bust UI where the beard occludes most lip motion (per SOURCE.md). Small mouth-aperture deltas with a static surrounding beard make drift MORE perceivable, not less — the eye locks onto the only moving region. Demo-day video on YouTube will read this as 'the lips are off' even at 40 ms. Without a tighter target, video judges may score storytelling lower.",
+      "evidence": "ATSC IS-191 broadcast lip-sync tolerance: ±15 ms lead, ±45 ms lag; SMPTE RP 168: ±22 ms; user-perception studies (Steinmetz 1996): noticeable at ~80 ms for normal scenes, ~40 ms for closeups. SOURCE.md line 49–54 explicitly flags the beard-occlusion intensification.",
+      "recommended_target_or_action": "Tighten demo-day target to ≤ 30 ms RMS for the YouTube video; allow ≤ 50 ms RMS only as DEGRADED-tier hardware fallback. Add a per-utterance maximum drift bound (e.g. ≤ 80 ms peak, never beyond) so transient spikes don't average away.",
+      "spec_action_required": "SPEC.md must restate drift as RMS ≤ 30 ms AND peak ≤ 80 ms; define re-anchor strategy (sync at every word boundary using AVSpeechSynthesizer's willSpeakRangeOfSpeechString delegate or phoneme delegate timestamps) so drift cannot accumulate over a 30-token Korean utterance.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-05",
+      "severity": "blocking",
+      "perf_axis": "cold_start",
+      "where": "design-approved.json#design_tokens.motion.fullscreen_fade_in_ms = 800 vs idea.spec.json TTFT framing",
+      "issue": "Cold app-launch must load 3.97 GB MLX weights, initialize Speech framework + AVSpeechSynthesizer + espeak-ng dictionaries, prepare viseme texture atlas, and compose the fullscreen black-fade. On an M2 with cold filesystem cache this realistically takes 5–8 s. The 800 ms fullscreen_fade_in is a rendering animation, not a model-load budget. Without an explicit splash/preload UX spec, the user will see a frozen Dock-bouncing icon for 5+ seconds — which (a) breaks the 'menu bar disappears' M04 OfflineProofBadge cold-open in the video, and (b) violates basic macOS HIG launch perception standards.",
+      "evidence": "Apple HIG 'Launching': apps should show a window within ~1 s. AppKit + SwiftUI launch sequence with a 4 GB resource load will not meet this without explicit splash. Video script (design-approved.json line 106) frames 0:00–0:10 as 'fade-in + menu-bar disappearing' — timing impossible if model is loaded in this window.",
+      "recommended_target_or_action": "Mandate a 2-stage launch: (1) instant splash with Socratic bust silhouette + 'preparing to listen' caption (≤ 500 ms to first paint), (2) async model-load with progress indicator ≤ 6 s on M2, (3) only then begin fullscreen-fade-in 800 ms transition to ready state. Allow user-initiated cancel at stage 2 (intersects SC1 a11y).",
+      "spec_action_required": "SPEC.md must define the launch state machine (Splash → Preloading → Ready → Listening → Thinking → Speaking → Idle) with time budgets per transition. Video script must be revised to either start mid-warm (assume preload happened off-camera) or include a deliberate 'preparing' beat in 0:00–0:10.",
+      "owner_when_addressed": "spec-author + video-script owner"
+    },
+    {
+      "id": "SC6-06",
+      "severity": "high",
+      "perf_axis": "thermal",
+      "where": "design-approved.json#video_script_skeleton (3 min runtime) + sustained MLX inference + 30 fps render + Speech recognizer",
+      "issue": "Sustained concurrent load on Apple Silicon (GPU for MLX inference + GPU for Metal viseme compositing + Neural Engine for Speech framework + CPU for AVSpeechSynthesizer + audio I/O) will engage thermal management on any fanless Mac. The video shoot likely needs multiple takes — by take 3, throttling kicks in and TTFT silently inflates by 30–50%, breaking the demo metric on what should be a controlled shoot.",
+      "evidence": "Apple powermetrics on M2 Air during sustained ML load: package power 18 W → ~22 W peak → throttle to 12 W at ~ 3 min. M2 Pro MacBook Pro 14\": stable at ~30 W indefinitely. Mac mini M2: stable indefinitely.",
+      "recommended_target_or_action": "Mandate active-cooled Mac (Mac mini M2 or MBP M2 Pro+) for the demo shoot AND for any reviewer who reproduces locally. Add a runtime thermal monitor (NSProcessInfo.thermalState) — if 'serious' or worse is reached during a session, log it to demo-day reliability output and surface a soft warning.",
+      "spec_action_required": "SPEC.md 'Thermal management' subsection: declare hardware tier requirement, code-side thermal-state observer, and demo-day cooldown protocol between takes (≥ 2 min idle).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-07",
+      "severity": "high",
+      "perf_axis": "fps",
+      "where": "design-approved.json#design_tokens.motion.viseme_swap_fps = 30 + viseme_crossfade_ms = 0",
+      "issue": "30 fps frame-swap of 16 PNG visemes is trivial CPU/GPU on its own (~33 ms/frame, well within 16.7 ms ProMotion budget). HOWEVER: viseme rendering shares the GPU with MLX inference (which runs on Apple Silicon GPU/ANE, not CPU). When ask_back is generating tokens for the NEXT turn while the current utterance is still speaking, GPU contention causes frame-pacing jitter — measurable as drift spikes. Spec is silent on GPU scheduling. Additionally, crossfade=0 produces a hard pop on the painterly portrait (per SOURCE.md the painterly style emphasizes any discontinuity); it's a polish-vs-perf tension that should be acknowledged, not assumed.",
+      "evidence": "MLX-Swift on Apple Silicon uses Metal compute; SwiftUI Image swaps go through CoreAnimation render server. Both contend for the same GPU command queue under load. Frame-pacing tools (Instruments → Animation Hitches) show jitter when ML compute is co-resident.",
+      "recommended_target_or_action": "Spec must (a) declare that viseme paint runs on the display refresh phase via CADisplayLink and MLX inference must NOT be initiated mid-utterance (only between utterances), (b) consider a 16 ms crossfade as a cheap polish win (~0 GPU cost, hides discontinuity on painterly faces), (c) target real frame-pacing metric: ≤ 1 dropped frame per 5-second utterance, not just 'no drop'.",
+      "spec_action_required": "SPEC.md 'Render pipeline' section: GPU scheduling rules, prohibition on overlapping inference + active speech, frame-pacing measurement methodology, crossfade revisit decision (keep 0 or move to 16 ms with rationale).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-08",
+      "severity": "high",
+      "perf_axis": "ttft",
+      "where": "chosen_preview.json#stack_decisions_locked.stt = 'macOS Speech framework (SFSpeechRecognizer, on-device only)'",
+      "issue": "SFSpeechRecognizer's natural end-of-utterance debounce is ~1.5–2.5 s of trailing silence. This adds directly to perceived TTFT — a 4-s warm inference becomes a 6-s perceived response, breaking the conversational illusion of 'listening Socrates.' For demo-day metrics to reflect what users actually feel, the spec must define an explicit end-of-turn trigger that is faster than the system default.",
+      "evidence": "AVAudioEngine + SFSpeechRecognizer documented behavior; community measurements show ~1.8 s default. Apple's own Dictation has the same lag and is widely complained-about.",
+      "recommended_target_or_action": "Choose ONE of: (a) push-to-talk via spacebar (simplest, most reliable for demo), (b) custom VAD with 600–800 ms silence threshold layered on top of partial transcripts from SFSpeechRecognizer, (c) Speech framework's contextualStrings + shouldReportPartialResults true with manual finalize. Recommend (a) for demo-day reliability, (b) for shipped product.",
+      "spec_action_required": "SPEC.md 'End-of-turn detection' subsection: define trigger mechanism, latency budget (target ≤ 800 ms post-final-syllable), demo-day default (push-to-talk acceptable), shipped-product default (VAD or hold-to-talk).",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-09",
+      "severity": "high",
+      "perf_axis": "model_load",
+      "where": "idea.spec.json#ai_capability_required.runtime = 'MLX-Swift on Apple Silicon'",
+      "issue": "First-launch cold disk read of 3.97 GB MLX safetensors from /Applications bundle (or app sandbox container) will trigger macOS Spotlight indexing on the file, mds_stores can take 10–30 % CPU for ~30 s, and Gatekeeper will scan the bundle on first run (notarized DMG path: idea.spec.json#distribution.primary). The combination 'first cold launch on a fresh DMG install' will be much slower than the rehearsed second-launch case. If demo-day judges download the DMG and click it for the first time, they get the worst-case experience.",
+      "evidence": "macOS Gatekeeper assessment on first launch of a notarized binary: ~3–8 s for a large bundle. Spotlight (mdimporter) indexing of new files in ~/Applications: continues for 30+ s after install. AppleScript: spctl assessments are repeated on app updates.",
+      "recommended_target_or_action": "Spec a first-launch-vs-subsequent-launch distinction. Demo-day strategy: pre-install on the demo Mac and run once before the camera rolls. For DMG distribution: include a README warning judges to launch once and wait 30 s before the timed demo.",
+      "spec_action_required": "SPEC.md 'First-launch behavior' subsection: declare expected first-launch additional latency (~10–20 s on top of cold), demo-day rehearsal mandate, README guidance for downloaders.",
+      "owner_when_addressed": "spec-author + distribution owner"
+    },
+    {
+      "id": "SC6-10",
+      "severity": "high",
+      "perf_axis": "drift",
+      "where": "chosen_preview.json#stack_decisions_locked.tts = 'AVSpeechSynthesizer (system voices)' + lip_sync = '16-viseme set, g2p via espeak-ng or built-in'",
+      "issue": "The viseme-to-audio sync source is ambiguous. Two approaches exist: (1) drive visemes from AVSpeechSynthesizer's willSpeakRangeOfSpeechString delegate (word-boundary timestamps, accurate but only word-grain), (2) drive visemes from espeak-ng phoneme stream (phoneme-grain, but espeak's timing may not match Apple's TTS engine). Mixing them = drift. Spec must commit to one as the timing master.",
+      "evidence": "AVSpeechSynthesizer phoneme delegate (speechSynthesizer:willSpeakPhoneme:atIndex:) was deprecated/removed in some macOS versions; the public stable delegate is willSpeakRangeOfSpeechString (word-grain). espeak-ng generates phoneme + duration list pre-synthesis — but Apple's voices have their own prosody and won't follow espeak's durations.",
+      "recommended_target_or_action": "Commit to AVSpeechSynthesizer willSpeakRangeOfSpeechString as the timing master; use espeak-ng only for ahead-of-time phoneme→viseme MAPPING, not timing. Within each word's time-slice, interpolate visemes by phoneme proportion. Add a per-word re-sync gate (drop or duplicate one frame to resync if drift > 30 ms).",
+      "spec_action_required": "SPEC.md 'Viseme timing source' subsection: commit to single timing master, document interpolation algorithm within word boundaries, declare per-word re-anchor.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-11",
+      "severity": "high",
+      "perf_axis": "disk",
+      "where": "idea.spec.json#distribution.primary = 'Direct DMG download (notarized)' + 3.97 GB model + 16 viseme PNGs",
+      "issue": "DMG file size and code-signing budget. A 3.97 GB Q4 model + Swift binary + viseme assets + espeak-ng data will produce a ~4.2–4.5 GB DMG. Notarization upload to Apple takes ~5–15 min for a bundle this size, with size-based throttling. Hackathon submission deadline 2026-05-19 — cutting notarization close = blocking. Also: judge download time on conference Wi-Fi (~10–50 Mbps) = 12–60 min. If judges open the YouTube video instead of downloading, the live_demo arm of distribution is moot.",
+      "evidence": "Apple notary service typical turnaround for 4 GB bundle: 8–20 min. 4.5 GB at 10 Mbps = ~60 min download.",
+      "recommended_target_or_action": "(a) Build and notarize a draft DMG by W2 Tuesday (May 12) so submission isn't last-minute. (b) Spec a model-download-on-first-launch fallback: ship a small (~50 MB) launcher app that fetches the model from a pinned URL on first launch. BUT this conflicts with idea.spec.json no_go: 'any external dependency that requires runtime download from a non-Apple source' — so option (b) is forbidden. Therefore (a) is mandatory. (c) Provide both DMG and YouTube as primary judge paths.",
+      "spec_action_required": "SPEC.md 'Distribution build pipeline' subsection: notarization deadline = W2 mid-week, DMG size budget, pre-flight checklist (codesign --verify, spctl --assess, notarytool log review).",
+      "owner_when_addressed": "spec-author + distribution owner"
+    },
+    {
+      "id": "SC6-12",
+      "severity": "high",
+      "perf_axis": "model_load",
+      "where": "chosen_preview.json#stack_decisions_locked.stt = 'macOS Speech framework' — Korean on-device locale model",
+      "issue": "On-device Korean speech recognition requires the user to have separately downloaded Apple's Korean speech model in System Settings → Keyboard → Dictation (~200 MB). It is NOT bundled with macOS by default in fresh installs, and is NOT something the app can install for the user. If the demo Mac doesn't have it pre-downloaded, the Korean utterances in video script (0:30, 1:20) silently fall back to network dictation — which violates M07 'no cloud network call' and M04 'OfflineProofBadge 0 KB sent'. This is a demo-day reliability landmine that has already broken at least one similar Apple-Speech-based macOS app I've seen at hackathons.",
+      "evidence": "Apple Documentation: SFSpeechRecognizer.supportsOnDeviceRecognition + SFSpeechRecognizer.requiresOnDeviceRecognition. macOS Settings: Dictation toggle 'On-Device Mode' — must be downloaded per locale.",
+      "recommended_target_or_action": "(a) On app launch, check SFSpeechRecognizer(locale: 'ko-KR').supportsOnDeviceRecognition; if false, block startup with a guided dialog linking to System Settings. (b) Force requiresOnDeviceRecognition = true on the SFSpeechRecognitionRequest so any fallback to cloud is blocked at the API level (will produce an error rather than silently leaking). (c) Demo-day rehearsal must include a 'fresh user' check: a Mac that has never used Korean dictation.",
+      "spec_action_required": "SPEC.md 'Speech locale model dependency' subsection: detection logic, user prompt UX, requiresOnDeviceRecognition = true mandate, demo-day pre-flight check.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-13",
+      "severity": "medium",
+      "perf_axis": "model_load",
+      "where": "chosen_preview.json#stack_decisions_locked.tts = 'AVSpeechSynthesizer (system voices: Korean Yuna/Heami, English Samantha/Alex)'",
+      "issue": "Same dependency-on-user-system pattern as the speech locale model: enhanced/premium voices (Yuna, Samantha Enhanced) are downloaded on demand from System Settings → Accessibility → Spoken Content → Voices. Default Korean voice may be the older 'compact' Yuna which sounds robotic and degrades the painterly bust illusion. App cannot install voices for the user.",
+      "evidence": "AVSpeechSynthesizer voice availability: AVSpeechSynthesisVoice.speechVoices() filtered by quality; AVSpeechSynthesisVoiceQuality.enhanced + .premium require user download.",
+      "recommended_target_or_action": "On launch, enumerate AVSpeechSynthesisVoice.speechVoices() and check if a non-default (enhanced or premium) voice is available for the active locale. If only default-quality, surface a one-time 'For best experience, download enhanced voice X' panel with deep-link to System Settings.",
+      "spec_action_required": "SPEC.md 'TTS voice quality fallback' subsection: detection, user-prompt UX, recorded fallback behavior. Intersects SC4 i18n.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-14",
+      "severity": "medium",
+      "perf_axis": "thermal",
+      "where": "idea.spec.json#success_criteria.user_outcome_metrics.session_length = 'median ≥ 4 minutes'",
+      "issue": "If users actually achieve median 4-minute sessions, fanless Macs will throttle inside that window. Per-turn TTFT will silently degrade for the user's 5th–10th turns vs the 1st turn. Demo metric measures only the first interaction; user-reported outcome will differ.",
+      "evidence": "Same as SC6-06 thermal data.",
+      "recommended_target_or_action": "Track per-turn TTFT in shipped app (locally only, no telemetry per RP M07) and surface in a debug overlay that demo videos can show. Add throttle-aware adaptive degradation: if NSProcessInfo.thermalState ≥ .serious, reduce viseme fps to 24, defer surface_past_wonder calls, prefer shorter ask_back outputs.",
+      "spec_action_required": "SPEC.md 'Thermal-adaptive degradation' subsection.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-15",
+      "severity": "medium",
+      "perf_axis": "drift",
+      "where": "chosen_preview.json#stack_decisions_locked: TTS pathway via AVSpeechSynthesizer + AirPods/Bluetooth audio output possibility",
+      "issue": "If the user's default audio output is AirPods or any Bluetooth device, A2DP/AAC adds 100–250 ms latency between AVSpeechSynthesizer 'word-spoken' delegate firing and the user actually hearing the syllable. Visemes painted at the delegate timestamp will visibly lead the audio by that much, blowing through the 30 ms drift target. Wired/built-in audio = ~5–15 ms delay (acceptable).",
+      "evidence": "Apple Bluetooth A2DP latency documented at ~150–220 ms typical; AAC profile lower but not zero. AVAudioSession.sharedInstance().outputLatency is the Apple-blessed query.",
+      "recommended_target_or_action": "Detect output device latency via AVAudioSession.outputLatency on session start; if > 50 ms, either (a) shift viseme schedule by that latency (cheap, fixes the issue), or (b) warn user and disable lip-sync (degrade to static face). Demo-day mandate: built-in speakers or wired output only, no AirPods.",
+      "spec_action_required": "SPEC.md 'Audio output latency compensation' subsection.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-16",
+      "severity": "medium",
+      "perf_axis": "ram",
+      "where": "design-approved.json#core_data_schema_initial.Wonder + 256K wondering log claim",
+      "issue": "Core Data schema is fine for a year of data (small footprint). But: Wonder.thinkingTraceCompressed (≤200 chars) is the only context-compression mechanism specified, and there's no spec for how the 'multi-year' log gets into the live 32K context window without exploding it. Without a retrieval/ranking layer (semantic similarity over SemanticTag.embeddingHash), surface_past_wonder will either inject everything (OOM) or inject randomly (looks broken in the 14-month time-jump scene).",
+      "evidence": "design-approved.json line 88–94 SemanticTag has embeddingHash but no embedding generator is specified, and no similarity-search mechanism over Core Data.",
+      "recommended_target_or_action": "Spec the retrieval pathway: generate embeddings via an on-device sentence-transformer (Apple's NLEmbedding or a small MLX embedding model — must be load-bearing-feature checked). Top-K=3 cosine over Wonder.embeddingHash → inject top-1 summary into ask_back context. Budget retrieval ≤ 100 ms, embedding generation ≤ 50 ms.",
+      "spec_action_required": "SPEC.md 'Wondering log retrieval' subsection: embedding model choice, similarity metric, top-K, latency budget. Intersects SC2 function-call API.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-17",
+      "severity": "medium",
+      "perf_axis": "cold_start",
+      "where": "out_of_scope_v1 + crash recovery (not addressed anywhere)",
+      "issue": "If the app crashes during a session (likely during demo-day rehearsals), there's no spec for resume behavior. Re-launching from cold = 5–8 s × 2 (relaunch + reload) = 16 s of dead air on stage. RTO target undefined.",
+      "evidence": "No mention in any locked artifact of crash recovery, session persistence, or auto-resume.",
+      "recommended_target_or_action": "Spec RTO from crash ≤ 10 s on M2 Pro, achieved via: (a) MLX model-cache reuse if process re-launches within 60 s (mmap-resident on macOS may help), (b) Session.endedAt = nil sentinel for in-progress session, resume to last Wonder. Demo-day reliability checklist: practice a graceful crash-recovery scenario.",
+      "spec_action_required": "SPEC.md 'Crash recovery & RTO' subsection.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-18",
+      "severity": "low",
+      "perf_axis": "other",
+      "where": "design-approved.json#design_tokens.viseme_set.g2p_engine_primary = 'espeak-ng'",
+      "issue": "espeak-ng startup loads dictionary files on first call (~50–100 ms), and each new locale adds ~30 ms. Korean phoneme rules in espeak-ng are documented as approximate. For Korean 'ㅡ/ㅓ/ㅗ' distinctions, espeak's mapping is coarser than Apple's TTS phoneme model — minor but can cause viseme miscategorization on long Korean words.",
+      "evidence": "espeak-ng community issue tracker has open Korean accuracy issues; it's listed as 'incomplete' for Korean prosody.",
+      "recommended_target_or_action": "Warm-load espeak-ng on app launch (call once with dummy phrase to load dictionaries). For Korean, spot-check the phoneme→viseme map against the 30-token demo utterances; adjust phoneme-viseme-map.json if any cluster mismaps.",
+      "spec_action_required": "SPEC.md 'g2p warm-up' subsection + phoneme-viseme-map.json validation step in build pipeline.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC6-19",
+      "severity": "low",
+      "perf_axis": "other",
+      "where": "demo-day reliability checklist (does not yet exist as a deliverable)",
+      "issue": "The SC6 mandate explicitly includes a 'demo-day reliability checklist' but no artifact-template exists. Without a written checklist, pre-shoot prep will be ad-hoc and forgettable.",
+      "evidence": "design-approved.json#specdd_critic_assignment.SC6_performance text mentions it but doesn't bind it to a file.",
+      "recommended_target_or_action": "Spec-author should produce spec/demo-day-reliability.md with concrete pre-flight items. Suggested contents: (i) Hardware: Mac model + chip + RAM + macOS version recorded; (ii) Disk: ≥ 50 GB free, Spotlight quiet (no recent indexing); (iii) Voices: enhanced Yuna + enhanced Samantha downloaded; (iv) Speech locale model: Korean on-device downloaded, on-device-only flag verified; (v) Network: Airplane mode ON, Wi-Fi off, Ethernet unplugged (M04 OfflineProofBadge); (vi) Power: plugged in, battery ≥ 80 % anyway; (vii) Audio output: built-in speakers or wired only, AirPods OFF; (viii) Microphone: tested with the demo phrases at intended distance; (ix) Activity Monitor baseline: idle CPU < 5 %, RAM available > 4 GB, no concurrent ML processes; (x) App: installed, launched once cold, second-launch warm path used for shoot; (xi) Backup machine: identical config, also pre-flighted; (xii) Sample utterances: KO + EN, 2 personas, 14-month time-jump scenario rehearsed end-to-end ≥ 2 times; (xiii) Recording: screen recorder NOT competing for GPU (Activity Monitor before record); (xiv) Crash plan: if hang > 10 s, what's the recovery action on camera. Also: produce spec/performance-test-suite.md with reproducible measurement methodology for TTFT, drift RMS, and frame-pacing — to make demo-day metrics falsifiable.",
+      "spec_action_required": "Two new files: spec/demo-day-reliability.md (checklist above) and spec/performance-test-suite.md (measurement methodology).",
+      "owner_when_addressed": "spec-author"
+    }
+  ],
+  "approval": "changes_requested",
+  "approval_rationale": "Five blocking findings (SC6-01 TTFT phase undefined, SC6-02 hardware matrix too coarse, SC6-03 256K context literal infeasibility, SC6-04 drift target too loose for occluded face, SC6-05 launch state machine missing) each independently put demo-day metrics at risk of being unmeasurable or unachievable. None require an architectural pivot — all are spec clarifications and additions to the upcoming SPEC.md. Addressable in a single spec-author iteration. The 7 high-severity items cluster around the same core gap: the upstream artifacts assume a happy-path performance profile without specifying the runtime conditions that would deliver it.",
+  "summary_for_lead": "5 blocking, 7 high, 5 medium, 2 low (19 total). Top blockers all converge on the same root cause: demo_day_metrics in idea.spec.json are stated as numbers without specifying the runtime conditions (cold vs warm, hardware tier, KV cache config, audio output device, occlusion-adjusted drift) under which they are measurable. Recommend spec-author treat the v1 SPEC.md as binding these conditions explicitly, and produce two ancillary files (spec/demo-day-reliability.md + spec/performance-test-suite.md) so demo-day pass/fail is falsifiable and reproducible. M01 256K-context wording in idea.spec.json should be revised in coordination with spec-lead to reflect compressed-recall reality rather than literal 256K-live-tokens injection."
+}

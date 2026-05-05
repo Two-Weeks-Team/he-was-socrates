@@ -1,0 +1,44 @@
+{
+  "critic_id": "SC6",
+  "domain": "performance",
+  "audit_phase": "iter-1 (post-author re-review)",
+  "audited_at_kst": "2026-05-05T17:05+09:00",
+  "delta_vs_pre_audit": { "blocking_was": 5, "blocking_now": 0, "high_was": 7, "high_now": 0, "medium_was": 5, "medium_now": 1, "low_was": 2, "low_now": 0 },
+  "resolutions": [
+    { "id": "SC6-01", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "performance-test-suite.md §1 TTFT phase diagram (Δ1..Δ5); cold vs warm distinction; warm-only is the demo metric." },
+    { "id": "SC6-02", "previous_severity": "blocking", "current_severity": "resolved_pending_user_(c)", "evidence": "L4 + SPEC.md §5 Hardware Tier matrix; demo-day-reliability.md §1 REQUIRED tier checklist. User escalation (c) confirms before video shoot." },
+    { "id": "SC6-03", "previous_severity": "blocking", "current_severity": "resolved_pending_user_(b)", "evidence": "L3 + DELTA-03 + SPEC.md §2.1 reframed M01: 32K live, INT8 KV, ≤7 GB peak. User escalation (b) confirms wording." },
+    { "id": "SC6-04", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "L7 + DELTA-04 + SPEC.md §4.3: ≤30 ms RMS within segment, ≤80 ms peak. performance-test-suite.md §2 measurement methodology." },
+    { "id": "SC6-05", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "performance-test-suite.md §1 launch state machine (Splash→Preloading→Ready→...). SPEC.md §13.2 video-script reframe so 0:00-0:10 beat starts post-warm." },
+    { "id": "SC6-06", "previous_severity": "high", "current_severity": "resolved", "evidence": "L4 active-cooled mandate; demo-day-reliability.md §9 cooldown protocol; error-catalog.md Model.ThermalThrottle.Warning." },
+    { "id": "SC6-07", "previous_severity": "high", "current_severity": "resolved", "evidence": "performance-test-suite.md §3 frame-pacing methodology + DELTA-06 16ms crossfade; SPEC.md §4.3 'forbid initiating MLX inference while AVSpeechSynthesizer mid-utterance'." },
+    { "id": "SC6-08", "previous_severity": "high", "current_severity": "resolved", "evidence": "performance-test-suite.md §4 + SPEC.md §4.1: push-to-talk via Space for demo-day default." },
+    { "id": "SC6-09", "previous_severity": "high", "current_severity": "resolved", "evidence": "demo-day-reliability.md §6 'first cold launch performed at least 30 minutes before recording (lets Spotlight/Gatekeeper finish)'; second-launch warm path used for shoot. README guidance to be authored." },
+    { "id": "SC6-10", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §4.3 timing master = AVSpeechSynthesizer willSpeakRangeOfSpeechString delegate; espeak-ng dropped (L2). phoneme-viseme-map.json provides phoneme→viseme mapping; per-word re-anchor." },
+    { "id": "SC6-11", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §11.15 + entitlements.plist.md §6 codesign+notarize recipe; W2 mid-week deadline. ODR option for MAS." },
+    { "id": "SC6-12", "previous_severity": "high", "current_severity": "resolved", "evidence": "performance-test-suite.md §5 dictation language pack probe; demo-day-reliability.md §2 + error-catalog.md STT.OnDeviceModelMissing.{ko_KR|en_US}." },
+    { "id": "SC6-13", "previous_severity": "medium", "current_severity": "resolved", "evidence": "performance-test-suite.md §6 voice probe + fallback chain + degraded mode; demo-day-reliability.md §2 voice download checklist." },
+    { "id": "SC6-14", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §5 thermal-adaptive degradation; error-catalog.md Model.ThermalThrottle.Warning steps (fps→24, defer surface_past_wonder)." },
+    { "id": "SC6-15", "previous_severity": "medium", "current_severity": "resolved", "evidence": "performance-test-suite.md §7 audio output latency compensation (shift viseme by latency); demo-day-reliability.md §4 wired/built-in only." },
+    { "id": "SC6-16", "previous_severity": "medium", "current_severity": "resolved", "evidence": "performance-test-suite.md §8 wondering log retrieval: NLEmbedding for MVP, top-K=3, latency budgets. SC7-014 reconciliation note about parallel embedding cache (one-way SHA for export safety; vectors for local search)." },
+    { "id": "SC6-17", "previous_severity": "medium", "current_severity": "resolved", "evidence": "performance-test-suite.md §9 crash recovery RTO ≤10 s on M2 Pro; coredata-model.md §2.2 Session.endedAt=nil sentinel + recoveryReason." },
+    { "id": "SC6-18", "previous_severity": "low", "current_severity": "resolved_obsoleted_by_L2", "evidence": "espeak-ng dropped entirely; warm-up concern moot. AVSpeechSynthesizer phoneme delegate has no equivalent dictionary-load cost." },
+    { "id": "SC6-19", "previous_severity": "low", "current_severity": "resolved", "evidence": "demo-day-reliability.md authored with 14-section checklist + recorded values; performance-test-suite.md authored with measurement methodology." }
+  ],
+  "new_findings_iter1": [
+    {
+      "id": "SC6-NEW-001",
+      "severity": "medium",
+      "where": "performance-test-suite.md §1 TTFT phase budgets",
+      "issue": "Δ3 budget for ask_back to first sentence + surface_past_wonder is ≤1800 ms (M2 Pro) but assumes the two run in parallel and the slower (ask_back) defines the bound. If ask_back stalls > Δ3 budget, SPEC.md §3.3 step 7 says 'append surface_past_wonder.connector_phrasing at next sentence boundary if relevant' — but if ask_back is stalling there is NO next sentence boundary. The orchestrator should either (a) emit surface_past_wonder result first as a standalone utterance, or (b) timeout-and-skip surface_past_wonder. Spec doesn't say.",
+      "spec_action_required": "SPEC.md §3.3 + performance-test-suite.md §1: 'If ask_back exceeds soft-timeout (15 s on M2/M3) BEFORE first sentence boundary, orchestrator emits surface_past_wonder.connector_phrasing as a standalone utterance to maintain conversational presence; ask_back is allowed an additional 30 s before hard-timeout.' One-paragraph addition.",
+      "owner_when_addressed": "spec-author iter-2 (low cost)"
+    }
+  ],
+  "approval": "approve",
+  "approval_rationale": "All 5 pre-author blockings resolved (2 pending user escalations (b)(c) with sensible defaults applied; non-blocking for spec freeze; user can ratify later). All 7 highs resolved. 4 of 5 mediums resolved + 1 NEW medium. 2 of 2 lows resolved (one obsoleted by L2). FREEZE-COMPATIBLE.",
+  "blocking_count": 0,
+  "high_count": 0,
+  "medium_count": 1,
+  "low_count": 0
+}

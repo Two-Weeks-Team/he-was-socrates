@@ -1,0 +1,41 @@
+{
+  "critic": "SC2_api_design",
+  "audit_phase": "iter-1 (post-author re-review)",
+  "audited_at_kst": "2026-05-05T16:57+09:00",
+  "audit_method_note": "Re-checking pre-author findings against function_call_contract.yaml (JSON Schema 2020-12), SPEC.md §3, coredata-model.md.",
+  "delta_vs_pre_audit": { "blocking_was": 4, "blocking_now": 0, "high_was": 6, "high_now": 0, "medium_was": 4, "medium_now": 1, "low_was": 2, "low_now": 1 },
+  "resolutions": [
+    { "id": "SC2-001", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "function_call_contract.yaml authored in JSON Schema 2020-12; declares dialect, $defs, required arrays, additionalProperties:false posture, sample valid+invalid for ask_back. L1." },
+    { "id": "SC2-002", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "function_call_contract.yaml#functions.ask_back.response_streaming defines TokenDelta AsyncStream with sentenceBoundary/isFinal. SPEC.md §3.4 declares back-pressure policy (queue depth ≤ 2). L8." },
+    { "id": "SC2-003", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "function_call_contract.yaml#$defs.Envelope wraps every return; $defs.Error enumerates 12 codes including MALFORMED_JSON, UNKNOWN_FUNCTION, LOW_CONFIDENCE, LOG_ENTRY_NOT_FOUND, CONTEXT_OVERFLOW. fallback_action enum specifies recovery." },
+    { "id": "SC2-004", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "function_call_contract.yaml#orchestration §steps 1-8 sequence diagram in pseudocode + ablation_harness build flag. SPEC.md §3.3 narrates." },
+    { "id": "SC2-005", "previous_severity": "high", "current_severity": "resolved", "evidence": "L11 / SPEC.md §10.1 BCP-47 canonical; function_call_contract.yaml $defs.BCP47 vs GemmaLanguageInput separated; Wonder.bcp47Locale vs Wonder.bcp47SecondaryLocale on coredata-model.md." },
+    { "id": "SC2-006", "previous_severity": "high", "current_severity": "resolved", "evidence": "L9 / function_call_contract.yaml $defs.RegulatedAdviceCategory unions all 7 values: legal/medical/financial/welfare/insurance/emergency/other. proposed-design-delta.json doesn't yet include a delta to idea.spec.json#no_go to mirror; recommend adding for completeness, but enum is the source of truth so non-blocking." },
+    { "id": "SC2-007", "previous_severity": "high", "current_severity": "resolved", "evidence": "L10 / mode enum renamed unspecified; mode_classify.returns adds mode_raw + chip_pattern. ModeChipPattern $defs in contract. coredata-model.md.Wonder.modeRaw." },
+    { "id": "SC2-008", "previous_severity": "high", "current_severity": "resolved", "evidence": "function_call_contract.yaml $defs.CompressedHistoryV1 declares format (compressed-history-v1), payload (array of {t,mode,bcp47,summary,wonder_id}), token_count cap 32K. SPEC.md §2.1 reframes M01 narrative." },
+    { "id": "SC2-009", "previous_severity": "high", "current_severity": "resolved", "evidence": "All 4 functions require turn_id: UUID. Wonder.turnId immutable field. SPEC.md §3.3 step 1 generates UUIDv4." },
+    { "id": "SC2-010", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §12 External Surfaces — binding negative declaration enumerates 6 documented and ~20 absent surfaces; data-flow-diagram.md §3 mirrors." },
+    { "id": "SC2-011", "previous_severity": "medium", "current_severity": "deferred-documented", "evidence": "SPEC.md §3.6 documents the inconsistency and reserves classify_mode alias for v1.1 minor. Acceptable as post-MVP; cleaner than late churn. Non-blocking." },
+    { "id": "SC2-012", "previous_severity": "medium", "current_severity": "resolved", "evidence": "function_call_contract.yaml surface_past_wonder.request.max_surfaced has min:0 max:5 default:1 with rationale in $defs comment." },
+    { "id": "SC2-013", "previous_severity": "medium", "current_severity": "resolved", "evidence": "Confidence $defs has range [0,1] + threshold note (<0.6 → unspecified). SPEC.md §3.3 step 5 hysteresis." },
+    { "id": "SC2-014", "previous_severity": "medium", "current_severity": "resolved", "evidence": "Envelope.schema_version const '1.0.0'; contract.contract_versioning_policy declares minor=additive, major=breaking. Wonder.inferenceFingerprint contains modelSHA256 + mlxSwiftVersion. AppMeta.schemaVersion. coredata-model.md §3 migration policy." },
+    { "id": "SC2-015", "previous_severity": "low", "current_severity": "resolved", "evidence": "SPEC.md §12 declares AppleScript .sdef ABSENT; AX tree explicitly enumerated (caption + chip exposed; wondering log NOT exposed)." },
+    { "id": "SC2-016", "previous_severity": "low", "current_severity": "deferred-documented", "evidence": "function_call_contract.yaml defer_to_human.response.deferred field documented as 'always true today; reserved for future state'; explanation_phrase has language + maxLength 200; suggested_resource_class is enum (ResourceClass). Localizable.strings keys referenced in SPEC.md §10.7. Non-blocking minor wording." }
+  ],
+  "new_findings_iter1": [
+    {
+      "id": "SC2-NEW-001",
+      "severity": "medium",
+      "where": "function_call_contract.yaml#functions.ask_back.response_streaming",
+      "issue": "Streaming is defined but the relationship between stream_items and the terminal response_terminal envelope is not explicit. Does the orchestrator emit a final Envelope wrapping the concatenated text after streaming concludes? Or does the stream itself replace the envelope? Implementer ambiguity.",
+      "spec_action_required": "Clarify: 'streaming emits TokenDelta items WITHOUT envelope wrap; on isFinal=true, orchestrator additionally emits one Envelope wrapping the concatenated terminal response_terminal data shape.' One sentence in SPEC.md §3.4.",
+      "owner_when_addressed": "spec-author iter-2 (low cost)"
+    }
+  ],
+  "approval": "approve",
+  "approval_rationale": "All 4 pre-author blockings resolved. All 6 highs resolved. 2 of 4 mediums resolved-or-deferred-documented; 2 reframed (mode_classify rename, defer_to_human.deferred field) with acceptable rationale. 1 of 2 lows resolved; 1 deferred-documented. 1 minor new finding (medium, low-cost). FREEZE-COMPATIBLE.",
+  "blocking_count": 0,
+  "high_count": 0,
+  "medium_count": 1,
+  "low_count": 1
+}

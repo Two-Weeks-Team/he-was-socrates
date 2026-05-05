@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "schema_note": "Korean phoneme→viseme delta against the SHA-locked phoneme-viseme-map.json. Authoritative for scaffold; the locked map remains intact for audit. Apply via merge: scaffold reads locked map, then overlays this delta.",
+  "ratified_at_kst": "2026-05-05T17:25+09:00",
+  "source": "viseme-best-practices.md §7.3 + §2.2",
+  "academic_basis": [
+    "Korean Phonological Viseme paper, ASK 1999 — koreascience.kr/article/CFKO199920828527868.page",
+    "Korean Co-articulation paper, J Korea CGS 26(3) — journal.cg-korea.org/archive/view_article?pid=jkcgs-26-3-49",
+    "Hyung & Ahn — Evaluation of a Korean Lip-sync system for an robot — semanticscholar.org"
+  ],
+
+  "ipa_to_viseme_ko_overrides": {
+    "ʌ": {
+      "viseme": "UH",
+      "rationale_ko": "ㅓ는 mid back unrounded vowel. 한국어 lip-sync 학계 합의(ASK 1999, J Korea CGS 26(3))는 UH 매핑. AA(ɑ)는 low back unrounded로 더 큰 입 벌림이 필요해 ㅓ에 부적합.",
+      "previous_value": "AA"
+    },
+    "ɾ": {
+      "viseme": "S",
+      "rationale_ko": "한국어 ㄹ 어두는 alveolar tap [ɾ]로, 영어 /ɹ/(rhotic, lip rounding 동반)와 시각적으로 다름. 입술 라운딩 없이 alveolar 영역에서 혀 동작 → S와 시각적으로 동일. Hyung & Ahn 로봇 lip-sync 평가에서 S로 매핑.",
+      "previous_value": "R"
+    }
+  },
+
+  "hangul_jamo_classes_vowel_overrides": {
+    "ㅓ": {"viseme": "UH", "previous_value": "AA"},
+    "ㅕ": {"viseme": "UH", "previous_value": "AA", "note": "ㅕ = j+ʌ, 디프통 분해 시 EE → UH transition. 단일 viseme 매핑은 UH (transition_to 키 사용 권장 — 아래 참조)"},
+    "ㅝ": {"viseme": "UH", "previous_value": "AA", "note": "ㅝ = w+ʌ, 디프통 분해 시 OW → UH transition"}
+  },
+
+  "diphthong_transitions_overrides_or_additions": {
+    "jʌ": {
+      "viseme": "EE",
+      "transition_to": "UH",
+      "previous_transition_to": "AA",
+      "rationale_ko": "ㅕ 디프통: EE에서 ㅓ(UH)로 전이. ASK 1999 §3.2 학계 표준."
+    },
+    "wʌ": {
+      "viseme": "OW",
+      "transition_to": "UH",
+      "previous_transition_to": "AA",
+      "rationale_ko": "ㅝ 디프통: OW에서 ㅓ(UH)로 전이"
+    },
+    "wa": {
+      "viseme": "OW",
+      "transition_to": "AA",
+      "previous_value": "(absent — newly added)",
+      "rationale_ko": "ㅘ 디프통: OW에서 AA로 전이. 기존 map에 누락. 한국어 빈출 (예: '왜', '와요')"
+    }
+  },
+
+  "preserved_unchanged": [
+    "All en-US IPA → viseme mappings",
+    "Hangul ㅏ ㅗ ㅜ ㅡ ㅣ ㅐ ㅔ ㅚ ㅟ ㅢ → vowel viseme (matches academic consensus already)",
+    "Hangul ㄱ ㄲ ㅋ ㄴ ㄷ ㄸ ㅌ ㄹ-coda ㅁ ㅂ ㅃ ㅍ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅎ → consonant viseme",
+    "REST as silence default",
+    "All other diphthong transitions"
+  ],
+
+  "scaffold_application_note": "At scaffold (Stage 5), the runtime engine loads the locked phoneme-viseme-map.json first, then applies this delta dictionary as a key-by-key override. Test fixtures _test_fixture_utterances_ko[] must include at least one utterance per altered key (ㅓ, ㅕ, ㅝ, ㄹ-initial, ㅘ) to exercise the new mappings. CI fails if any altered key reverts."
+}

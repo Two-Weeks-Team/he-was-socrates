@@ -1,0 +1,183 @@
+{
+  "schema_version": "1.0",
+  "critic_id": "SC5",
+  "domain": "idempotency",
+  "phase": "PRE-AUTHOR",
+  "phase_note": "No openapi.yaml exists. Auditing locked upstream artifacts (idea.spec.json + chosen_preview.json + design-approved.json + assets/SOURCE.md) so retry-safety, dedup, and replayability are baked into SPEC.md before SPEC_AUTHOR drafts. Translated 'idempotency' from REST/HTTP semantics to offline single-user macOS app: wondering log integrity, deterministic Gemma function-call replay, and crash-resume safety.",
+  "run_id": "2026-05-05-spec",
+  "reviewed_at_kst": "2026-05-05T14:25+09:00",
+  "inputs_reviewed": [
+    "runs/2026-05-05-spec/idea.spec.json",
+    "runs/2026-05-05-spec/chosen_preview.json",
+    "runs/2026-05-05-spec/design-approved.json",
+    "runs/2026-05-05-spec/assets/SOURCE.md"
+  ],
+  "scope_translation": {
+    "from": "REST: Idempotency-Key header + ETag + If-Match + 409 Conflict + webhook retry policy",
+    "to": "Offline macOS app: Wonder.id determinism, dedup window (time + semantic), MLX-Swift inference retry/cancel semantics, Core Data save retry + merge policy, Gemma function-call replay determinism (temp/seed), 14-month wondering-log replay (M01) reproducibility, JSON export byte-stability, schema migration no-op-on-rerun, crash-resume of Session and in-flight inference."
+  },
+  "severity_summary": {
+    "blocking": 4,
+    "high": 6,
+    "medium": 3,
+    "low": 1
+  },
+  "findings": [
+    {
+      "id": "SC5-01",
+      "severity": "blocking",
+      "mechanism": "dedup",
+      "where": "design-approved.json#core_data_schema_initial.Wonder.id ('UUID, primary')",
+      "issue": "Wonder.id is declared 'UUID, primary' with no specification of UUID generation strategy. If random (UUIDv4), two literally identical user utterances produce two distinct Wonder rows with no link between them — wondering log accumulates phantom duplicates that bloat the 256K context window and skew surface_past_wonder relevance. If derived (UUIDv5 over content), accidental collision is possible when the same user revisits the same wonder a year later (which is the demo's M01 payoff — that case MUST be a deliberate accumulation event, not a silent overwrite).",
+      "evidence": "design-approved.json line 75: '\"id\": \"UUID, primary\"' — no derivation rule. No dedup_window, no equality semantics defined anywhere across all four artifacts. SC5_idempotency assignment line 120 explicitly calls out 'wondering log 중복 입력 방지, 같은 utterance 연속 시 dedup or accumulate' but no mechanism is locked.",
+      "spec_action_required": "SPEC.md MUST specify: (a) Wonder.id generation = UUIDv4 random (chosen for guaranteed uniqueness); (b) separate `Wonder.contentFingerprint: String` field = SHA-256(normalized_utterance + mode + language) for dedup queries; (c) explicit dedup policy with three states — `accumulate` (always insert; default), `merge_count` (increment counter on existing if within window), `surface_prior` (insert new + cross-link prior); (d) dedup window = 30 seconds for byte-identical, 10 minutes for cosine(embeddingHash) ≥ 0.92, 14 months unbounded for surface_past_wonder relevance scan. Choose ONE policy and lock; do not leave to implementation.",
+      "owner_when_addressed": "SPEC_AUTHOR (data model section) + SC2_api_design (function-call schema must echo dedup state in ask_back return) + SC6_performance (256K log size impact)"
+    },
+    {
+      "id": "SC5-02",
+      "severity": "blocking",
+      "mechanism": "determinism",
+      "where": "design-approved.json#function_call_schema_locked_signatures (all 4 calls) + idea.spec.json#ai_capability_required",
+      "issue": "Gemma E4B inference temperature, top_p, top_k, and seed are unspecified. The demo's 14-month time-jump scene (chosen_preview.json line 16: '14개월 후 빗속 타이어 질문 → 256K log에서 얼음 wondering surface') is a REPLAY scenario — the wondering log is recorded today and re-injected into Gemma 14 months later with possibly a different model build (gemma-4-e4b-it-4bit may be re-quantized, MLX-Swift updated, OS upgraded). Without temp=0 + fixed seed + locked model SHA, the same input log produces different surface_past_wonder outputs across runs. M01 mitigation says 'thinking mode + 256K + function-call 3가지 load-bearing' but does not lock the inference parameters that make those features reproducible.",
+      "evidence": "design-approved.json#mitigation_adopted_full M01 (lines 8-9) — no inference param lock. function_call_schema_locked_signatures (lines 67-71) — no determinism contract. idea.spec.json#success_criteria.demo_day_metrics has accuracy targets (≥80% mode_classify) but no replay-stability target.",
+      "spec_action_required": "SPEC.md MUST lock per-function-call inference params: ask_back {temperature: 0.7, top_p: 0.9, seed: per-Wonder.id-deterministic}, mode_classify {temperature: 0.0, top_p: 1.0, seed: 0}, surface_past_wonder {temperature: 0.0, seed: deterministic}, defer_to_human {temperature: 0.0, seed: 0}. Each Wonder row MUST persist `inferenceFingerprint: {modelSHA, mlxSwiftVersion, temp, topP, topK, seed}` so a 14-month-later replay can reproduce. Add success criterion: 'replay of any wondering log entry against the same modelSHA produces byte-identical Gemma output'.",
+      "owner_when_addressed": "SPEC_AUTHOR (Replay Determinism section, new) + SC6_performance (impact of low-temp on 'thoughtful' feel) + SC2_api_design (function signatures must accept seed override)"
+    },
+    {
+      "id": "SC5-03",
+      "severity": "blocking",
+      "mechanism": "retry",
+      "where": "design-approved.json#function_call_schema_locked_signatures.ask_back + idea.spec.json#success_criteria.demo_day_metrics.TTFT",
+      "issue": "TTFT target is ≤8s (M2/M3) and ≤12s (M1). On a slower machine or under thermal throttle, MLX-Swift inference will exceed budget. Spec is silent on retry semantics: (a) does the orchestrator cancel and retry? (b) if cancelled, is the partial KV-cache discarded or persisted? (c) if a 2nd ask_back is issued, does it use the same seed (idempotent) or a new seed (different question — visemes already in flight will desync). Worse: if the user-facing layer queues the first response AND the retry response, two TTS streams compete and both write to wondering log — duplicate Wonder entries with the same userUtterance but different socraticReply.",
+      "evidence": "design-approved.json line 67-71 (function signatures) has no `request_id` / `correlation_id` / `cancellation_token`. idea.spec.json line 47 ('TTFT ≤ 8s on M2/M3') has no retry/timeout semantics. SC3_error_model is assigned 'STT 실패, TTS voice 미사용 가능, 모델 OOM' but inference timeout retry is not enumerated.",
+      "spec_action_required": "SPEC.md MUST add: (a) every function-call invocation carries `correlation_id: UUID` (stable across retries within one user turn); (b) at most ONE in-flight ask_back per user turn — second utterance from user cancels the first via Combine/AsyncSequence cancellation; (c) on timeout (TTFT > 8s M2/M3, > 12s M1), abort and surface 'thinking longer than usual' UI affordance, do NOT silently retry; (d) only one Wonder row written per (Session.id, correlation_id) pair — DB unique constraint enforces.",
+      "owner_when_addressed": "SPEC_AUTHOR (Inference Lifecycle section, new) + SC3_error_model (must align timeout taxonomy) + SC6_performance (TTFT budget + cancellation cost)"
+    },
+    {
+      "id": "SC5-04",
+      "severity": "blocking",
+      "mechanism": "migration",
+      "where": "design-approved.json#core_data_schema_initial (all 3 entities) + chosen_preview.json#stack_decisions_locked.wondering_log_storage",
+      "issue": "Storage choice is 'Core Data or SwiftData' (chosen_preview.json line 39) — not yet locked. Either way, no schemaVersion field exists on any entity. Demo M01 (14-month replay) implicitly REQUIRES the v1.0 wondering log to be readable by v1.x — but no migration policy, no schemaVersion column, no lightweight-migration mapping rules. Re-running migration on already-migrated DB is undefined (idempotency violation). For a single-user app where the wondering log IS the persistent state, a botched migration = silent data loss = entire product premise broken.",
+      "evidence": "design-approved.json line 72-103 — Wonder/SemanticTag/Session have no `schemaVersion` field. No migration plan in any artifact. idea.spec.json#no_go bans 'TODO/mock/stub' (line 72) but doesn't ban undocumented migration. CLAUDE.md (workspace) flags 'No DB migration tool' as known landmine for sibling Go project — same risk class here.",
+      "spec_action_required": "SPEC.md MUST: (a) lock storage = Core Data (SwiftData migration tooling is still maturing as of macOS 14); (b) add `schemaVersion: Int` to a singleton `AppMeta` entity; (c) declare migration policy = lightweight-migration only for v1.x, heavyweight (custom NSEntityMigrationPolicy) for any field rename/delete; (d) migration MUST be idempotent — re-running on already-migrated store is a no-op verified by schemaVersion check; (e) backup-before-migrate: copy .sqlite to .sqlite.pre-v{N} before any migration runs; (f) on migration failure, restore from backup and surface 'wondering log preserved, app rolling back to v{N-1}' UX.",
+      "owner_when_addressed": "SPEC_AUTHOR (Storage & Migration section) + SC7_security (backup file File Protection level)"
+    },
+    {
+      "id": "SC5-05",
+      "severity": "high",
+      "mechanism": "dedup",
+      "where": "design-approved.json#core_data_schema_initial.SemanticTag",
+      "issue": "SemanticTag has no uniqueness constraint on `name` or `embeddingHash`. If user wonders about 'ice' three times across 14 months, three separate SemanticTag rows are created with the same name and (probably) same embeddingHash — the to-many `Wonder.tags` relationship balloons, surface_past_wonder over-indexes 'ice' (3 hits where 1 should be), and the 256K log compression scheme has redundant tag tokens to compress.",
+      "evidence": "design-approved.json lines 88-93: SemanticTag fields are id (UUID, no 'unique' qualifier), name, embeddingHash. No upsert rule, no unique index.",
+      "spec_action_required": "SPEC.md MUST: (a) declare SemanticTag uniqueness = `embeddingHash` (since name 'ice' vs 'icy' differ as strings but should share a tag); (b) tag-resolution flow: compute embeddingHash → query existing → if hit, attach existing tag to new Wonder.tags; if miss, insert new SemanticTag; (c) the upsert MUST be idempotent under concurrent Wonder writes — use Core Data's `NSMergeByPropertyStoreTrumpMergePolicy` on SemanticTag context.",
+      "owner_when_addressed": "SPEC_AUTHOR (SemanticTag Upsert Protocol) + SC2_api_design (surface_past_wonder return shape)"
+    },
+    {
+      "id": "SC5-06",
+      "severity": "high",
+      "mechanism": "retry",
+      "where": "design-approved.json#core_data_schema_initial.Session.wonderCount",
+      "issue": "Session.wonderCount is a stored Int that must be incremented on every Wonder save. This is write-amplification (every Wonder.save also writes Session) and a concurrency hazard if the user's STT pipeline produces a Wonder while Session timer is updating endedAt. On crash mid-increment, wonderCount drifts from actual Wonder.count — replay-time mismatch breaks Session-level metrics in M11 storytelling video.",
+      "evidence": "design-approved.json line 101: '\"wonderCount\": \"Int\"' — no concurrency control, no derivation rule. Session.endedAt nullable (line 100) implies sessions can crash open.",
+      "spec_action_required": "SPEC.md MUST: (a) drop `Session.wonderCount` as stored field; (b) replace with computed property = Core Data @FetchRequest(predicate: Wonder.session.id == self.id).count; (c) on app launch, scan for Session rows with endedAt == nil AND startedAt > 24h ago → mark `recoveryReason = .crash` and set endedAt = last Wonder.createdAt + 5min; (d) recovery MUST be idempotent — re-running on already-recovered Session is no-op.",
+      "owner_when_addressed": "SPEC_AUTHOR (Session Lifecycle section) + SC3_error_model (crash-recovery UX)"
+    },
+    {
+      "id": "SC5-07",
+      "severity": "high",
+      "mechanism": "replay",
+      "where": "design-approved.json#core_data_schema_initial.Wonder.surfaceLater + design-approved.json#mitigation_adopted_full.M01",
+      "issue": "`Wonder.surfaceLater: Bool default true` is the ONLY mutable field declared, but spec doesn't say which OTHER fields are immutable. For the M01 14-month replay to be reproducible, userUtterance, socraticReply, mode, modeConfidence, language, createdAt, thinkingTraceCompressed MUST be append-only / immutable after first write. If a future feature lets the user 'edit' a wondering, the replay diverges. Also: surfaceLater itself is mutable but has no audit trail — if surface_past_wonder flips it to false after 'used once', a re-demo of the same scene cannot reproduce.",
+      "evidence": "design-approved.json line 85: '\"surfaceLater\": \"Bool default true\"' — no immutability contract on other fields. M01 (line 8-9) requires reproducibility but doesn't lock log entry mutability.",
+      "spec_action_required": "SPEC.md MUST: (a) declare Wonder fields IMMUTABLE after first save: id, createdAt, userUtterance, socraticReply, mode, modeConfidence, language, thinkingTraceCompressed, audioFilePathLocal (path itself; file content opt-in addressed in SC5-09); (b) MUTABLE-with-audit: surfaceLater, tags (relationship updates only); (c) any 'edit' is a soft-delete + re-insert with `Wonder.supersedesId: UUID?`; (d) add `Wonder.surfacedHistory: to-many SurfaceEvent {at: Date, sessionId: UUID, contextHash: String}` so M01 demo can re-fire by clearing surfacedHistory entries scoped to the demo session.",
+      "owner_when_addressed": "SPEC_AUTHOR (Log Immutability Invariant section) + SC2_api_design (surface_past_wonder must return surfaced count for idempotency check)"
+    },
+    {
+      "id": "SC5-08",
+      "severity": "high",
+      "mechanism": "dedup",
+      "where": "design-approved.json#function_call_schema_locked_signatures.surface_past_wonder",
+      "issue": "surface_past_wonder.params has `max_surfaced: integer (default 1)` but no per-session dedup. If the same past wonder is the most-relevant on turn N AND turn N+1 (likely — semantic relevance is sticky over short windows), it surfaces twice in a row. The user hears 'remember when you wondered about X?' twice within minutes — breaks the 'one elegant connection per session' demo aesthetic and produces duplicate cross-link records.",
+      "evidence": "design-approved.json line 68: '\"max_surfaced\": \"integer (default 1)\"' — no per-session 'already-surfaced' set, no decay policy.",
+      "spec_action_required": "SPEC.md MUST: (a) maintain in-memory `Session.surfacedWonderIds: Set<UUID>` populated as surface_past_wonder fires; (b) surface_past_wonder MUST exclude IDs in this set from candidate pool; (c) decay = set is cleared on Session.endedAt; (d) cross-session decay = a Wonder cannot be surfaced more than once per 7 days (configurable, lock the default); (e) surface_past_wonder return shape adds `was_already_surfaced_this_session: Bool` for orchestrator visibility.",
+      "owner_when_addressed": "SPEC_AUTHOR (surface_past_wonder Behavioral Contract) + SC2_api_design (return shape change)"
+    },
+    {
+      "id": "SC5-09",
+      "severity": "high",
+      "mechanism": "other",
+      "where": "design-approved.json#core_data_schema_initial.Wonder.audioFilePathLocal",
+      "issue": "audioFilePathLocal is `String? (nullable, only if user opt-in)` — no filename collision policy. If user opts in and accidentally records the same wonder twice (same content, different Wonder.id since SC5-01 mandates random UUIDs), filename derivation isn't specified. Possibilities: (a) overwrite (data loss for the first); (b) suffix counter (UUID-based filename = no collision but breaks export idempotency in SC5-12); (c) reuse (two Wonder rows share one audio file — orphan-on-delete hazard).",
+      "evidence": "design-approved.json line 82: '\"audioFilePathLocal\": \"String? (nullable, only if user opt-in)\"' — no filename rule, no orphan policy.",
+      "spec_action_required": "SPEC.md MUST: (a) lock filename = `{Wonder.id}.m4a` (UUID guarantees uniqueness, no collision possible); (b) audio file lifecycle = create-on-first-write, never-overwrite, delete-only-on-Wonder-deletion; (c) on Wonder soft-delete (SC5-07), audio file is renamed to `.deleted.m4a` and purged on next launch + 30 days (giving user a recovery window); (d) on app launch, garbage-collect orphan audio files (no matching Wonder.id) — this scan MUST be idempotent (re-running finds zero orphans).",
+      "owner_when_addressed": "SPEC_AUTHOR (Audio File Lifecycle section) + SC7_security (File Protection level on audio files) + SC1_a11y (delete affordance)"
+    },
+    {
+      "id": "SC5-10",
+      "severity": "high",
+      "mechanism": "determinism",
+      "where": "design-approved.json#design_tokens.viseme_set + idea.spec.json#success_criteria.demo_day_metrics 'viseme-audio drift ≤ 50ms RMS'",
+      "issue": "TTS+viseme generation is implicitly assumed deterministic, but AVSpeechSynthesizer is NOT guaranteed bit-identical across calls (system voice cache state, prosody jitter). For demo-day reliability and for M01 replay to look identical to the recorded video, the same `socraticReply: String` must produce the same viseme timeline frame-by-frame. Spec is silent. Worse: if user hits 'pause' mid-utterance and resumes, partial-speech idempotency (restart vs continue) is undefined — restart re-renders visemes 0..N twice in the wondering log audit trail.",
+      "evidence": "design-approved.json line 58-64 (viseme_set) declares mapping but not synthesis determinism. idea.spec.json line 48 ('viseme-audio drift ≤ 50ms RMS') is a one-shot target, not a replay-stability target. SOURCE.md line 53-54 hints at tighter ≤30ms tolerance for the painterly bust.",
+      "spec_action_required": "SPEC.md MUST: (a) cache the (socraticReply text, voiceID, rate, pitch) → viseme timeline tuple in `Wonder.visemeTimelineCached: Data?` on first synthesis; (b) replay uses cached timeline, never re-synthesizes; (c) pause/resume = continue from frame N (no re-fire of TTS); (d) if user invokes 'repeat', it plays the cached audio buffer + cached visemes (byte-identical), it does NOT re-synthesize; (e) cache invalidated only on voice-pack change or app version bump.",
+      "owner_when_addressed": "SPEC_AUTHOR (TTS+Viseme Cache Protocol) + SC6_performance (cache size impact) + SC4_i18n (per-language voice cache)"
+    },
+    {
+      "id": "SC5-11",
+      "severity": "high",
+      "mechanism": "retry",
+      "where": "design-approved.json#function_call_schema_locked_signatures (all 4 calls — implicit JSON contract)",
+      "issue": "Gemma function-call output is JSON; malformed JSON is a known failure mode for any LLM (especially quantized Q4). Spec is silent on (a) max retry count for 'parse failed → re-prompt'; (b) idempotency of retry — does each retry get a fresh seed (different output, possibly valid) or the same seed (same broken output)? (c) does the wondering log accumulate the failed attempts? If yes, 256K context fills with junk; if no, debugging the failure is impossible. M07 'so크라테스는 절대 답하지 않음' means defer_to_human malformed-JSON failure is HIGHEST risk: regulated-advice trigger that fails to fire = product violates RP D1.",
+      "evidence": "design-approved.json lines 67-71 declare returns but no malformed-output policy. M07 (line 14) makes defer_to_human a safety-critical path with no failure handling.",
+      "spec_action_required": "SPEC.md MUST: (a) max 2 retries per function-call invocation, with seed incremented per retry (seed_n = base_seed XOR n) to escape stuck states; (b) retry attempts are NOT persisted to wondering log — only the final successful (or final-failed) attempt; (c) a `function_call_attempts: [{seed, raw_output, parse_ok, ts}]` ephemeral debug log written to a separate `_diagnostics/` dir, gitignore-equivalent (not part of wondering log, not part of export, purged on app quit); (d) defer_to_human failure mode is FAIL-CLOSED — if final attempt fails, default to a hardcoded safe phrase ('이건 사람 전문가에게 물어보세요') and surface diagnostic banner; (e) all 4 function calls share the same retry policy (no special-casing).",
+      "owner_when_addressed": "SPEC_AUTHOR (Function-Call Retry Policy section) + SC3_error_model (malformed JSON taxonomy) + SC7_security (defer_to_human fail-closed contract for M07)"
+    },
+    {
+      "id": "SC5-12",
+      "severity": "medium",
+      "mechanism": "other",
+      "where": "chosen_preview.json#stack_decisions_locked.wondering_log_storage 'JSON export' + idea.spec.json#regulatory_domain (GDPR portability)",
+      "issue": "JSON export is a stated capability but byte-stability is undefined. GDPR Article 20 (right to data portability) is implicitly invoked by 'GDPR (EU users)' applicability. If user exports today, then exports tomorrow with no new entries, the two files SHOULD be byte-identical (or at minimum, content-hash-identical) for user trust and for legal-evidence use cases. Without spec: dict-order non-determinism, ISO timestamp formatter variance, or Wonder.tags ordering randomness all break this.",
+      "evidence": "chosen_preview.json line 39 ('JSON export') — no format spec. idea.spec.json line 78 ('GDPR') — no portability schema.",
+      "spec_action_required": "SPEC.md MUST: (a) export is sorted by Wonder.createdAt ASC, then by Wonder.id lex (tiebreaker); (b) JSON serialization uses sorted keys, ISO-8601 with Z suffix and millisecond precision, Wonder.tags sorted by SemanticTag.id; (c) export includes `exportSchemaVersion`, `appVersion`, `generatedAt`, `wonderingLogContentHash` (SHA-256 over canonical body excluding generatedAt); (d) two exports of an unchanged log produce identical wonderingLogContentHash; (e) test fixture in spec/test-fixtures/ shows expected canonical form.",
+      "owner_when_addressed": "SPEC_AUTHOR (Export Format section) + SC4_i18n (UTF-8 NFC normalization) + SC7_security (export file File Protection)"
+    },
+    {
+      "id": "SC5-13",
+      "severity": "medium",
+      "mechanism": "dedup",
+      "where": "design-approved.json#function_call_schema_locked_signatures.mode_classify",
+      "issue": "mode_classify is read-only and naturally idempotent at temp=0 (locked by SC5-02). But: it is called every utterance. If user's mode oscillates turn-by-turn between curious_adult (confidence 0.55) and learning_student (confidence 0.52) due to borderline utterances, the UI mode chip flickers and Session.mode updates non-deterministically. Spec is silent on hysteresis.",
+      "evidence": "design-approved.json line 69 — mode_classify returns confidence but no stability rule. design_tokens.color (lines 30-31) defines `mode_chip_curious_adult` vs `mode_chip_learning_student` distinct colors, implying visible UI feedback that should not flicker.",
+      "spec_action_required": "SPEC.md MUST: (a) mode hysteresis — Session.mode changes only when new mode confidence > current_mode.confidence + 0.15 OR over 3 consecutive turns; (b) mode_classify is called at most once per user utterance (cached for the duration of one ask_back/surface_past_wonder cycle via correlation_id); (c) a `Session.modeHistory: [(mode, confidence, at)]` for replay-time reconstruction.",
+      "owner_when_addressed": "SPEC_AUTHOR (Mode Stability section) + SC2_api_design (mode_classify caching contract)"
+    },
+    {
+      "id": "SC5-14",
+      "severity": "low",
+      "mechanism": "other",
+      "where": "design-approved.json#core_data_schema_initial.Wonder.thinkingTraceCompressed '≤200 chars'",
+      "issue": "thinkingTraceCompressed has a 200-char ceiling but no compression algorithm and no idempotency guarantee. Two runs on the same prompt may produce different compressions if compression is LLM-driven (which would be non-deterministic without temp=0 lock). For M01 14-month replay, the visible 'thought silhouette pulse' is meant to be evocative not reproducible, so this is low-severity — but worth a footnote.",
+      "evidence": "design-approved.json line 84: '\"thinkingTraceCompressed\": \"String (≤200 chars)\"' — no algorithm.",
+      "spec_action_required": "SPEC.md SHOULD: (a) declare compression = first 200 chars of Gemma thinking-mode trace, truncated at last whole word, with ellipsis suffix (purely deterministic, no LLM call); (b) explicitly note this is a UI affordance, NOT a replay-determinism input; (c) on replay, the field is decorative — the canonical thinking trace lives in the (uncompressed) Gemma output replayed from inferenceFingerprint (SC5-02).",
+      "owner_when_addressed": "SPEC_AUTHOR (Thinking Trace section) + SC1_a11y (VoiceOver reads the compressed string)"
+    }
+  ],
+  "approval": "changes_requested",
+  "approval_rationale": "4 blocking findings (Wonder.id strategy + dedup policy, Gemma inference determinism, MLX-Swift retry semantics, Core Data migration) MUST be resolved before SPEC_AUTHOR drafts. Each blocker can corrupt or invalidate the wondering log — the single piece of state on which the entire product premise (M01 14-month replay) depends. The 6 high findings are demo-day showstoppers if unaddressed but are recoverable post-author iteration. Resolving SC5-01 through SC5-04 unblocks ~70% of the other findings (most cascade from those decisions).",
+  "out_of_scope_for_sc5": [
+    "WCAG / VoiceOver determinism (SC1)",
+    "function-call API naming/evolution (SC2)",
+    "STT / TTS / OOM error UX (SC3)",
+    "ko/en mixed-language (SC4)",
+    "TTFT / 30fps perf (SC6)",
+    "App Sandbox / COPPA flow (SC7)"
+  ],
+  "cross_critic_dependencies": {
+    "SC2_api_design": ["SC5-03 correlation_id in all signatures", "SC5-07 surface_past_wonder return shape", "SC5-08 was_already_surfaced field", "SC5-13 mode_classify caching"],
+    "SC3_error_model": ["SC5-03 timeout taxonomy", "SC5-06 Session crash recovery", "SC5-11 malformed JSON"],
+    "SC6_performance": ["SC5-01 256K log dedup impact", "SC5-02 temp=0 vs thoughtful feel", "SC5-10 viseme cache size"],
+    "SC7_security": ["SC5-04 backup File Protection", "SC5-09 audio File Protection", "SC5-11 defer_to_human fail-closed", "SC5-12 export File Protection"]
+  }
+}

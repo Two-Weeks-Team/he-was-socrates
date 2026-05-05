@@ -1,0 +1,60 @@
+{
+  "critic": "SC1_a11y",
+  "audit_phase": "iter-1 (post-author re-review)",
+  "audited_at_kst": "2026-05-05T16:55:00+09:00",
+  "audit_method_note": "Re-checking each pre-author finding against iter-1 deliverables (SPEC.md §7, design-tokens delta in proposed-design-delta.json DELTA-07/08, coredata-model.md, function_call_contract.yaml). Single-thread caveat per SPEC.md §14.3.",
+  "delta_vs_pre_audit": {
+    "blocking_was": 7,
+    "blocking_now": 0,
+    "high_was": 5,
+    "high_now": 1,
+    "medium_was": 3,
+    "medium_now": 1,
+    "low_was": 1,
+    "low_now": 1
+  },
+  "resolutions": [
+    { "id": "SC1-001", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "DELTA-07 adds mode_chip_*_pattern tokens (disc/diamond/triangle/circle); SPEC.md §7.1 mandates color + shape + text label simultaneously. function_call_contract.yaml mode_classify return includes chip_pattern field." },
+    { "id": "SC1-002", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §7.1 contrast matrix restricts user_utterance_dim to large-text only (≥32px) where 4.04 CR satisfies AA 3:1; DELTA-07 adds user_utterance_dim_high_contrast for Increase Contrast." },
+    { "id": "SC1-003", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §7.5 Caption Policy: default-on, system-Live-Captions inheritance, Child Mode forced-on. L18." },
+    { "id": "SC1-004", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §7.4 keyboard map (Space/Esc); §7.8 Child Mode auto-utterance FORBIDDEN; AVAudioSession ducking covered in §4.1 + SC3 catalog. function_call_contract.yaml does not include explicit pause_speech but §7.4 Cmd+. is the immediate-stop path." },
+    { "id": "SC1-005", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §7.4 Keyboard Map; out_of_scope_v1 'no text channel' reconciled with WCAG 2.1.1 by adding Cmd+Enter typed-utterance a11y mode." },
+    { "id": "SC1-006", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §7.4 explicit prohibited presentationOptions (.disableProcessSwitching/.disableAppleMenu/.disableForceQuit); Esc invariant 1-keypress no-confirm." },
+    { "id": "SC1-007", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §7.2 VoiceOver Routing table; live region polite for ask_back, assertive for defer." },
+    { "id": "SC1-008", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §7.3 + DELTA-08 add Tier 3 static + caption-only fallback with user toggle." },
+    { "id": "SC1-009", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §7.6 Larger Text/Dynamic Type, caption max-width min(28em, 60vw), Child Mode +20%." },
+    { "id": "SC1-010", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §7.7 + DELTA-07 _hi_contrast variants; thought silhouette → static + 'thinking…' label on Increase Contrast." },
+    { "id": "SC1-011", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §7.8 Child Mode A11y Defaults; ask_back.reading_level param added in function_call_contract.yaml." },
+    { "id": "SC1-012", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §7.2 state-transition audio cues + NSAccessibility announcement." },
+    { "id": "SC1-013", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §7.9 Hover Text + accessibilityHint mandate." },
+    { "id": "SC1-014", "previous_severity": "medium", "current_severity": "deferred-acceptable", "evidence": "coredata-model.md adds Wonder.socraticReplyDisplayText, accessibilityNarrative, readingLevelGrade. Review UI itself remains post-MVP per out_of_scope_v1; schema reservation prevents retrofit. Not a freeze blocker." },
+    { "id": "SC1-015", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §4.1 Voice Control coexistence: detection forces push-to-talk only." },
+    { "id": "SC1-016", "previous_severity": "low", "current_severity": "resolved", "evidence": "DELTA-07 focus_ring_color = warm_amber_accent (CR 9.63), 3px width, NSFocusRingType.exterior." }
+  ],
+  "new_findings_iter1": [
+    {
+      "id": "SC1-NEW-001",
+      "severity": "high",
+      "wcag_2_2_reference": "1.4.4 Resize Text — Cmd+Enter typed-utterance a11y mode is announced in §7.4 but no UI affordance is rendered to discover it",
+      "where": "SPEC.md §7.4 Keyboard Map",
+      "issue": "Typed-utterance a11y mode is the reconciliation of out_of_scope_v1 'no text channel' with WCAG 2.1.1. But a keyboard-only user with no a11y manual won't know Cmd+Enter exists. No on-screen affordance described.",
+      "spec_action_required": "SPEC.md §7.4: when VoiceOver is detected OR fullscreen entry happens, render a discoverable hint near caption area: 'Press Space to speak, Cmd+Enter to type a question' (KO+EN). Hint persists until first user action. Author for iter-2 if applicable; otherwise ship-acceptable as a settings-panel documented shortcut.",
+      "owner_when_addressed": "spec-author"
+    },
+    {
+      "id": "SC1-NEW-002",
+      "severity": "medium",
+      "wcag_2_2_reference": "Cross-ref SC4-009 cross-locale wondering surfacing",
+      "where": "SPEC.md §10.4 connector_phrasing verbatim quote",
+      "issue": "When a Korean past wondering is quoted verbatim mid-English sentence, VoiceOver locale auto-switching may stutter; AttributedString runs (per §10.6) needs to ALSO carry locale attribute for VO to switch voice mid-string. Not yet codified.",
+      "spec_action_required": "SPEC.md §10.4 (or §7.2): add NSAttributedString.Key.languageIdentifier per-run mandate; Wonder.socraticReplyDisplayText is rendered as AttributedString with per-run locale tags.",
+      "owner_when_addressed": "spec-author iter-2"
+    }
+  ],
+  "approval": "approve_with_minor_revisions",
+  "approval_rationale": "All 7 pre-author blockings resolved; 4 of 5 highs resolved; 2 of 3 mediums resolved (1 deferred to post-MVP with schema reservation, acceptable); 1 low resolved. 2 new findings emerged at iter-1 (1 high, 1 medium) — high is non-blocking ship-acceptable but cleaner with iter-2 pass; medium is also non-blocking. Recommend ESCAPE EARLY (single iter-2 spot fix on SC1-NEW-001 if budget allows) OR FREEZE if budget exhausted.",
+  "blocking_count": 0,
+  "high_count": 1,
+  "medium_count": 1,
+  "low_count": 1
+}

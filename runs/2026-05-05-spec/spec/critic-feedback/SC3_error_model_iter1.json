@@ -1,0 +1,57 @@
+{
+  "critic": "SC3_error_model",
+  "audit_phase": "iter-1 (post-author re-review)",
+  "audited_at_kst": "2026-05-05T16:59+09:00",
+  "audit_method_note": "Re-checking pre-author findings against error-catalog.md, SPEC.md §8 + §9 + §11, function_call_contract.yaml retry policy.",
+  "delta_vs_pre_audit": { "blocking_was": 6, "blocking_now": 0, "high_was": 11, "high_now": 1, "medium_was": 5, "medium_now": 1, "low_was": 2, "low_now": 0 },
+  "resolutions": [
+    { "id": "SC3-001", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "spec/error-catalog.md authored with NSError domain prefix com.twoweeks.hewassocrates.<subsystem>; rows include severity, recoverable, retry_strategy, modality, KO+EN adult+child copy, requires_adult_help, telemetry." },
+    { "id": "SC3-002", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "entitlements.plist.md §4 declares both NSMicrophoneUsageDescription + NSSpeechRecognitionUsageDescription verbatim KO+EN. error-catalog.md STT.PermissionDenied.* + STT.PermissionRestricted.ParentalControl. SPEC.md §9 boot sequence." },
+    { "id": "SC3-003", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §4.1 STT bootstrap probe; error-catalog.md STT.OnDeviceModelMissing.{ko_KR|en_US} with x-apple.systempreferences deeplink." },
+    { "id": "SC3-004", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "spec/model-integrity.md authored with SHA-256 baked into binary, runtime check, mismatch refusal, no re-download. error-catalog.md Model.IntegrityMismatch / BundleMissing / LoadFailed.Corrupt." },
+    { "id": "SC3-005", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §5 install-time guards: LSMinimumSystemVersion 14.0, arm64-only build, runtime guard. error-catalog.md OSCompat.IntelMacUnsupported / MacOSTooOld / M1_8GB_Warning." },
+    { "id": "SC3-006", "previous_severity": "blocking", "current_severity": "resolved", "evidence": "SPEC.md §8 modality matrix + DELTA-07 error_overlay_* tokens. Bust never speaks errors invariant explicit." },
+    { "id": "SC3-007", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §4.2 voice fallback chain; error-catalog.md TTS.VoiceUnavailable.{ko_KR|en_US} + degraded text+viseme mode." },
+    { "id": "SC3-008", "previous_severity": "high", "current_severity": "resolved", "evidence": "error-catalog.md Model.InferenceTimeout.Soft (15s/25s) + Hard (45s) + ThermalThrottle.Warning. SPEC.md §5 thermal awareness." },
+    { "id": "SC3-009", "previous_severity": "high", "current_severity": "resolved", "evidence": "function_call_contract.yaml retry policy 2 retries + seed XOR; error-catalog.md Model.FunctionCall.* family; defer_to_human fail-closed canned safe phrase." },
+    { "id": "SC3-010", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §4.3 drift state machine; performance-test-suite.md §2 drift recovery thresholds; error-catalog.md Viseme.* family. Drift target reconciled to ≤30 ms RMS / ≤80 ms peak (DELTA-04)." },
+    { "id": "SC3-011", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §4.1 Strategy A + DELTA-05 KPI revision; error-catalog.md STT.LowConfidenceTranscription handled by Gemma in-character." },
+    { "id": "SC3-012", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §4.1 AVAudioSession interruption handling; error-catalog.md STT.AudioInterruption.SystemEvent + STT.RecognitionTaskTimeout." },
+    { "id": "SC3-013", "previous_severity": "high", "current_severity": "resolved", "evidence": "coredata-model.md §3 migration policy + backup-before-migrate; error-catalog.md Storage.* family. SPEC.md §11.8 macOS-correct backup posture (replaces 'File Protection complete' wording)." },
+    { "id": "SC3-014", "previous_severity": "high", "current_severity": "resolved", "evidence": "spec/network-test-plan.md authored; layered enforcement (build-time, runtime NSURLProtocol shim, demo-day live nettop). entitlements.plist.md §3 prohibitions + CI gate command. error-catalog.md Sandbox.NetworkAttemptBlocked counter." },
+    { "id": "SC3-015", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §5 thermal+OOM; error-catalog.md Model.MemoryPressure.{Warning|Critical} + RAMInsufficientWarning.M1_8GB. performance-test-suite.md §10." },
+    { "id": "SC3-016", "previous_severity": "high", "current_severity": "resolved", "evidence": "error-catalog.md every row has user_copy_ko_child + user_copy_en_child + requires_adult_help bool. SPEC.md §7.8 Child Mode A11y Defaults." },
+    { "id": "SC3-017", "previous_severity": "high", "current_severity": "resolved", "evidence": "SPEC.md §11.13 telemetry policy + §11.14 logging hygiene. error-catalog.md Crash.UnhandledException with child-mode field redaction." },
+    { "id": "SC3-018", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §11.15 distribution size constraints; ODR option for MAS noted as Apple-source-allowed (does not violate no_go)." },
+    { "id": "SC3-019", "previous_severity": "medium", "current_severity": "resolved", "evidence": "spec/phoneme-viseme-map.json authored with KO+EN IPA tables + Hangul jamo class fallback. error-catalog.md Viseme.G2P.* family." },
+    { "id": "SC3-020", "previous_severity": "medium", "current_severity": "resolved", "evidence": "function_call_contract.yaml orchestration steps 2-5: defer_to_human first, mode_classify with hysteresis, threshold 0.6. error-catalog.md Model.FunctionCall.ConfidenceBelowThreshold. SPEC.md §3.3." },
+    { "id": "SC3-021", "previous_severity": "medium", "current_severity": "resolved", "evidence": "error-catalog.md TTS.AudioRouteLost / SystemMuted / UtteranceCancelled. SPEC.md §4.2 output device latency compensation." },
+    { "id": "SC3-022", "previous_severity": "medium", "current_severity": "resolved", "evidence": "SPEC.md §7.4 Keyboard Contract & Emergency Exit; Esc invariant; Cmd+. immediate stop; Cmd+, opens Settings." },
+    { "id": "SC3-023", "previous_severity": "low", "current_severity": "resolved", "evidence": "error-catalog.md Storage.AudioPurgeFailed.PartialCleanup; coredata-model.md §4 audio file lifecycle (60s purge on opt-out)." },
+    { "id": "SC3-024", "previous_severity": "low", "current_severity": "resolved", "evidence": "SPEC.md §3.3 step 3 emergency bypass + L9. error-catalog.md Defer.Emergency.HotlineSurfaced (KO 1393 / US-EN 988); function_call_contract.yaml defer_to_human.response.emergency_bypass field." }
+  ],
+  "new_findings_iter1": [
+    {
+      "id": "SC3-NEW-001",
+      "severity": "high",
+      "where": "error-catalog.md modality 'overlay_emergency_full_screen' + SPEC.md §3.3 step 3",
+      "issue": "Emergency bypass is defined but the overlay's a11y semantics are NOT specified. A user in crisis with VoiceOver on must hear the hotline number IMMEDIATELY (not after caption read-through). Live region 'assertive' for caption is the closer of what's available, but this overlay isn't a caption — it's a full-screen modal. SC1 cross-ref needed.",
+      "spec_action_required": "SPEC.md §8 (or §11.7): emergency overlay has role=alert + NSAccessibility.post(.announcement, value: 'Emergency. Call 1393 in Korea or 988 in the US for support.', priority: .high) on appear. Also: hotline number must be selectable text (Cmd+C) so a non-vocal user can copy-paste into Phone app.",
+      "owner_when_addressed": "spec-author iter-2 (low cost)"
+    },
+    {
+      "id": "SC3-NEW-002",
+      "severity": "medium",
+      "where": "SPEC.md §11.7 + data-flow-diagram.md auto-detection safety net",
+      "issue": "Auto-detect-then-purge flow description says 'PURGES the just-collected userUtterance and any partial Wonder row (atomic via Core Data context discard)'. Atomicity is asserted but the orchestrator might have ALREADY emitted defer_to_human and mode_classify calls before learning the utterance was a child speaking — those calls left logs in the diagnostics dir. Are the diagnostic logs ALSO purged?",
+      "spec_action_required": "Update SPEC.md §11.7 + data-flow-diagram.md: 'On auto-detect-purge, also rotate-and-redact diagnostics file entries within the last 60s associated with the rejected turn_id.' Document the redaction (replace utterance text with '<redacted-coppa-purge>').",
+      "owner_when_addressed": "spec-author iter-2"
+    }
+  ],
+  "approval": "approve",
+  "approval_rationale": "All 6 pre-author blockings resolved. 11 of 11 highs resolved. 5 of 5 mediums resolved. 2 of 2 lows resolved. 2 minor new findings emerged (1 high, 1 medium) — both are refinement-class, not freeze-blocking. FREEZE-COMPATIBLE with iter-2 spot fix recommended.",
+  "blocking_count": 0,
+  "high_count": 1,
+  "medium_count": 1,
+  "low_count": 0
+}

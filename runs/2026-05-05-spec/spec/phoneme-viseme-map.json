@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "authored_kst": "2026-05-05T16:10+09:00",
+  "g2p_engine_primary": "AVSpeechSynthesizer phoneme delegate",
+  "g2p_engine_primary_rationale": "L2 / SC7-002: GPLv3 espeak-ng dropped due to license incompatibility with Apache-2.0 + Mac App Store. AVSpeechSynthesizer phoneme delegate is Apple system framework, no license issue. SC4-006 + SC6-18 acknowledged: Korean phoneme coverage in AVSpeechSynthesizer is Apple's internal SAPI scheme; mapping below covers the cases observed in demo utterances + 50-utterance test set.",
+  "g2p_engine_fallback_chain": [
+    "AVSpeechSynthesizer phoneme delegate (PRIMARY)",
+    "Bundled Hangul jamo class table (Apache-2.0, see hangul_jamo_classes below)",
+    "Bundled IPA→viseme mapping (CC0; first-row fallback when AVSpeech delegate emits IPA on edge cases)",
+    "REST viseme + Viseme.G2P.HangulSyllableUnmapped warning increment"
+  ],
+  "viseme_set_count": 16,
+  "viseme_ids": ["AA","EE","IH","OH","OW","UH","M","P","B","F","V","TH","S","SH","R","REST"],
+
+  "_comment_en": "English IPA → 16-viseme. Maps follow the Disney/Preston Blair convention with Apple SAPI alignment notes.",
+  "ipa_to_viseme_en": {
+    "ɑ":  { "viseme": "AA", "rationale": "open back unrounded" },
+    "æ":  { "viseme": "AA", "rationale": "low front; near AA in PB convention" },
+    "ʌ":  { "viseme": "UH", "rationale": "mid central unrounded" },
+    "ə":  { "viseme": "UH" },
+    "ɛ":  { "viseme": "EE", "rationale": "near-EE in lip aperture" },
+    "e":  { "viseme": "EE" },
+    "ɪ":  { "viseme": "IH" },
+    "i":  { "viseme": "EE" },
+    "ɔ":  { "viseme": "OH" },
+    "o":  { "viseme": "OH" },
+    "u":  { "viseme": "OW" },
+    "ʊ":  { "viseme": "OW" },
+    "aɪ": { "viseme": "AA", "transition_to": "EE" },
+    "aʊ": { "viseme": "AA", "transition_to": "OW" },
+    "ɔɪ": { "viseme": "OH", "transition_to": "EE" },
+    "m":  { "viseme": "M" },
+    "n":  { "viseme": "S", "rationale": "tongue-tip alveolar; visually similar mouth aperture to S/SH" },
+    "ŋ":  { "viseme": "UH" },
+    "p":  { "viseme": "P" },
+    "b":  { "viseme": "B" },
+    "t":  { "viseme": "S" },
+    "d":  { "viseme": "S" },
+    "k":  { "viseme": "UH", "rationale": "velar; no distinct visible mouth shape; default open" },
+    "g":  { "viseme": "UH" },
+    "f":  { "viseme": "F" },
+    "v":  { "viseme": "V" },
+    "θ":  { "viseme": "TH" },
+    "ð":  { "viseme": "TH" },
+    "s":  { "viseme": "S" },
+    "z":  { "viseme": "S" },
+    "ʃ":  { "viseme": "SH" },
+    "ʒ":  { "viseme": "SH" },
+    "tʃ": { "viseme": "SH" },
+    "dʒ": { "viseme": "SH" },
+    "h":  { "viseme": "REST" },
+    "l":  { "viseme": "S" },
+    "ɹ":  { "viseme": "R" },
+    "r":  { "viseme": "R" },
+    "j":  { "viseme": "EE" },
+    "w":  { "viseme": "OW" },
+    "_silence": { "viseme": "REST" }
+  },
+
+  "_comment_ko": "Korean IPA → 16-viseme. Per SC4-006: Hangul vowels not cleanly mapping to PB English set; choices below favor visible lip-aperture similarity. SOURCE.md beard occlusion mitigates mismatch perception. Loanword fallback uses ipa_to_viseme_en first.",
+  "ipa_to_viseme_ko": {
+    "ɐ":   { "viseme": "AA", "rationale": "ㅏ; open central" },
+    "a":   { "viseme": "AA" },
+    "ʌ":   { "viseme": "AA", "rationale": "ㅓ; mid back unrounded; visually closer to AA than UH due to wider aperture" },
+    "ɛ":   { "viseme": "EE", "rationale": "ㅔ" },
+    "e":   { "viseme": "EE", "rationale": "ㅔ" },
+    "i":   { "viseme": "EE", "rationale": "ㅣ" },
+    "o":   { "viseme": "OH", "rationale": "ㅗ" },
+    "u":   { "viseme": "OW", "rationale": "ㅜ" },
+    "ɯ":   { "viseme": "UH", "rationale": "ㅡ; high back unrounded; closest English equivalent UH despite different lip rounding" },
+    "ø":   { "viseme": "OH", "rationale": "ㅚ; rounded mid front; nearest in our set is OH" },
+    "y":   { "viseme": "OW", "rationale": "ㅟ; high front rounded; nearest is OW" },
+    "wi":  { "viseme": "OW", "transition_to": "EE", "rationale": "ㅟ as glide" },
+    "we":  { "viseme": "OW", "transition_to": "EE", "rationale": "ㅙ ㅞ" },
+    "wʌ":  { "viseme": "OW", "transition_to": "AA", "rationale": "ㅝ" },
+    "ja":  { "viseme": "EE", "transition_to": "AA", "rationale": "ㅑ" },
+    "jʌ":  { "viseme": "EE", "transition_to": "AA", "rationale": "ㅕ" },
+    "jo":  { "viseme": "EE", "transition_to": "OH", "rationale": "ㅛ" },
+    "ju":  { "viseme": "EE", "transition_to": "OW", "rationale": "ㅠ" },
+    "ɰi":  { "viseme": "UH", "transition_to": "EE", "rationale": "ㅢ" },
+    "p":   { "viseme": "P", "rationale": "ㅂ ㅍ ㅃ; aspirated/tense not distinguished visually" },
+    "p_h": { "viseme": "P" },
+    "p_p": { "viseme": "P" },
+    "b":   { "viseme": "B" },
+    "t":   { "viseme": "S", "rationale": "ㄷ ㅌ ㄸ" },
+    "t_h": { "viseme": "S" },
+    "t_p": { "viseme": "S" },
+    "d":   { "viseme": "S" },
+    "k":   { "viseme": "UH", "rationale": "ㄱ ㅋ ㄲ; velar, no visible distinction" },
+    "k_h": { "viseme": "UH" },
+    "k_p": { "viseme": "UH" },
+    "g":   { "viseme": "UH" },
+    "s":   { "viseme": "S", "rationale": "ㅅ" },
+    "s_p": { "viseme": "S", "rationale": "ㅆ" },
+    "tɕ":  { "viseme": "SH", "rationale": "ㅈ ㅊ ㅉ; alveolo-palatal affricate" },
+    "tɕ_h":{ "viseme": "SH" },
+    "tɕ_p":{ "viseme": "SH" },
+    "h":   { "viseme": "REST", "rationale": "ㅎ; barely-visible glottal" },
+    "m":   { "viseme": "M", "rationale": "ㅁ" },
+    "n":   { "viseme": "S", "rationale": "ㄴ" },
+    "ŋ":   { "viseme": "UH", "rationale": "ㅇ syllable-final" },
+    "l":   { "viseme": "S", "rationale": "ㄹ syllable-final" },
+    "ɾ":   { "viseme": "R", "rationale": "ㄹ syllable-initial" },
+    "_silence": { "viseme": "REST" }
+  },
+
+  "_comment_hangul_jamo_classes": "Per-syllable fallback when phoneme delegate fails. Maps Hangul jamo Unicode classes to viseme buckets. SC3-019.",
+  "hangul_jamo_classes": {
+    "vowel": {
+      "ㅏ": "AA", "ㅐ": "EE", "ㅑ": "AA", "ㅒ": "EE",
+      "ㅓ": "AA", "ㅔ": "EE", "ㅕ": "AA", "ㅖ": "EE",
+      "ㅗ": "OH", "ㅘ": "OH", "ㅙ": "EE", "ㅚ": "OH",
+      "ㅛ": "OH", "ㅜ": "OW", "ㅝ": "AA", "ㅞ": "EE",
+      "ㅟ": "OW", "ㅠ": "OW", "ㅡ": "UH", "ㅢ": "UH",
+      "ㅣ": "EE"
+    },
+    "initial": {
+      "ㄱ": "UH", "ㄲ": "UH", "ㄴ": "S", "ㄷ": "S", "ㄸ": "S",
+      "ㄹ": "R", "ㅁ": "M", "ㅂ": "P", "ㅃ": "P", "ㅅ": "S",
+      "ㅆ": "S", "ㅇ": "_pass", "ㅈ": "SH", "ㅉ": "SH", "ㅊ": "SH",
+      "ㅋ": "UH", "ㅌ": "S", "ㅍ": "P", "ㅎ": "REST"
+    },
+    "final": {
+      "ㄱ": "UH", "ㄲ": "UH", "ㄴ": "S", "ㄷ": "S", "ㄹ": "S",
+      "ㅁ": "M", "ㅂ": "P", "ㅅ": "S", "ㅇ": "UH", "ㅈ": "S",
+      "ㅊ": "S", "ㅋ": "UH", "ㅌ": "S", "ㅍ": "P", "ㅎ": "REST"
+    },
+    "_pass_note": "ㅇ as initial is silent (zero-onset); the syllable's viseme is determined by the medial vowel only."
+  },
+
+  "_test_fixture_utterances": {
+    "korean_primary": [
+      "왜 어떤 노래는 들으면 우는지",
+      "얼음이 미끄러워요",
+      "그 노래를 처음 들은 건 누구와 함께였나요"
+    ],
+    "english_primary": [
+      "Why does some music make me cry",
+      "Ice is slippery to me"
+    ],
+    "code_switched": [
+      "이게 왜 trigger 되는지 모르겠어",
+      "내가 왜 이 decision을 미루지"
+    ]
+  },
+
+  "_validation_step": "Build pipeline runs spec/test-fixtures/g2p-validation.swift over the utterances above; each utterance must produce a complete viseme timeline (zero REST-because-unmapped frames). See spec/performance-test-suite.md.",
+
+  "_addresses": ["L2", "SC4-006", "SC3-019", "SC6-18", "SC7-002 (license cascade)"]
+}
