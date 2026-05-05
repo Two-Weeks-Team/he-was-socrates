@@ -1,4 +1,5 @@
 import Testing
+
 @testable import SocraticEngine
 
 @Suite("Viseme set integrity")
@@ -56,20 +57,24 @@ struct PhonemeMapTests {
 struct WonderingLogTests {
     @Test func dedupSameUtteranceSameSession() async {
         let log = WonderingLog()
-        let first = await log.append(Wonder(
-            userUtterance: "왜 어떤 노래는 우는가?",
-            socraticReply: "...",
-            mode: .curiousAdult,
-            modeConfidence: 0.9,
-            language: .ko
-        ))
-        let second = await log.append(Wonder(
-            userUtterance: "왜 어떤 노래는 우는가?",
-            socraticReply: "...",
-            mode: .curiousAdult,
-            modeConfidence: 0.9,
-            language: .ko
-        ))
+        let first = await log.append(
+            Wonder(
+                userUtterance: "왜 어떤 노래는 우는가?",
+                socraticReply: "...",
+                mode: .curiousAdult,
+                modeConfidence: 0.9,
+                language: .ko
+            )
+        )
+        let second = await log.append(
+            Wonder(
+                userUtterance: "왜 어떤 노래는 우는가?",
+                socraticReply: "...",
+                mode: .curiousAdult,
+                modeConfidence: 0.9,
+                language: .ko
+            )
+        )
         #expect(first.id == second.id)
         let count = await log.count()
         #expect(count == 1)
@@ -77,13 +82,15 @@ struct WonderingLogTests {
 
     @Test func deterministicJSONExport() async throws {
         let log = WonderingLog()
-        _ = await log.append(Wonder(
-            userUtterance: "ice is slippery",
-            socraticReply: "is it the ice or your finger?",
-            mode: .learningStudent,
-            modeConfidence: 0.85,
-            language: .en
-        ))
+        _ = await log.append(
+            Wonder(
+                userUtterance: "ice is slippery",
+                socraticReply: "is it the ice or your finger?",
+                mode: .learningStudent,
+                modeConfidence: 0.85,
+                language: .en
+            )
+        )
         let exportA = try await log.exportJSON()
         let exportB = try await log.exportJSON()
         #expect(exportA == exportB)
@@ -207,7 +214,8 @@ struct FunctionCallParserTests {
     }
 
     @Test func parsesModeClassify() {
-        let raw = #"{"function":"mode_classify","args":{"mode":"learning_student","confidence":0.92,"reasoning_summary":"단순 호기심"}}"#
+        let raw =
+            #"{"function":"mode_classify","args":{"mode":"learning_student","confidence":0.92,"reasoning_summary":"단순 호기심"}}"#
         let result = FunctionCallParser.parse(raw)
         guard case .modeClassify(let mode, let conf, let reasoning) = result else {
             Issue.record("expected modeClassify")
@@ -219,7 +227,8 @@ struct FunctionCallParserTests {
     }
 
     @Test func parsesDeferToHuman() {
-        let raw = #"{"function":"defer_to_human","args":{"trigger_category":"medical","suggested_resource_class":"의사","explanation_phrase":"이건 전문가의 도움이 필요하다."}}"#
+        let raw =
+            #"{"function":"defer_to_human","args":{"trigger_category":"medical","suggested_resource_class":"의사","explanation_phrase":"이건 전문가의 도움이 필요하다."}}"#
         let result = FunctionCallParser.parse(raw)
         guard case .deferToHuman(let trigger, let resource, let exp) = result else {
             Issue.record("expected deferToHuman")
@@ -232,10 +241,10 @@ struct FunctionCallParserTests {
 
     @Test func stripsMarkdownCodeFence() {
         let raw = """
-        ```json
-        {"function":"ask_back","args":{"question":"그래서?","language":"ko"}}
-        ```
-        """
+            ```json
+            {"function":"ask_back","args":{"question":"그래서?","language":"ko"}}
+            ```
+            """
         let result = FunctionCallParser.parse(raw)
         if case .askBack(let q, _) = result {
             #expect(q == "그래서?")
@@ -255,7 +264,8 @@ struct FunctionCallParserTests {
     }
 
     @Test func stripsTrailingProse() {
-        let raw = #"{"function":"ask_back","args":{"question":"무엇을?","language":"ko"}} (note: trailing prose ignored)"#
+        let raw =
+            #"{"function":"ask_back","args":{"question":"무엇을?","language":"ko"}} (note: trailing prose ignored)"#
         let result = FunctionCallParser.parse(raw)
         if case .askBack(let q, _) = result {
             #expect(q == "무엇을?")
@@ -341,16 +351,24 @@ struct FunctionCallOrchestratorTests {
     @Test func wonderingLogCompressedHistoryStub() async {
         let log = WonderingLog()
         // Append two wonders.
-        _ = await log.append(Wonder(
-            userUtterance: "음악이 왜 슬픈가?",
-            socraticReply: "노래는 자네 안의 무엇과 만나는가?",
-            mode: .curiousAdult, modeConfidence: 0.9, language: .ko
-        ))
-        _ = await log.append(Wonder(
-            userUtterance: "왜 시간은 빠르지?",
-            socraticReply: "시간이 빠른 것인가, 자네의 주의가 다른 곳에 있는 것인가?",
-            mode: .curiousAdult, modeConfidence: 0.85, language: .ko
-        ))
+        _ = await log.append(
+            Wonder(
+                userUtterance: "음악이 왜 슬픈가?",
+                socraticReply: "노래는 자네 안의 무엇과 만나는가?",
+                mode: .curiousAdult,
+                modeConfidence: 0.9,
+                language: .ko
+            )
+        )
+        _ = await log.append(
+            Wonder(
+                userUtterance: "왜 시간은 빠르지?",
+                socraticReply: "시간이 빠른 것인가, 자네의 주의가 다른 곳에 있는 것인가?",
+                mode: .curiousAdult,
+                modeConfidence: 0.85,
+                language: .ko
+            )
+        )
         let count = await log.count()
         #expect(count == 2)
     }
@@ -431,6 +449,107 @@ struct FunctionCallOrchestratorTests {
         driver.updateAudioClock(200)  // 100ms late, > 50ms threshold
         driver.tick()
 
-        #expect(!alerts.isEmpty, "drift alert should fire when audio_clock is > threshold past schedule")
+        #expect(
+            !alerts.isEmpty,
+            "drift alert should fire when audio_clock is > threshold past schedule"
+        )
+    }
+}
+
+// MARK: - PR-α regression tests
+// Added 2026-05-06 to lock in the fix for finalFallbackTask race + 1.5s
+// penalty + cross-session callback. Apple does NOT contractually guarantee
+// SFSpeechRecognitionTask.finish() will deliver a final result (forum 125279)
+// — these tests exercise the documented best-effort substitute (sessionId
+// token + didPromoteFinal flag + abortListening teardown).
+
+@Suite("AudioInputManager session-token + final-promote guards")
+@MainActor
+struct AudioInputManagerSessionGuardTests {
+
+    @Test func stopListeningPromotesPartialSynchronously() async {
+        let mgr = AudioInputManager()
+        var deliveredFinals: [(String, Language)] = []
+        mgr.onFinalTranscript = { text, lang in deliveredFinals.append((text, lang)) }
+        mgr.locale = .ko
+        mgr._test_seedPartial("왜")
+        mgr._test_setStateForStop()
+
+        mgr.stopListening()
+
+        #expect(deliveredFinals.count == 1)
+        #expect(deliveredFinals.first?.0 == "왜")
+    }
+
+    @Test func stopListeningPromotesEmptyWhenNoPartial() async {
+        let mgr = AudioInputManager()
+        var deliveredFinals: [(String, Language)] = []
+        mgr.onFinalTranscript = { text, lang in deliveredFinals.append((text, lang)) }
+        mgr._test_setStateForStop()
+
+        mgr.stopListening()
+
+        #expect(deliveredFinals.count == 1)
+        #expect(deliveredFinals.first?.0 == "")
+    }
+
+    @Test func doubleStopListeningIsIdempotent() async {
+        let mgr = AudioInputManager()
+        var fires = 0
+        mgr.onFinalTranscript = { _, _ in fires += 1 }
+        mgr._test_seedPartial("hi")
+        mgr._test_setStateForStop()
+
+        mgr.stopListening()
+        mgr.stopListening()
+
+        #expect(fires == 1, "didPromoteFinal should suppress a second promote on the same session")
+    }
+
+    @Test func abortListeningSuppressesFinal() async {
+        let mgr = AudioInputManager()
+        var fires = 0
+        mgr.onFinalTranscript = { _, _ in fires += 1 }
+        mgr._test_seedPartial("would-have-been-final")
+        mgr._test_setStateForStop()
+
+        mgr.abortListening()
+
+        #expect(fires == 0, "abortListening must NOT synthesize a final — that's the whole point")
+        #expect(mgr._test_currentSessionId == nil)
+    }
+
+    @Test func staleCallbackDroppedAcrossSessions() async {
+        // Simulate: session A's recognition closure captured A's sessionId,
+        // then we abort/start a new session B. The closure should not be
+        // able to mutate state for session B.
+        let mgr = AudioInputManager()
+        var fires = 0
+        mgr.onFinalTranscript = { _, _ in fires += 1 }
+        let sessionA = mgr._test_beginFakeSession()
+        mgr.abortListening()
+        // Aborting cleared currentSessionId — even if a callback held
+        // sessionA's id, the guard rejects.
+        let accepted = mgr._test_callbackWouldAccept(sessionId: sessionA)
+        #expect(accepted == false)
+        #expect(fires == 0)
+    }
+
+    @Test func startListeningResetsDidPromoteFinal() async {
+        let mgr = AudioInputManager()
+        var fires = 0
+        mgr.onFinalTranscript = { _, _ in fires += 1 }
+        mgr._test_seedPartial("turn-1")
+        mgr._test_setStateForStop()
+        mgr.stopListening()
+        #expect(fires == 1)
+
+        // New session must be able to promote again.
+        let _ = mgr._test_beginFakeSession()
+        mgr._test_seedPartial("turn-2")
+        mgr._test_setStateForStop()
+        mgr.stopListening()
+
+        #expect(fires == 2, "didPromoteFinal must reset on each startListening")
     }
 }
