@@ -118,23 +118,47 @@ public final class AudioInputManager: NSObject {
             }
         }
 
-        // 2. Speech recognition authorization. The TCC callback fires on a
-        // background queue (com.apple.root.default-qos); under Swift 6 strict
-        // concurrency, calling `withCheckedContinuation` from a MainActor
-        // method makes the resulting continuation MainActor-isolated, so
-        // resuming it from the TCC background queue trips
-        // `_swift_task_checkIsolatedSwift` → dispatch_assert_queue_fail →
-        // SIGTRAP at first launch. We move the call into `Task.detached` so
-        // the continuation runs in a nonisolated context; we re-enter
-        // MainActor naturally on the surrounding `await`.
-        let speechStatus: SFSpeechRecognizerAuthorizationStatus = await Task.detached {
-            await withCheckedContinuation {
-                (cont: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
-                SFSpeechRecognizer.requestAuthorization { status in
-                    cont.resume(returning: status)
-                }
+        // 2. Speech recognition authorization.
+        //
+        // The TCC callback fires on a background queue
+        // (com.apple.root.default-qos); under Swift 6 strict concurrency a
+        // bare `withCheckedContinuation` from a MainActor method produces a
+        // MainActor-isolated continuation, and resuming it from the TCC
+        // background queue trips `_swift_task_checkIsolatedSwift` →
+        // `dispatch_assert_queue_fail` → SIGTRAP at first launch. We hop
+        // into `Task.detached` so the continuation runs in a nonisolated
+        // context; we re-enter MainActor naturally on the surrounding
+        // `await`.
+        //
+        // PR-β: in rare cases (process-termination signal during the OS
+        // prompt, tccd hang, audit-log denial) TCC has been observed to
+        // never invoke the completion at all, leaving the bootstrap
+        // wedged forever in `.bootstrapping` (RCA finding N1). We race
+        // the authorization callback against a 10 s deadline using a
+        // TaskGroup — first to finish wins, and a stalled TCC degrades to
+        // `.notDetermined` instead of an indefinite await.
+        let speechStatus: SFSpeechRecognizerAuthorizationStatus = await withTaskGroup(
+            of: SFSpeechRecognizerAuthorizationStatus.self
+        ) { group in
+            group.addTask {
+                await Task.detached {
+                    await withCheckedContinuation {
+                        (cont: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
+                        SFSpeechRecognizer.requestAuthorization { status in
+                            cont.resume(returning: status)
+                        }
+                    }
+                }.value
             }
-        }.value
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 10_000_000_000)  // 10 s
+                return .notDetermined
+            }
+            // Whichever task completes first is the result.
+            let result = await group.next() ?? .notDetermined
+            group.cancelAll()
+            return result
+        }
         switch speechStatus {
         case .authorized:
             state = .ready

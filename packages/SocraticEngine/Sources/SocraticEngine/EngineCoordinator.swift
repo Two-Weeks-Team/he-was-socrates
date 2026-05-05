@@ -108,6 +108,19 @@ public final class EngineCoordinator {
                 self?.transition(to: .idle)
             }
         }
+        // PR-β: AVSpeechSynthesizer.stopSpeaking(at: .immediate) fires
+        // didCancel on the synthesizer delegate (see Apple Speech Synthesis
+        // docs). The watchdog calls `tts.cancel()` and we must mirror the
+        // viseme/phase teardown the success path runs in `onUtteranceEnd`.
+        // Otherwise the bust mouth is left mid-shape and the phase only
+        // advances via the watchdog's own `transition(.idle)` call —
+        // visible for one render frame as a frozen non-REST viseme.
+        tts.onUtteranceCancel = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.viseme.reset()
+                self?.transition(to: .idle)
+            }
+        }
         tts.onPhonemeMarker = { [weak self] (label, offsetMs) in
             Task { @MainActor [weak self] in
                 self?.viseme.ingest(appleLabel: label, audioOffsetMs: offsetMs)
@@ -262,21 +275,34 @@ public final class EngineCoordinator {
     }
 
     /// Phase budgets:
+    ///   bootstrapping — permission prompts + Gemma model load + warmup.
+    ///                   600 s ceiling covers a slow first launch (cache
+    ///                   miss, MLX kernel JIT). Beyond it we surface a
+    ///                   `.failed` so the user isn't wedged on a black
+    ///                   screen indefinitely. Closes RCA finding N3.
     ///   listening — user holds Space; STT can lag a beat
     ///   thinking  — first Gemma turn includes a one-time MLX warmup,
     ///               subsequent turns are seconds. 60s window covers both.
     ///   surfacing — pure-engine search over the wondering log
+    ///                (reserved — iter2 §A7 stall fallback; no transition
+    ///                path active in Phase 1–3, but budget kept for forward
+    ///                compatibility per CONTRIBUTING.md L27-31)
     ///   speaking  — TTS playback for a long Socratic question
-    /// idle / bootstrapping / failed have no watchdog.
+    ///   failed    — auto-rearm to .idle after 5 s. Not a teardown —
+    ///               just clears the failure UI so the user can retry
+    ///               without restarting the app. Closes finding D + N8.
+    ///   idle      — terminal; no watchdog.
     private func scheduleWatchdog(for next: Phase) {
         phaseWatchdog?.cancel()
         let budget: TimeInterval?
         switch next {
+        case .bootstrapping: budget = 600
         case .listening: budget = 60
         case .thinking: budget = 60
         case .surfacing: budget = 10
         case .speaking: budget = 60
-        case .idle, .bootstrapping, .failed:
+        case .failed: budget = 5
+        case .idle:
             budget = nil
         }
         guard let budget else { return }
@@ -285,14 +311,72 @@ public final class EngineCoordinator {
             try? await Task.sleep(nanoseconds: UInt64(budget * 1_000_000_000))
             guard let self else { return }
             guard self.phase == snapshot else { return }
+
+            self.runWatchdogBody(snapshot: snapshot)
+        }
+    }
+
+    /// Watchdog body extracted so test seams can invoke it without
+    /// waiting on a real `Task.sleep`. Internal so `@testable` can call it
+    /// via `_test_simulateWatchdogElapsed()`.
+    @MainActor
+    internal func runWatchdogBody(snapshot: Phase) {
+        guard self.phase == snapshot else { return }
+        _runWatchdogTransitions(snapshot: snapshot)
+    }
+
+    @MainActor
+    private func _runWatchdogTransitions(snapshot: Phase) {
+        switch snapshot {
+        case .failed:
+            // Auto-rearm: clear the failure surface so the user can
+            // press Spacebar again. Don't tear down audio (it's already
+            // inactive) or TTS (it's already cancelled by whatever
+            // caused the failure).
+            self.transition(to: .idle)
+
+        case .bootstrapping:
+            // Bootstrapping itself ran past its budget — `loadModel` or
+            // `warmup` is wedged. Surface a clean failure so the user
+            // gets a recoverable phase rather than an indefinite black
+            // screen. Encoded key per PR-δ failure-key plan.
+            self.transition(to: .failed("bootstrap.timeout"))
+
+        default:
+            // Active turn or surfacing — full teardown then idle.
             self.tts.cancel()
             self.viseme.reset()
-            // `abortListening()` (PR-α) tears down the recognition session
-            // WITHOUT synthesizing a phantom final. The previous call to
-            // `stopListening()` here would schedule a 1.5 s fallback that
-            // re-entered the turn loop while phase was already `.idle`.
+            // `abortListening()` (PR-α) tears down the recognition
+            // session WITHOUT synthesizing a phantom final.
             self.audio.abortListening()
             self.transition(to: .idle)
+        }
+    }
+
+    // MARK: - Test seams (PR-β)
+    //
+    // Internal hooks reachable from `@testable import SocraticEngine` so
+    // tests can drive watchdog logic without waiting on real Task.sleep
+    // budgets. Each carries a `_test_` prefix to keep them visually
+    // distinct from production surface.
+
+    internal func _test_forceTransition(to phase: Phase) {
+        // Mirror the production `transition(to:)` body: write phase, fire
+        // the callback, AND arm the watchdog so .failed/.bootstrapping
+        // auto-rearm logic is exercised from tests.
+        self.phase = phase
+        onPhaseChanged?(phase)
+        scheduleWatchdog(for: phase)
+    }
+
+    internal func _test_simulateWatchdogElapsed() {
+        runWatchdogBody(snapshot: self.phase)
+    }
+
+    internal func _test_fireOnUtteranceCancel() {
+        Task { @MainActor [weak self] in
+            self?.viseme.reset()
+            self?.transition(to: .idle)
         }
     }
 }
