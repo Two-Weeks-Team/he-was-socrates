@@ -1,5 +1,5 @@
 .PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app run bootstrap help \
-        doctor probe-phonemes ci-local secret-scan
+        doctor probe-phonemes ci-local secret-scan install-gemma-weights
 
 help:
 	@echo "He Was Socrates — build targets"
@@ -35,12 +35,15 @@ help:
 	@echo "    make probe-phonemes  — Stage-5 day-1 Apple phoneme availability probe"
 	@echo ""
 	@echo "  End-to-end:"
-	@echo "    make bootstrap       — fresh-clone setup (assets + xcodeproj + app)"
-	@echo "    make run             — launch the built .app (first launch downloads"
-	@echo "                            ~3.97 GB Gemma 4 weights)"
+	@echo "    make bootstrap            — fresh-clone setup (assets + xcodeproj + app +"
+	@echo "                                 install-gemma-weights)"
+	@echo "    make install-gemma-weights — pre-fetch the ~3.97 GB Gemma 4 E4B 4-bit"
+	@echo "                                 model into the sandbox container so the"
+	@echo "                                 NO-CLOUD app can read it offline."
+	@echo "    make run                  — launch the built .app"
 	@echo "    HEWASSOCRATES_GEMMA_MODE=stub make run"
-	@echo "                          — launch with canned stub responses (skips MLX"
-	@echo "                            download; useful for UI smoke tests)"
+	@echo "                               — launch with canned stub responses (skips MLX"
+	@echo "                                 load; useful for UI smoke tests)"
 
 assets:
 	bash scripts/build-visemes.sh
@@ -109,15 +112,40 @@ app:
 		           build
 
 # `make bootstrap` — full fresh-clone setup. Runs assets, generates the
-# xcodeproj, builds the .app. Designed to "just work" on a clean Apple Silicon
-# Mac with full Xcode + Homebrew deps installed (see Brewfile).
-bootstrap: assets xcodeproj app
+# xcodeproj, builds the .app, then pre-fetches the Gemma weights into the
+# sandbox container (the NO-CLOUD invariant means the app itself cannot
+# download them at runtime). Designed to "just work" on a clean Apple
+# Silicon Mac with full Xcode + Homebrew deps installed (see Brewfile).
+bootstrap: assets xcodeproj app install-gemma-weights
 	@echo ""
 	@echo "Bootstrap complete. Launch with: make run"
-	@echo "  • First launch downloads ~3.97 GB Gemma 4 E4B 4-bit weights."
-	@echo "  • Cached at ~/Library/Caches/com.apple.MLX/ for subsequent runs."
 	@echo "  • Optional signing override: cp apps/macos/HeWasSocrates/Local.xcconfig.example \\"
 	@echo "                                  apps/macos/HeWasSocrates/Local.xcconfig"
+
+# `make install-gemma-weights` — pre-fetch the Gemma 4 E4B 4-bit model from
+# HuggingFace and stage it into the sandboxed app's cache.
+#
+# Why: the app ships with App Sandbox enabled and *no* network entitlements
+# (NO-CLOUD invariant). swift-huggingface's CacheLocationProvider resolves to
+# `~/Library/Caches/huggingface/hub` for sandboxed Apple apps, which under
+# sandboxing redirects to
+# `~/Library/Containers/<bundle>/Data/Library/Caches/huggingface/hub`.
+# We download into that container path here, OUTSIDE the sandbox, so the
+# sandboxed app process only ever has to READ from the cache at runtime.
+#
+# Idempotent: huggingface_hub's snapshot_download skips files that match the
+# expected hash, so re-running is cheap once the bundle is present.
+install-gemma-weights:
+	@if [ ! -d .venv-build ]; then \
+		echo "Creating Python venv (.venv-build)..."; \
+		python3 -m venv .venv-build && \
+		.venv-build/bin/pip install --quiet --upgrade pip; \
+	fi
+	@.venv-build/bin/pip show huggingface_hub >/dev/null 2>&1 || { \
+		echo "Installing huggingface_hub into .venv-build..."; \
+		.venv-build/bin/pip install --quiet huggingface_hub; \
+	}
+	@.venv-build/bin/python3 scripts/install_gemma_weights.py
 
 # `make run` — launch the built .app. Resolves the actual build product path
 # from xcodebuild's settings so DerivedData relocations don't break this.

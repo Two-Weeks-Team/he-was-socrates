@@ -78,8 +78,13 @@ cp apps/macos/HeWasSocrates/Local.xcconfig.example \
    apps/macos/HeWasSocrates/Local.xcconfig
 $EDITOR apps/macos/HeWasSocrates/Local.xcconfig    # set DEVELOPMENT_TEAM = …
 
-# 5) Single-command bootstrap: assets → xcodeproj → app.
-#    Auto-downloads the Metal Toolchain (~688 MB) on first call.
+# 5) Single-command bootstrap. This is `assets → xcodeproj → app →
+#    install-gemma-weights`. The last step pre-fetches the ~3.97 GB
+#    Gemma 4 E4B 4-bit model into the sandboxed app's HuggingFace cache
+#    via Python's huggingface_hub. The app itself ships with NO network
+#    entitlements (NO-CLOUD invariant), so the model MUST be staged from
+#    outside the sandbox here — the runtime only ever READS the cache.
+#    Auto-downloads the Metal Toolchain (~688 MB) on first call too.
 make bootstrap
 
 # 6) Launch the app.
@@ -89,8 +94,9 @@ make run
 What you do at first launch (the parts only a human can do):
 
 1. Approve **Microphone** + **Speech Recognition** TCC dialogs.
-2. Wait for the on-screen progress bar — Gemma 4 E4B 4-bit weights (~3.97 GB) download to `~/Library/Caches/com.apple.MLX/`. Subsequent launches start instantly.
-3. **Hold Spacebar** to talk; release to let the bust think and ask back. **Esc** quits.
+2. **Hold Spacebar** to talk; release to let the bust think and ask back. **Esc** quits.
+
+Note: if the bust shows `⚠ gemma load: Failed to load Gemma 4 model.`, the offline cache wasn't staged — re-run `make install-gemma-weights` and relaunch.
 
 Try: "왜 어떤 노래는 들으면 우는지?" → 산파술 질문이 돌아옵니다. "변호사 좀 추천해줘" → `defer_to_human` 거절 (이 거절이 곧 제품 메커닉입니다).
 
@@ -115,9 +121,14 @@ make engine-test          # 41 swift-testing scenarios
 # 5) CI parity gate — same checks GitHub Actions runs (assets-verify + tests + lint).
 make ci-local
 
-# 6) Full app build. Metal Toolchain auto-downloads via `xcodebuild
-#    -downloadComponent` on first call (no Apple ID required).
-make bootstrap
+# 6) Full app build + offline model stage. `make bootstrap` runs:
+#      assets → xcodeproj → app → install-gemma-weights.
+#    Metal Toolchain auto-downloads via `xcodebuild -downloadComponent` on
+#    first call (no Apple ID required). install-gemma-weights provisions a
+#    Python venv and uses huggingface_hub to stage ~3.97 GB into the
+#    sandbox container so the NO-CLOUD app can read it offline.
+#    Skip the model fetch in CI by overriding the bootstrap chain:
+make assets xcodeproj app           # build-only path, no model fetch
 
 # 7) Headless launch with stub Gemma (no MLX fetch, no model load).
 #    The .app still exercises every wiring path: SFSpeechRecognizer →
@@ -141,7 +152,7 @@ test "$(ls "$APP/Contents/Resources/visemes" | wc -l | xargs)" = "16"
 Things an LLM **cannot** automate — the bust requires a human at first launch:
 
 - TCC permission dialogs (Microphone, Speech Recognition) — system-modal, no programmatic grant on production macOS.
-- The 3.97 GB Gemma weight download has no flag to short-circuit; use `HEWASSOCRATES_GEMMA_MODE=stub` to bypass it during CI / smoke runs.
+- The 3.97 GB Gemma weight stage (`make install-gemma-weights`) finishes unattended, but in CI you'll usually want to skip it. Run the build path `make assets xcodeproj app` instead of the full `make bootstrap`, and launch with `HEWASSOCRATES_GEMMA_MODE=stub`.
 - Voice input via Spacebar push-to-talk — there's no headless voice fixture; if you need a deterministic conversation trace, drive the engine layer directly via `swift test` (the `FunctionCallOrchestrator end-to-end (stub Gemma)` suite covers it).
 
 Detailed setup including Stage-5 day-1 tasks: see **[SETUP.md](SETUP.md)**. Architecture and invariants for AI assistants: **[CLAUDE.md](CLAUDE.md)**.
