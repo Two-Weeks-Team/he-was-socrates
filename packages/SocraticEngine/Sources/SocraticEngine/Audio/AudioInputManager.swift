@@ -38,14 +38,32 @@ public final class AudioInputManager: NSObject {
     public var onError: ((NSError) -> Void)?
 
     /// Most recent partial transcript observed during the active session.
-    /// Used by `stopListening()` as a fallback when SFSpeechRecognitionTask
-    /// does not deliver a final result within a short deadline (observed in
-    /// practice on ko-KR voices for short / silent-tail utterances).
+    /// `stopListening()` promotes this to a final transcript synchronously
+    /// when the recognition task didn't deliver `isFinal=true` — Apple's
+    /// `SFSpeechRecognitionTask.finish()` does not contractually guarantee
+    /// a final callback (see Apple forum thread 125279, ko-KR observed
+    /// drop-rate is non-trivial on short / silent-tail utterances).
     private var lastPartialTranscript: String = ""
 
-    /// Outstanding fallback timer scheduled by `stopListening()`. Cancelled
-    /// if the real final result arrives in time.
-    private var finalFallbackTask: Task<Void, Never>?
+    /// Per-session token captured by value into the recognition closure.
+    /// On every `startListening()` we mint a fresh `UUID` and stamp this
+    /// field; the closure compares its captured copy against
+    /// `currentSessionId` before touching any state. A stale callback
+    /// (different session OR session aborted via `abortListening()`) is
+    /// dropped at the guard. Aligns with the Swift 6 strict-concurrency
+    /// "task identity tokens across actor hops" pattern documented in
+    /// WWDC24 session 10169 "Migrate your app to Swift 6".
+    private var currentSessionId: UUID?
+
+    /// Sentinel for the "final has already been promoted (via real or
+    /// fallback path) for the current session" condition. Apple's
+    /// `SFSpeechRecognitionTask` resultHandler is empirically observed to
+    /// emit `isFinal=true` more than once on rare iOS / macOS versions
+    /// (forum 125279) and to fire `isFinal` followed by an error in normal
+    /// flow. Guarding `onFinalTranscript` with this flag is the
+    /// documented-best-effort substitute for a contract Apple does not
+    /// supply.
+    private var didPromoteFinal: Bool = false
 
     #if canImport(Speech) && canImport(AVFAudio)
     private var recognizer: SFSpeechRecognizer?
@@ -155,6 +173,24 @@ public final class AudioInputManager: NSObject {
         #if canImport(Speech) && canImport(AVFAudio)
         guard state == .ready || state == .idle else { return }
 
+        // Mint a fresh per-session token. Captured by VALUE in the
+        // recognition closure below — Swift 6 strict concurrency declares
+        // `UUID` Sendable, so this survives the closure crossing onto
+        // SFSpeech's internal queue and back to MainActor without any
+        // capture diagnostics. Apple-endorsed identity-token pattern per
+        // WWDC24 #10169 "Migrate your app to Swift 6".
+        let sessionId = UUID()
+        self.currentSessionId = sessionId
+        self.didPromoteFinal = false
+        self.lastPartialTranscript = ""
+
+        // Cancel any lingering task from a prior session before installing
+        // a new one. SFSpeechRecognitionTask.cancel() is the documented
+        // teardown for an in-flight recognition; without it, a delayed
+        // callback from the previous session would race the new one.
+        self.task?.cancel()
+        self.task = nil
+
         let bcp47 = (locale == .auto ? Language.ko : locale).bcp47
         let recognizer = SFSpeechRecognizer(locale: Locale(identifier: bcp47))
         guard let recognizer, recognizer.isAvailable else {
@@ -172,39 +208,42 @@ public final class AudioInputManager: NSObject {
         request.shouldReportPartialResults = true
         self.request = request
 
-        // Wire up audio engine input node tap. AVAudioEngine invokes this
-        // callback on a realtime audio queue (CADeprecated::RealtimeMessenger);
-        // a MainActor-isolated closure would trip
-        // `_swift_task_checkIsolatedSwift` → `dispatch_assert_queue_fail` →
-        // SIGTRAP on the first audio buffer.
-        //
-        // Just capturing `request` instead of `self` is NOT enough — closures
-        // declared inside a @MainActor method inherit the actor isolation of
-        // the enclosing function regardless of capture list. We delegate the
-        // tap installation to a `nonisolated` helper so the closure literal
-        // itself is built in a nonisolated context.
-        // SFSpeechAudioBufferRecognitionRequest.append is thread-safe.
+        // Audio engine input node tap. AVAudioEngine invokes this on a
+        // realtime audio queue (CADeprecated::RealtimeMessenger). A
+        // MainActor-isolated closure would trip
+        // `_swift_task_checkIsolatedSwift` → SIGTRAP on the first audio
+        // buffer; we delegate installation to a `nonisolated` static
+        // helper so the closure literal is built outside any actor.
+        // SFSpeechAudioBufferRecognitionRequest.append is documented
+        // thread-safe.
         let inputNode = audioEngine.inputNode
         let format = inputNode.outputFormat(forBus: 0)
+        // Apple's Speech sample "Recognizing speech in live audio" calls
+        // `removeTap` defensively before `installTap` — the canonical
+        // guard against the documented `installTap`-twice crash.
         inputNode.removeTap(onBus: 0)
         Self.installNonisolatedTap(onInputNode: inputNode, format: format, request: request)
 
         audioEngine.prepare()
         try audioEngine.start()
 
-        // SFSpeechRecognitionTask invokes its callback on an arbitrary queue
-        // too. We don't capture `self` directly in the outer closure — we
-        // hop to MainActor via `Task { @MainActor in ... }` for the actor-
-        // isolated state writes. The capture list pulls `weak self` ONLY
-        // into the inner Task body, not the outer recognition closure.
+        // SFSpeechRecognitionTask resultHandler fires on an arbitrary
+        // queue. The outer closure doesn't capture `self`; the inner
+        // `Task { @MainActor }` pulls `weak self` plus the by-value
+        // `sessionId` token so a stale callback (different session OR
+        // session aborted) is dropped at the guard before any state
+        // mutation. Apple does not contract single-fire on isFinal
+        // (forum 125279); `didPromoteFinal` is the documented best-effort
+        // substitute.
         self.task = recognizer.recognitionTask(with: request) { result, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                guard self.currentSessionId == sessionId else { return }
                 if let result {
                     let transcript = result.bestTranscription.formattedString
                     if result.isFinal {
-                        self.finalFallbackTask?.cancel()
-                        self.finalFallbackTask = nil
+                        guard !self.didPromoteFinal else { return }
+                        self.didPromoteFinal = true
                         self.lastPartialTranscript = ""
                         self.onFinalTranscript?(transcript, self.locale)
                     } else {
@@ -218,9 +257,6 @@ public final class AudioInputManager: NSObject {
             }
         }
 
-        lastPartialTranscript = ""
-        finalFallbackTask?.cancel()
-        finalFallbackTask = nil
         state = .listening(startedAt: Date())
         #else
         throw EngineError.make(
@@ -232,37 +268,104 @@ public final class AudioInputManager: NSObject {
         #endif
     }
 
+    /// Stop listening. Tear down audio + recognition AND synchronously
+    /// promote the latest partial transcript to a final, so the host's
+    /// turn loop never wedges waiting for a final callback Apple's
+    /// `SFSpeechRecognitionTask.finish()` does not contractually deliver.
+    ///
+    /// Earlier revisions used a 1.5 s `Task.sleep` safety net that fired
+    /// `onFinalTranscript` from a deferred timer; that timer was the
+    /// dominant per-turn latency tax (1.5 s pinned per ko-KR utterance)
+    /// and produced phantom-final re-entries when the watchdog called
+    /// this method on an idle session. Replaced with synchronous promote
+    /// gated by `didPromoteFinal` so a real final still wins if it
+    /// arrives between `task.finish()` and the next runloop tick.
     public func stopListening() {
         #if canImport(Speech) && canImport(AVFAudio)
         state = .finalizing
-        request?.endAudio()
+
+        // Apple SpeakToMe sample stop sequence.
+        audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
-        if audioEngine.isRunning {
-            audioEngine.stop()
-        }
+        request?.endAudio()
         let partialAtStop = lastPartialTranscript
         let captureLocale = locale
         task?.finish()
 
-        // SFSpeechRecognitionTask does not always deliver a final result
-        // after `finish()` — observed for ko-KR voices on short or
-        // silent-tail utterances. Without a fallback the host's turn loop
-        // wedges in `.listening`. Schedule a 1.5s safety net: if the real
-        // final hasn't fired by then, promote the most recent partial (or
-        // an empty string) so the coordinator can advance.
-        finalFallbackTask?.cancel()
-        finalFallbackTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
-            guard let self else { return }
-            guard self.finalFallbackTask != nil else { return }
-            self.finalFallbackTask = nil
-            self.lastPartialTranscript = ""
-            self.task?.cancel()
-            self.task = nil
-            self.onFinalTranscript?(partialAtStop, captureLocale)
+        // Synchronous promote. If the recognition callback has already
+        // promoted a real final on the same MainActor turn (which would
+        // have set `didPromoteFinal = true` above), this is a no-op.
+        if !didPromoteFinal {
+            didPromoteFinal = true
+            lastPartialTranscript = ""
+            onFinalTranscript?(partialAtStop, captureLocale)
         }
 
         state = .ready
+        #endif
+    }
+
+    // MARK: - Test seams
+    //
+    // Internal hooks used by `@testable import SocraticEngine` to drive the
+    // session-token + promote-guard logic without standing up a full
+    // SFSpeechRecognizer pipeline. Marked `internal` so they're invisible
+    // to release SDK consumers but reachable from `SocraticEngineTests`.
+    // Each name carries the `_test_` prefix so a reader can't confuse it
+    // for a public surface.
+
+    internal func _test_seedPartial(_ text: String) {
+        lastPartialTranscript = text
+    }
+
+    internal func _test_setStateForStop() {
+        // Tests don't go through `startListening()`, so we mint a fake
+        // session token by hand to exercise the promote path.
+        currentSessionId = UUID()
+        didPromoteFinal = false
+    }
+
+    internal var _test_currentSessionId: UUID? { currentSessionId }
+
+    internal func _test_beginFakeSession() -> UUID {
+        let id = UUID()
+        currentSessionId = id
+        didPromoteFinal = false
+        return id
+    }
+
+    internal func _test_callbackWouldAccept(sessionId: UUID) -> Bool {
+        return currentSessionId == sessionId
+    }
+
+    /// Tear down the recognition session WITHOUT firing any onFinal
+    /// callback. Used by `EngineCoordinator`'s watchdog when the host
+    /// wants to abandon the turn entirely (e.g. the watchdog timed out
+    /// while we were still in `.listening`); without this method the
+    /// watchdog's call to `stopListening()` would itself synthesize a
+    /// phantom final and re-enter the turn loop. The session token is
+    /// also cleared so any in-flight resultHandler hop drops at the
+    /// `currentSessionId == sessionId` guard.
+    public func abortListening() {
+        #if canImport(Speech) && canImport(AVFAudio)
+        // Invalidate the session token first so any callback already
+        // in-flight on the MainActor queue early-returns at its guard.
+        currentSessionId = nil
+        didPromoteFinal = true
+        lastPartialTranscript = ""
+
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+        audioEngine.inputNode.removeTap(onBus: 0)
+        request?.endAudio()
+        request = nil
+        // `cancel()` (vs `finish()`) explicitly does NOT promise a final
+        // result — exactly what we want for an aborted session.
+        task?.cancel()
+        task = nil
+
+        state = .idle
         #endif
     }
 }

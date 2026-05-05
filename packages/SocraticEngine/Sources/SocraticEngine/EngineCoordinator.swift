@@ -287,7 +287,11 @@ public final class EngineCoordinator {
             guard self.phase == snapshot else { return }
             self.tts.cancel()
             self.viseme.reset()
-            self.audio.stopListening()
+            // `abortListening()` (PR-α) tears down the recognition session
+            // WITHOUT synthesizing a phantom final. The previous call to
+            // `stopListening()` here would schedule a 1.5 s fallback that
+            // re-entered the turn loop while phase was already `.idle`.
+            self.audio.abortListening()
             self.transition(to: .idle)
         }
     }
