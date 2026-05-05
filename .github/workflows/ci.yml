@@ -170,5 +170,5 @@ jobs:
 
       - name: Verify Rhubarb binary
         run: |
-          test -x tools/oracles/rhubarb-1.13.0/rhubarb
-          tools/oracles/rhubarb-1.13.0/rhubarb --version
+          test -x tools/oracles/rhubarb-1.14.0/rhubarb
+          tools/oracles/rhubarb-1.14.0/rhubarb --version

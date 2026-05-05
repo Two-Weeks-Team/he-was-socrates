@@ -28,7 +28,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ORACLES_DIR="$REPO_ROOT/tools/oracles"
 VENV_DIR="$REPO_ROOT/.venv-build"
 
-RHUBARB_VERSION="${RHUBARB_VERSION:-1.13.0}"
+RHUBARB_VERSION="${RHUBARB_VERSION:-1.14.0}"
 RHUBARB_DIR="$ORACLES_DIR/rhubarb-$RHUBARB_VERSION"
 RHUBARB_BIN="$RHUBARB_DIR/rhubarb"
 
@@ -54,9 +54,12 @@ install_rhubarb() {
     *) echo "✗  rhubarb: unsupported arch $arch" >&2; return 1 ;;
   esac
 
-  # Rhubarb releases ship a single macOS universal zip:
-  # rhubarb-lip-sync-${VERSION}-osx.zip
-  local url="https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${RHUBARB_VERSION}/rhubarb-lip-sync-${RHUBARB_VERSION}-osx.zip"
+  # Rhubarb release asset naming changed at v1.14: capitalised + `macOS`
+  # suffix. Verified live against the GitHub releases API
+  # (https://api.github.com/repos/DanielSWolf/rhubarb-lip-sync/releases/latest).
+  local zip_name="Rhubarb-Lip-Sync-${RHUBARB_VERSION}-macOS.zip"
+  local extracted_name="Rhubarb-Lip-Sync-${RHUBARB_VERSION}-macOS"
+  local url="https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${RHUBARB_VERSION}/${zip_name}"
   local tmp
   tmp="$(mktemp -d)"
   echo "⇢  rhubarb: downloading $url"
@@ -66,9 +69,8 @@ install_rhubarb() {
     return 1
   fi
   unzip -q "$tmp/rhubarb.zip" -d "$tmp"
-  # The zip extracts to rhubarb-lip-sync-${VERSION}-osx/
   mkdir -p "$RHUBARB_DIR"
-  cp -R "$tmp/rhubarb-lip-sync-${RHUBARB_VERSION}-osx/." "$RHUBARB_DIR/"
+  cp -R "$tmp/${extracted_name}/." "$RHUBARB_DIR/"
   chmod +x "$RHUBARB_BIN"
   rm -rf "$tmp"
   echo "✓  rhubarb $RHUBARB_VERSION installed: $RHUBARB_BIN"
