@@ -584,12 +584,12 @@ struct EngineCoordinatorHangKillerTests {
         // We don't actually want to wait the 600s production budget here.
         // Verify the routing intent by exercising the watchdog body
         // directly via the _test_ seam: caller forces .bootstrapping,
-        // simulates a budget-elapsed event, expects .failed("bootstrap.timeout").
+        // simulates a budget-elapsed event, expects .failed(bootstrapTimeout).
         let coord = EngineCoordinator(gemmaMode: .stub)
         coord._test_forceTransition(to: .bootstrapping)
         coord._test_simulateWatchdogElapsed()
         if case .failed(let key) = coord.phase {
-            #expect(key == "bootstrap.timeout")
+            #expect(key == PhaseFailureKey.bootstrapTimeout)
         } else {
             Issue.record("expected .failed(bootstrap.timeout), got \(coord.phase)")
         }
@@ -651,6 +651,36 @@ struct PerformanceCacheTests {
         // The contract here is "no crash, deterministic outcome" —
         // installed-on-runner is the only thing that varies.
         _ = v
+    }
+
+    @Test func phaseFailureKeyNamespaceIsStable() {
+        // Stability bar — these strings are part of the cross-layer
+        // contract between the engine (Phase.failed payloads) and the
+        // SwiftUI FailedMessage lookup. Changing a key requires a UI
+        // update in lock-step.
+        #expect(PhaseFailureKey.micDenied == "audio.permission.microphone.denied")
+        #expect(PhaseFailureKey.speechRecognitionDenied == "audio.permission.speech.denied")
+        #expect(PhaseFailureKey.gemmaLoadFailed == "gemma.load.failed")
+        #expect(PhaseFailureKey.bootstrapTimeout == "bootstrap.timeout")
+    }
+
+    @Test func turnOutputSurfacedPastWonderReservedFieldExists() {
+        // Forward-compat: TurnOutput.surfacedPastWonder is reserved for
+        // iter2 §A7 stall fallback (PR-δ annotation). Verify the field
+        // is on the public surface so a future PR doesn't accidentally
+        // remove it.
+        let out = FunctionCallOrchestrator.TurnOutput(
+            mode: ModeClassification(
+                mode: .curiousAdult,
+                confidence: 0.5,
+                reasoningSummary: "test"
+            ),
+            surfacedPastWonder: "stub-surface",
+            socraticReply: "?",
+            deferred: false,
+            correlationId: UUID()
+        )
+        #expect(out.surfacedPastWonder == "stub-surface")
     }
 
     @Test func gemmaWarmupOnStubIsNoOp() async {
