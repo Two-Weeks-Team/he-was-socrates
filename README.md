@@ -54,36 +54,97 @@ Three Gemma 4 features are **load-bearing** — pull any one out and the product
 
 ## Quick start
 
-**Prerequisite:** Apple Silicon Mac with macOS 14+ and **full Xcode 15.2+** installed.
+**Prerequisite:** Apple Silicon Mac with macOS 14+, full Xcode 16+ (Xcode 26 ships Swift 6.1+ and the Metal Toolchain auto-installs on first build), and Homebrew.
+
+The project ships two parallel quick-start tracks: a manual one for humans and a strictly-scripted one for LLMs / CI. Both end at the same green build, the same `.app` bundle, and the same first-launch flow.
+
+### For Human (interactive)
 
 ```bash
-# Clone
+# 1) Clone
 git clone https://github.com/Two-Weeks-Team/he-was-socrates.git
 cd he-was-socrates
 
-# Install build tooling (xcodegen)
+# 2) Install brew-managed CLI deps (xcodegen, swift-format, gitleaks)
 brew bundle
 
-# Sanity check the environment
+# 3) Sanity-check the toolchain — green checks for swift / xcodebuild /
+#    xcodegen / python3, optional gitleaks + swift-format.
 make doctor
 
-# Build assets (regenerates 17 PNGs from source-portrait.png)
-make assets
+# 4) (Optional) Pin your Apple Developer Team ID so signing isn't ad-hoc.
+#    Without this, the build still succeeds with ad-hoc signing for Debug.
+cp apps/macos/HeWasSocrates/Local.xcconfig.example \
+   apps/macos/HeWasSocrates/Local.xcconfig
+$EDITOR apps/macos/HeWasSocrates/Local.xcconfig    # set DEVELOPMENT_TEAM = …
 
-# Build engine + run all tests (~1.5 s on M2 Pro)
-make engine-test          # 41 swift-testing scenarios
+# 5) Single-command bootstrap: assets → xcodeproj → app.
+#    Auto-downloads the Metal Toolchain (~688 MB) on first call.
+make bootstrap
 
-# Generate Xcode project + build the .app
-make xcodeproj
-make app
-
-# Launch
-open apps/macos/HeWasSocrates/build/Debug/HeWasSocrates.app
+# 6) Launch the app.
+make run
 ```
 
-First launch downloads Gemma 4 E4B 4-bit weights (~3.97 GB) into `~/Library/Caches/com.apple.MLX/`. Subsequent launches are warm.
+What you do at first launch (the parts only a human can do):
 
-Detailed setup including Stage-5 day-1 tasks: see **[SETUP.md](SETUP.md)**.
+1. Approve **Microphone** + **Speech Recognition** TCC dialogs.
+2. Wait for the on-screen progress bar — Gemma 4 E4B 4-bit weights (~3.97 GB) download to `~/Library/Caches/com.apple.MLX/`. Subsequent launches start instantly.
+3. **Hold Spacebar** to talk; release to let the bust think and ask back. **Esc** quits.
+
+Try: "왜 어떤 노래는 들으면 우는지?" → 산파술 질문이 돌아옵니다. "변호사 좀 추천해줘" → `defer_to_human` 거절 (이 거절이 곧 제품 메커닉입니다).
+
+### For LLM / CI (non-interactive)
+
+The same flow, but every step exits with a non-zero status on failure and emits machine-readable progress. Use this on CI runners, in `claude-code` agentic loops, or for unattended verification on a fresh worker.
+
+```bash
+# 1) Clone + enter (no auth needed for the public repo)
+git clone --depth=1 https://github.com/Two-Weeks-Team/he-was-socrates.git
+cd he-was-socrates
+
+# 2) Install brew deps non-interactively. Brewfile pins xcodegen, swift-format, gitleaks.
+brew bundle --no-lock
+
+# 3) Toolchain audit — exits 1 if Swift / xcodebuild / xcodegen / python3 missing.
+make doctor
+
+# 4) Engine-only verification path (no Xcode required, ~1.5 s on M2 Pro).
+make engine-test          # 41 swift-testing scenarios
+
+# 5) CI parity gate — same checks GitHub Actions runs (assets-verify + tests + lint).
+make ci-local
+
+# 6) Full app build. Metal Toolchain auto-downloads via `xcodebuild
+#    -downloadComponent` on first call (no Apple ID required).
+make bootstrap
+
+# 7) Headless launch with stub Gemma (no MLX fetch, no model load).
+#    The .app still exercises every wiring path: SFSpeechRecognizer →
+#    FunctionCallOrchestrator(.stub) → AVSpeechSynthesizer → VisemeDriver.
+HEWASSOCRATES_GEMMA_MODE=stub make run
+
+# 8) Verify the artefact you just built.
+APP="$(xcodebuild -project apps/macos/HeWasSocrates/HeWasSocrates.xcodeproj \
+                  -scheme HeWasSocrates -configuration Debug \
+                  -showBuildSettings 2>/dev/null \
+      | awk -F' = ' '/^[[:space:]]*BUILT_PRODUCTS_DIR =/ {print $2; exit}')/HeWasSocrates.app"
+codesign --verify --deep --strict --verbose=2 "$APP"
+codesign -d --entitlements :- "$APP" \
+  | grep -E '(network\.client|network\.server|disable-library-validation|allow-unsigned-executable-memory|device\.camera)' \
+  && { echo "FAIL: prohibited entitlement leaked" >&2; exit 1; } \
+  || echo "PASS: NO-CLOUD entitlement gate"
+test -f "$APP/Contents/Resources/face_halftone.png"
+test "$(ls "$APP/Contents/Resources/visemes" | wc -l | xargs)" = "16"
+```
+
+Things an LLM **cannot** automate — the bust requires a human at first launch:
+
+- TCC permission dialogs (Microphone, Speech Recognition) — system-modal, no programmatic grant on production macOS.
+- The 3.97 GB Gemma weight download has no flag to short-circuit; use `HEWASSOCRATES_GEMMA_MODE=stub` to bypass it during CI / smoke runs.
+- Voice input via Spacebar push-to-talk — there's no headless voice fixture; if you need a deterministic conversation trace, drive the engine layer directly via `swift test` (the `FunctionCallOrchestrator end-to-end (stub Gemma)` suite covers it).
+
+Detailed setup including Stage-5 day-1 tasks: see **[SETUP.md](SETUP.md)**. Architecture and invariants for AI assistants: **[CLAUDE.md](CLAUDE.md)**.
 
 ---
 
