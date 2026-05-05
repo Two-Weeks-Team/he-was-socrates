@@ -553,3 +553,54 @@ struct AudioInputManagerSessionGuardTests {
         #expect(fires == 2, "didPromoteFinal must reset on each startListening")
     }
 }
+
+// MARK: - PR-β regression tests
+// Hang killers + onUtteranceCancel teardown.
+
+@Suite("EngineCoordinator hang-killer watchdog (PR-β)")
+@MainActor
+struct EngineCoordinatorHangKillerTests {
+
+    @Test func failedPhaseAutoRearmsToIdleAfterBudget() async throws {
+        let coord = EngineCoordinator(gemmaMode: .stub)
+        var phases: [EngineCoordinator.Phase] = []
+        coord.onPhaseChanged = { p in phases.append(p) }
+
+        // Force a synthetic .failed transition.
+        coord._test_forceTransition(to: .failed("test.synthetic"))
+
+        // The watchdog budget for .failed is 5s. Sleep slightly longer than
+        // that to observe the auto-rearm. (We use the public 5s budget
+        // intentionally — slow tests catch budget regressions.)
+        try await Task.sleep(nanoseconds: 5_500_000_000)
+
+        // After auto-rearm we must end at .idle.
+        #expect(coord.phase == .idle, "watchdog must rearm .failed → .idle within budget+grace")
+        #expect(phases.contains(.idle), "phase callback must fire .idle on auto-rearm")
+    }
+
+    @Test func bootstrappingWatchdogTransitionsToFailedKey() async throws {
+        // We don't actually want to wait the 600s production budget here.
+        // Verify the routing intent by exercising the watchdog body
+        // directly via the _test_ seam: caller forces .bootstrapping,
+        // simulates a budget-elapsed event, expects .failed("bootstrap.timeout").
+        let coord = EngineCoordinator(gemmaMode: .stub)
+        coord._test_forceTransition(to: .bootstrapping)
+        coord._test_simulateWatchdogElapsed()
+        if case .failed(let key) = coord.phase {
+            #expect(key == "bootstrap.timeout")
+        } else {
+            Issue.record("expected .failed(bootstrap.timeout), got \(coord.phase)")
+        }
+    }
+
+    @Test func onUtteranceCancelResetsVisemeAndPhase() async {
+        let coord = EngineCoordinator(gemmaMode: .stub)
+        coord._test_forceTransition(to: .speaking(reply: "x", deferred: false))
+        // Simulate AVSpeechSynthesizer didCancel → onUtteranceCancel chain.
+        coord._test_fireOnUtteranceCancel()
+        // Allow MainActor Task hop.
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        #expect(coord.phase == .idle)
+    }
+}
