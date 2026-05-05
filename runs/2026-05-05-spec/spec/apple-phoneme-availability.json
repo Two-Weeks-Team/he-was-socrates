@@ -1,0 +1,97 @@
+{
+  "fixtures" : {
+    "Samantha::hello" : {
+      "labels" : [
+
+      ],
+      "language" : "en-US",
+      "marker_count" : 0,
+      "voice" : "Samantha"
+    },
+    "Samantha::ice is slippery" : {
+      "labels" : [
+
+      ],
+      "language" : "en-US",
+      "marker_count" : 0,
+      "voice" : "Samantha"
+    },
+    "Samantha::why does some music make me cry?" : {
+      "labels" : [
+
+      ],
+      "language" : "en-US",
+      "marker_count" : 0,
+      "voice" : "Samantha"
+    },
+    "Yuna::변호사가 필요해" : {
+      "labels" : [
+
+      ],
+      "language" : "ko-KR",
+      "marker_count" : 0,
+      "voice" : "Yuna"
+    },
+    "Yuna::안녕" : {
+      "labels" : [
+
+      ],
+      "language" : "ko-KR",
+      "marker_count" : 0,
+      "voice" : "Yuna"
+    },
+    "Yuna::얼음이 미끄러워요" : {
+      "labels" : [
+
+      ],
+      "language" : "ko-KR",
+      "marker_count" : 0,
+      "voice" : "Yuna"
+    },
+    "Yuna::왜 어떤 노래는 들으면 우는지?" : {
+      "labels" : [
+
+      ],
+      "language" : "ko-KR",
+      "marker_count" : 0,
+      "voice" : "Yuna"
+    }
+  },
+  "macos_version" : "26.4.1",
+  "probed_at_kst" : "2026-05-05T20:20:50+09:00",
+  "verdict" : "no-markers-anywhere",
+  "voices" : {
+    "Alex" : {
+      "installed" : false,
+      "phoneme_markers_emitted" : 0,
+      "sample_labels" : [
+
+      ]
+    },
+    "Heami" : {
+      "installed" : false,
+      "phoneme_markers_emitted" : 0,
+      "sample_labels" : [
+
+      ]
+    },
+    "Samantha" : {
+      "identifier" : "com.apple.voice.compact.en-US.Samantha",
+      "installed" : true,
+      "phoneme_markers_emitted" : 0,
+      "quality" : "default",
+      "sample_labels" : [
+
+      ]
+    },
+    "Yuna" : {
+      "identifier" : "com.apple.voice.compact.ko-KR.Yuna",
+      "installed" : true,
+      "phoneme_markers_emitted" : 0,
+      "quality" : "default",
+      "sample_labels" : [
+
+      ]
+    }
+  }
+}
