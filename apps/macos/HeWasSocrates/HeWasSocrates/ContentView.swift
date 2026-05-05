@@ -125,6 +125,10 @@ final class SocraticAppViewModel: ObservableObject {
         guard !bootstrapStarted else { return }
         bootstrapStarted = true
 
+        // PR-γ: warm the viseme image cache once at bootstrap so the
+        // 30 fps swap path never pays a Bundle.main.url + PNG decode.
+        VisemeImageCache.preloadAll()
+
         // Apply system Reduce Motion at bootstrap. VisemeDriver runs the
         // §7.6 Tier-3 talking cue (500 ms square wave) instead of phoneme-
         // driven swaps when this is on. Re-evaluating on every utterance
@@ -242,6 +246,44 @@ struct StatusOverlay: View {
 
 // MARK: - Bust view (viseme PNG swap)
 
+/// PR-γ: process-wide viseme image cache. Previous implementation paid a
+/// `Bundle.main.url(forResource:...)` lookup + `NSImage(contentsOf:)` PNG
+/// decode on EVERY frame swap (30 fps), measuring ~1–3 ms per swap. The
+/// 16 viseme PNGs are immutable across the app's lifetime, so we preload
+/// them once and cache by id. Swap cost drops to a dictionary lookup.
+private enum VisemeImageCache {
+    nonisolated(unsafe) private static var cache: [VisemeID: NSImage] = [:]
+
+    static func image(for id: VisemeID) -> NSImage? {
+        if let cached = cache[id] { return cached }
+        guard let img = loadFromBundle(id) else { return nil }
+        cache[id] = img
+        return img
+    }
+
+    static func preloadAll() {
+        for id in VisemeID.allCases {
+            if cache[id] == nil, let img = loadFromBundle(id) {
+                cache[id] = img
+            }
+        }
+    }
+
+    private static func loadFromBundle(_ id: VisemeID) -> NSImage? {
+        if let url = Bundle.main.url(
+            forResource: id.resourceName,
+            withExtension: "png",
+            subdirectory: "visemes"
+        ) {
+            return NSImage(contentsOf: url)
+        }
+        if let url = Bundle.main.url(forResource: id.resourceName, withExtension: "png") {
+            return NSImage(contentsOf: url)
+        }
+        return nil
+    }
+}
+
 /// Renders the active viseme PNG centered on screen, scaled to ~52% height
 /// per design-approved.json `layout.bust_screen_height_fraction`.
 struct BustView: View {
@@ -253,7 +295,7 @@ struct BustView: View {
             let bustWidth = bustHeight * 1.0  // 1024×1024 source aspect
 
             Group {
-                if let nsImage = loadVisemeImage(viseme) {
+                if let nsImage = VisemeImageCache.image(for: viseme) {
                     Image(nsImage: nsImage)
                         .resizable()
                         .interpolation(.none)

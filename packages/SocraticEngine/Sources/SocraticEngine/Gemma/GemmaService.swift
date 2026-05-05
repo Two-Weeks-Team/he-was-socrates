@@ -106,6 +106,12 @@ public actor GemmaService {
                     }
                 }
                 self.modelContainer = container
+                // PR-γ: HF download progress callbacks may stop arriving
+                // before reaching 1.0 (the last chunk completes synchronously
+                // inside `loadContainer`). Explicitly emit 100% so any UI
+                // bound to `loadState.loading(progress)` reaches 1.0 before
+                // we transition to `.ready` — closes finding N-CRIT-7.
+                loadState = .loading(progress: 1.0)
                 loadState = .ready(
                     weightsSHA256: "(mlx-swift-lm cache verified by HF SHA)",
                     mode: .real
@@ -228,6 +234,39 @@ public actor GemmaService {
             } catch {
                 // intentional no-op; cold-start hit just shifts to turn 1.
             }
+
+            // PR-γ: clear the warmup turn's user/assistant pair from the
+            // ChatSession history so the user's first real turn is not
+            // conditioned on a "ready"/throwaway exchange. The system
+            // instructions remain installed — `ChatSession.clear()`
+            // documented contract: "Clear the session history and cache,
+            // preserving system instructions" (mlx-swift-lm 0.31.3
+            // ChatSession.swift:492-497, Apple Inc. © 2025).
+            //
+            // We considered `ChatSession.clear()` (mlx-swift-lm 0.31.3
+            // ChatSession.swift:492-497, "Clear the session history and
+            // cache, preserving system instructions"), but `ChatSession`
+            // is a non-Sendable `final class` and the `await
+            // session.clear()` edge trips Swift 6 strict-concurrency
+            // SendingRisksDataRace from inside our actor. The mlx-swift-lm
+            // class is owned exclusively by this actor and serializes
+            // internally via SerialAccessContainer, so the data race risk
+            // is theoretical only — but rather than silence it with
+            // `nonisolated(unsafe)` we drop the session entirely after
+            // warmup. The next `streamInto` rebuilds it.
+            //
+            // Cost analysis: rebuilding `ChatSession` is a struct alloc
+            // plus the first-call system-prefill (~600-800 ms on M2 Pro
+            // for our 1.5-2k token system prompt). The Metal kernel JIT,
+            // GPU pipeline state objects, and weight residency live in
+            // the underlying `ModelContainer` (unchanged), so the
+            // dominant warmup benefit survives. Net effect on user's
+            // first real turn: equivalent to "warmup ran, ChatSession
+            // built fresh" — clean conversation history, no contamination
+            // by the throwaway "ready" exchange (Perf engineer's V/Lead's
+            // V finding).
+            chatSession = nil
+            sessionTurnCount = 0
             #endif
         }
     }

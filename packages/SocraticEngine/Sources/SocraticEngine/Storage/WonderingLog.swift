@@ -1,5 +1,5 @@
-import Foundation
 import CryptoKit
+import Foundation
 
 /// Persistent wondering log. Phase 1: in-memory stub. Phase 3-4: Core Data
 /// (or SwiftData) per `runs/2026-05-05-spec/spec/coredata-model.md`, with
@@ -15,6 +15,21 @@ public actor WonderingLog {
     private var sessions: [SessionRecord] = []
     public private(set) var currentSession: SessionRecord
 
+    /// PR-γ: shared `ISO8601DateFormatter`. Apple's "Working with Dates"
+    /// performance note observes that `ISO8601DateFormatter` initialization
+    /// is O(locale tables) and was being paid on every `contentFingerprint`
+    /// call (i.e. every `append` AND every dedup-check). Apple Foundation
+    /// documents `ISO8601DateFormatter.string(from:)` as thread-safe after
+    /// configuration (Foundation date-formatter contracts unchanged since
+    /// ISO8601DateFormatter introduction in macOS 10.12). The
+    /// `nonisolated(unsafe)` annotation makes this Sendable-clean under
+    /// Swift 6 strict concurrency without spawning per-call formatters
+    /// behind an actor hop.
+    nonisolated(unsafe) private static let isoDayFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        return f
+    }()
+
     public init() {
         self.currentSession = SessionRecord()
     }
@@ -26,8 +41,9 @@ public actor WonderingLog {
         sessionId: UUID,
         on day: Date = Date()
     ) -> String {
-        let dayBucket = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: day))
-        let raw = "\(utterance.trimmingCharacters(in: .whitespaces).lowercased())|\(sessionId.uuidString)|\(dayBucket)"
+        let dayBucket = isoDayFormatter.string(from: Calendar.current.startOfDay(for: day))
+        let raw =
+            "\(utterance.trimmingCharacters(in: .whitespaces).lowercased())|\(sessionId.uuidString)|\(dayBucket)"
         let digest = SHA256.hash(data: Data(raw.utf8))
         return digest.map { String(format: "%02x", $0) }.joined().prefix(32).description
     }
@@ -41,7 +57,8 @@ public actor WonderingLog {
             sessionId: currentSession.id
         )
         if let existing = entries.first(where: {
-            Self.contentFingerprint(utterance: $0.userUtterance, sessionId: currentSession.id) == fingerprint
+            Self.contentFingerprint(utterance: $0.userUtterance, sessionId: currentSession.id)
+                == fingerprint
         }) {
             return existing
         }
@@ -54,7 +71,8 @@ public actor WonderingLog {
     /// returns recent matches by substring overlap (placeholder).
     public func surface(matching query: String, max: Int = 1) -> [Wonder] {
         let q = query.lowercased()
-        let candidates = entries
+        let candidates =
+            entries
             .filter { $0.surfaceLater }
             .filter { wonder in
                 wonder.userUtterance.lowercased().contains(q.prefix(8))
