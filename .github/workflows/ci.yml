@@ -30,7 +30,7 @@ jobs:
   # -------------------------------------------------------------------------
   engine-build-and-test:
     name: Engine build & 41 swift-testing scenarios
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -79,7 +79,7 @@ jobs:
   # -------------------------------------------------------------------------
   assets-determinism:
     name: Asset pipeline determinism
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 10
     steps:
       - name: Checkout repository
@@ -105,7 +105,7 @@ jobs:
   # -------------------------------------------------------------------------
   lint-swift:
     name: swift-format lint
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 10
     steps:
       - name: Checkout repository
@@ -130,7 +130,7 @@ jobs:
   # -------------------------------------------------------------------------
   security-scan:
     name: gitleaks secret scan
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 5
     steps:
       - name: Checkout repository (full history for gitleaks)
