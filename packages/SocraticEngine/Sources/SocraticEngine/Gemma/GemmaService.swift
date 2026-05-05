@@ -1,4 +1,5 @@
 import Foundation
+
 #if canImport(MLXLLM)
 import MLXLLM
 import MLXLMCommon
@@ -30,8 +31,8 @@ import Tokenizers
 public actor GemmaService {
 
     public enum RuntimeMode: Sendable, Equatable {
-        case stub      // canned JSON responses, no MLX
-        case real      // mlx-swift-lm via LLMRegistry.gemma4_e4b_it_4bit
+        case stub  // canned JSON responses, no MLX
+        case real  // mlx-swift-lm via LLMRegistry.gemma4_e4b_it_4bit
     }
 
     public enum LoadState: Sendable {
@@ -44,17 +45,40 @@ public actor GemmaService {
     public private(set) var loadState: LoadState = .unloaded
     public let mode: RuntimeMode
 
-#if canImport(MLXLLM)
+    #if canImport(MLXLLM)
     private var modelContainer: ModelContainer?
-#endif
+
+    /// Reused across turns. The locked Korean Socratic system prompt is
+    /// ~5,000 chars / ~1,500-2,000 tokens; creating a new ChatSession every
+    /// turn would force a full re-prefill on each user utterance and was
+    /// the dominant component of the observed 9-11s/turn latency. Holding
+    /// the session lets mlx-swift-lm reuse its KV cache across turns: the
+    /// system prefill happens exactly once, and subsequent turns only pay
+    /// for the new user input + response decode.
+    private var chatSession: ChatSession?
+    private var sessionTurnCount: Int = 0
+
+    /// Cap accumulated turns per session to bound KV-cache memory growth on
+    /// long sessions (an hour of conversation can otherwise build a multi-
+    /// thousand-token KV state). 20 turns ≈ 4-5 minutes of natural Socratic
+    /// dialogue; well within attention budget for Gemma 4 E4B's 256K context
+    /// while keeping prefill on `streamResponse` fast.
+    private static let sessionTurnLimit = 20
+    #endif
 
     /// Generation parameters per Stage 5 day-1 tuning. Temperature 0.0 makes
     /// the model deterministic — required for SC5 wondering-log replay
     /// reproducibility (M01 14-month time-jump scene).
+    ///
+    /// `maxTokens: 192` covers the function-call JSON wrap (~30 tokens) plus
+    /// a Korean Socratic question of typical length (~80-120 tokens). Was
+    /// 256; reducing it shaves the worst-case generation tail off turns
+    /// where the model would otherwise keep emitting trailing whitespace
+    /// past the closing `}` before EOS.
     public var generateParameters: GenerateParametersBox = GenerateParametersBox(
         temperature: 0.0,
         topP: 1.0,
-        maxTokens: 256
+        maxTokens: 192
     )
 
     public init(mode: RuntimeMode = .stub) {
@@ -69,7 +93,7 @@ public actor GemmaService {
             loadState = .ready(weightsSHA256: "stub-no-real-weights", mode: .stub)
 
         case .real:
-#if canImport(MLXLLM)
+            #if canImport(MLXLLM)
             loadState = .loading(progress: 0)
             do {
                 let container = try await LLMModelFactory.shared.loadContainer(
@@ -96,7 +120,7 @@ public actor GemmaService {
                     underlying: error
                 )
             }
-#else
+            #else
             loadState = .failed("MLXLLM not available")
             throw EngineError.make(
                 domain: SocraticErrorDomain.model,
@@ -104,7 +128,7 @@ public actor GemmaService {
                 descriptionKO: "MLX 사용 불가.",
                 descriptionEN: "MLX not available."
             )
-#endif
+            #endif
         }
     }
 
@@ -114,9 +138,105 @@ public actor GemmaService {
         }
     }
 
+    #if canImport(MLXLLM)
+    /// Lazily build (or recycle) the per-session ChatSession. Recycles after
+    /// `sessionTurnLimit` turns so the KV cache stays bounded during long
+    /// conversations.
+    private func ensureChatSession(
+        container: ModelContainer,
+        systemPrompt: String,
+        params: GenerateParametersBox
+    ) -> ChatSession {
+        if let existing = chatSession, sessionTurnCount < Self.sessionTurnLimit {
+            return existing
+        }
+        let session = ChatSession(
+            container,
+            instructions: systemPrompt,
+            generateParameters: params.toMLX()
+        )
+        chatSession = session
+        sessionTurnCount = 0
+        return session
+    }
+
+    /// Actor-isolated stream pump. The strict-concurrency rule against
+    /// sending a non-Sendable ChatSession into a nonisolated `AsyncStream`
+    /// task forces this split: the outer `generate` only constructs the
+    /// stream + a Task, and that Task immediately re-enters the actor here
+    /// where the session capture is legal.
+    private func streamInto(
+        _ continuation: AsyncStream<String>.Continuation,
+        systemPrompt: String,
+        userTurn: String
+    ) async {
+        guard let container = modelContainer else {
+            continuation.finish()
+            return
+        }
+        let params = generateParameters
+        let session = ensureChatSession(
+            container: container,
+            systemPrompt: systemPrompt,
+            params: params
+        )
+        sessionTurnCount += 1
+        do {
+            for try await chunk in session.streamResponse(to: userTurn) {
+                continuation.yield(chunk)
+            }
+        } catch {
+            continuation.yield(
+                """
+                {"function":"defer_to_human","args":{"trigger_category":"other","suggested_resource_class":"system","explanation_phrase":"모델 추론 오류가 발생했다."}}
+                """
+            )
+        }
+        continuation.finish()
+    }
+    #endif
+
+    /// Drop any cached ChatSession so the next `generate(...)` rebuilds it
+    /// with whatever system prompt is passed in. Use when the host wants a
+    /// clean slate (e.g. on `EngineCoordinator.shutdown()`).
+    public func resetSession() {
+        #if canImport(MLXLLM)
+        chatSession = nil
+        sessionTurnCount = 0
+        #endif
+    }
+
+    /// Run one throwaway turn to warm the inference path (KV cache, GPU
+    /// pipeline state objects, system-prompt prefill) so the first
+    /// user-visible turn doesn't pay the cold-start cost. Output is
+    /// discarded. Failure is non-fatal — callers may still proceed; the
+    /// first real turn will simply pay the warm-up cost itself.
+    public func warmup() async {
+        switch mode {
+        case .stub:
+            return
+        case .real:
+            #if canImport(MLXLLM)
+            guard modelContainer != nil else { return }
+            do {
+                let stream = try await generate(
+                    systemPrompt: SystemPrompt.composed,
+                    userTurn: "ready",
+                    maxTokens: 8
+                )
+                for await _ in stream {}
+            } catch {
+                // intentional no-op; cold-start hit just shifts to turn 1.
+            }
+            #endif
+        }
+    }
+
     /// Streaming JSON output. Yields chunks of the function-call JSON; caller
     /// accumulates and parses at end-of-stream.
-    public func generate(systemPrompt: String, userTurn: String, maxTokens: Int = 256) async throws -> AsyncStream<String> {
+    public func generate(systemPrompt: String, userTurn: String, maxTokens: Int = 256) async throws
+        -> AsyncStream<String>
+    {
         switch mode {
         case .stub:
             return AsyncStream { continuation in
@@ -132,8 +252,8 @@ public actor GemmaService {
             }
 
         case .real:
-#if canImport(MLXLLM)
-            guard let container = modelContainer else {
+            #if canImport(MLXLLM)
+            guard modelContainer != nil else {
                 throw EngineError.make(
                     domain: SocraticErrorDomain.model,
                     code: .modelLoadFailed,
@@ -141,39 +261,33 @@ public actor GemmaService {
                     descriptionEN: "Model is not loaded."
                 )
             }
-            let params = generateParameters
             return AsyncStream { continuation in
-                Task {
-                    do {
-                        let session = ChatSession(
-                            container,
-                            instructions: systemPrompt,
-                            generateParameters: params.toMLX()
-                        )
-                        for try await chunk in session.streamResponse(to: userTurn) {
-                            continuation.yield(chunk)
-                        }
+                Task { [weak self] in
+                    guard let self else {
                         continuation.finish()
-                    } catch {
-                        continuation.yield("""
-                        {"function":"defer_to_human","args":{"trigger_category":"other","suggested_resource_class":"system","explanation_phrase":"모델 추론 오류가 발생했다."}}
-                        """)
-                        continuation.finish()
+                        return
                     }
+                    await self.streamInto(
+                        continuation,
+                        systemPrompt: systemPrompt,
+                        userTurn: userTurn
+                    )
                 }
             }
-#else
+            #else
             throw EngineError.make(
                 domain: SocraticErrorDomain.model,
                 code: .modelLoadFailed,
                 descriptionKO: "MLX 사용 불가.",
                 descriptionEN: "MLX not available."
             )
-#endif
+            #endif
         }
     }
 
-    public func runTurn(systemPrompt: String, userTurn: String) async throws -> FunctionCallParser.Result {
+    public func runTurn(systemPrompt: String, userTurn: String) async throws
+        -> FunctionCallParser.Result
+    {
         let stream = try await generate(systemPrompt: systemPrompt, userTurn: userTurn)
         var assembled = ""
         for await chunk in stream {
@@ -186,16 +300,18 @@ public actor GemmaService {
 
     private nonisolated func stubCannedResponse(forUserTurn turn: String) -> String {
         let lower = turn.lowercased()
-        let regulatedKeywords = ["변호사", "lawyer", "법", "law", "의사", "doctor", "약물", "약", "응급",
-                                 "주식", "stock", "투자", "invest", "보험", "insurance", "복지", "welfare"]
+        let regulatedKeywords = [
+            "변호사", "lawyer", "법", "law", "의사", "doctor", "약물", "약", "응급",
+            "주식", "stock", "투자", "invest", "보험", "insurance", "복지", "welfare",
+        ]
         if regulatedKeywords.contains(where: lower.contains) {
             return """
-            {"function":"defer_to_human","args":{"trigger_category":"other","suggested_resource_class":"전문가","explanation_phrase":"이 질문은 전문가의 도움이 필요해 보인다. 자네에게 더 적합한 사람을 찾아보라."}}
-            """
+                {"function":"defer_to_human","args":{"trigger_category":"other","suggested_resource_class":"전문가","explanation_phrase":"이 질문은 전문가의 도움이 필요해 보인다. 자네에게 더 적합한 사람을 찾아보라."}}
+                """
         }
         return """
-        {"function":"ask_back","args":{"question":"좋다. 그 말에서 가장 중요한 단어는 무엇인가?","language":"ko"}}
-        """
+            {"function":"ask_back","args":{"question":"좋다. 그 말에서 가장 중요한 단어는 무엇인가?","language":"ko"}}
+            """
     }
 }
 
@@ -211,7 +327,7 @@ public struct GenerateParametersBox: Sendable, Equatable {
         self.maxTokens = maxTokens
     }
 
-#if canImport(MLXLMCommon)
+    #if canImport(MLXLMCommon)
     public func toMLX() -> GenerateParameters {
         GenerateParameters(
             maxTokens: maxTokens,
@@ -219,11 +335,11 @@ public struct GenerateParametersBox: Sendable, Equatable {
             topP: Float(topP)
         )
     }
-#endif
+    #endif
 }
 
-private extension String {
-    func chunked(into size: Int) -> [String] {
+extension String {
+    fileprivate func chunked(into size: Int) -> [String] {
         var result: [String] = []
         var current = startIndex
         while current < endIndex {
