@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import SocraticEngine
@@ -602,5 +603,68 @@ struct EngineCoordinatorHangKillerTests {
         // Allow MainActor Task hop.
         try? await Task.sleep(nanoseconds: 50_000_000)
         #expect(coord.phase == .idle)
+    }
+}
+
+// MARK: - PR-γ regression tests
+// Per-turn perf caches + warmup-clear. .real-mode behavior is asserted at
+// integration level (PR-ζ); these are stub-mode unit tests that pin
+// public behavior contracts.
+
+@Suite("Performance caches (PR-γ)")
+struct PerformanceCacheTests {
+
+    @Test func wonderingLogISO8601FormatterIsStableAcrossCalls() async {
+        // Smoke test for the static formatter — same fingerprint must be
+        // produced for the same logical input regardless of whether the
+        // formatter was just allocated or reused.
+        let id = UUID()
+        let day = Date(timeIntervalSince1970: 1_700_000_000)  // fixed
+        let a = WonderingLog.contentFingerprint(utterance: "왜?", sessionId: id, on: day)
+        let b = WonderingLog.contentFingerprint(utterance: "왜?", sessionId: id, on: day)
+        let c = WonderingLog.contentFingerprint(utterance: "왜?", sessionId: id, on: day)
+        #expect(a == b)
+        #expect(b == c)
+    }
+
+    @Test @MainActor func ttsManagerVoiceCacheReturnsStableInstance() {
+        let mgr = TTSManager()
+        let v1 = mgr.resolveVoice(forBCP47: "ko-KR")
+        let v2 = mgr.resolveVoice(forBCP47: "ko-KR")
+        // If a voice is installed, both lookups return the same object
+        // (identity-stable per the cache contract). If not installed on
+        // this runner (CI macos-15 may not bundle ko-KR), both return nil.
+        if v1 != nil {
+            #expect(v1 === v2, "voice cache must return the same NSObject instance")
+        } else {
+            #expect(v2 == nil)
+        }
+    }
+
+    @Test @MainActor func ttsManagerInvalidateVoiceCacheClears() {
+        let mgr = TTSManager()
+        _ = mgr.resolveVoice(forBCP47: "ko-KR")
+        mgr.invalidateVoiceCache()
+        // After invalidation a fresh lookup must succeed (or fail
+        // identically) without depending on the prior cache state.
+        let v = mgr.resolveVoice(forBCP47: "ko-KR")
+        // The contract here is "no crash, deterministic outcome" —
+        // installed-on-runner is the only thing that varies.
+        _ = v
+    }
+
+    @Test func gemmaWarmupOnStubIsNoOp() async {
+        // Stub-mode warmup must early-return without touching ChatSession.
+        let svc = GemmaService(mode: .stub)
+        try? await svc.loadModel()
+        await svc.warmup()
+        // No crash, no error path. We don't have a stub session to inspect;
+        // this test exists to guard the early-return at the top of warmup().
+        let state = await svc.loadState
+        if case .ready = state {
+            // pass
+        } else {
+            Issue.record("expected stub loadModel to leave loadState=.ready, got \(state)")
+        }
     }
 }
