@@ -1,4 +1,5 @@
 import Foundation
+
 #if canImport(AVFAudio)
 import AVFAudio
 #endif
@@ -19,8 +20,8 @@ public final class TTSManager: NSObject {
 
         public var bcp47: String {
             switch self {
-            case .korean:    return "ko-KR"
-            case .english:   return "en-US"
+            case .korean: return "ko-KR"
+            case .english: return "en-US"
             case .auto(let l): return l.bcp47
             }
         }
@@ -36,20 +37,21 @@ public final class TTSManager: NSObject {
     /// Fired when no phoneme markers were observed for an utterance and the
     /// driver should fall back to the JamoTimeline schedule. Carries the
     /// total estimated duration so the caller can build the schedule.
-    public var onPhonemeStreamUnavailable: ((_ text: String, _ language: Language, _ estimatedDurationMs: Double) -> Void)?
+    public var onPhonemeStreamUnavailable:
+        ((_ text: String, _ language: Language, _ estimatedDurationMs: Double) -> Void)?
 
-#if canImport(AVFAudio)
+    #if canImport(AVFAudio)
     private let synthesizer = AVSpeechSynthesizer()
     private var observedAnyPhonemeMarker = false
     private var lastSpokenText: String = ""
     private var lastSpokenLanguage: Language = .auto
-#endif
+    #endif
 
     public override init() {
         super.init()
-#if canImport(AVFAudio)
+        #if canImport(AVFAudio)
         synthesizer.delegate = self
-#endif
+        #endif
     }
 
     // MARK: - Voice resolution
@@ -60,7 +62,7 @@ public final class TTSManager: NSObject {
     ///   3. Default quality
     ///   4. Any voice for the locale
     ///   5. nil → caller should surface ttsVoiceNotInstalled error
-#if canImport(AVFAudio)
+    #if canImport(AVFAudio)
     public func resolveVoice(forBCP47 locale: String) -> AVSpeechSynthesisVoice? {
         let voices = AVSpeechSynthesisVoice.speechVoices()
         let localeMatch = voices.filter { $0.language == locale }
@@ -74,12 +76,12 @@ public final class TTSManager: NSObject {
     public var availableVoices: [AVSpeechSynthesisVoice] {
         return AVSpeechSynthesisVoice.speechVoices()
     }
-#endif
+    #endif
 
     // MARK: - Speak
 
     public func speak(_ text: String, voice preference: VoicePreference) async throws {
-#if canImport(AVFAudio)
+        #if canImport(AVFAudio)
         let bcp47 = preference.bcp47
         guard let voice = resolveVoice(forBCP47: bcp47) else {
             throw EngineError.make(
@@ -98,8 +100,8 @@ public final class TTSManager: NSObject {
 
         lastSpokenText = text
         switch preference {
-        case .korean:    lastSpokenLanguage = .ko
-        case .english:   lastSpokenLanguage = .en
+        case .korean: lastSpokenLanguage = .ko
+        case .english: lastSpokenLanguage = .en
         case .auto(let l): lastSpokenLanguage = l
         }
         observedAnyPhonemeMarker = false
@@ -121,21 +123,20 @@ public final class TTSManager: NSObject {
         // whether `.phoneme` markers are actually emitted on macOS 14+ via
         // the delegate; if yes, this method gains marker forwarding.
         synthesizer.speak(utterance)
-#else
+        #else
         throw EngineError.make(
             domain: SocraticErrorDomain.tts,
             code: .ttsNoVoicesAvailable,
             descriptionKO: "AVFoundation 사용 불가.",
             descriptionEN: "AVFoundation unavailable on this platform."
         )
-#endif
+        #endif
     }
 
-
     public func cancel() {
-#if canImport(AVFAudio)
+        #if canImport(AVFAudio)
         synthesizer.stopSpeaking(at: .immediate)
-#endif
+        #endif
     }
 
     // MARK: - Estimation
@@ -152,41 +153,57 @@ public final class TTSManager: NSObject {
 
 #if canImport(AVFAudio)
 extension TTSManager: AVSpeechSynthesizerDelegate {
-    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                              didStart utterance: AVSpeechUtterance) {
+    public nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didStart utterance: AVSpeechUtterance
+    ) {
         Task { @MainActor [weak self] in
-            self?.onUtteranceStart?()
+            guard let self else { return }
+            self.onUtteranceStart?()
+            // macOS 26 emits zero `AVSpeechSynthesisMarker.phoneme` events for
+            // every system voice we ship — verdict "no-markers-anywhere" in
+            // runs/2026-05-05-spec/spec/apple-phoneme-availability.json.
+            // Surface the JamoTimeline fallback synchronously at audio start
+            // so VisemeDriver can begin lip-sync in time with the speech;
+            // waiting for didFinish (the previous behaviour) only ingested
+            // the schedule AFTER the audio had already played, so no visible
+            // mouth motion ever happened during the actual utterance.
+            let estimated = TTSManager.estimateDurationMs(
+                text: self.lastSpokenText,
+                language: self.lastSpokenLanguage
+            )
+            self.onPhonemeStreamUnavailable?(
+                self.lastSpokenText,
+                self.lastSpokenLanguage,
+                estimated
+            )
         }
     }
 
-    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                              willSpeakRangeOfSpeechString characterRange: NSRange,
-                                              utterance: AVSpeechUtterance) {
+    public nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        willSpeakRangeOfSpeechString characterRange: NSRange,
+        utterance: AVSpeechUtterance
+    ) {
         let text = utterance.speechString
         Task { @MainActor [weak self] in
             self?.onWillSpeakWord?(characterRange, text)
         }
     }
 
-    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                              didFinish utterance: AVSpeechUtterance) {
+    public nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didFinish utterance: AVSpeechUtterance
+    ) {
         Task { @MainActor [weak self] in
-            guard let self else { return }
-            self.onUtteranceEnd?()
-            // If the entire utterance played without any phoneme marker, signal
-            // fallback so the caller can build a JamoTimeline schedule.
-            if !self.observedAnyPhonemeMarker {
-                let estimated = TTSManager.estimateDurationMs(
-                    text: self.lastSpokenText,
-                    language: self.lastSpokenLanguage
-                )
-                self.onPhonemeStreamUnavailable?(self.lastSpokenText, self.lastSpokenLanguage, estimated)
-            }
+            self?.onUtteranceEnd?()
         }
     }
 
-    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                              didCancel utterance: AVSpeechUtterance) {
+    public nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didCancel utterance: AVSpeechUtterance
+    ) {
         Task { @MainActor [weak self] in
             self?.onUtteranceCancel?()
         }
