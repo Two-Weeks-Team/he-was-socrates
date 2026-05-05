@@ -328,31 +328,48 @@ patch, every fresh build picks it up.
 
 **Owner:** repo maintainer.
 
-### M-03 — Custom `.gitleaks.toml` not committed; CI relies on default ruleset (MEDIUM)
+### M-03 — `.gitleaks.toml` lacks Apple App-Specific Password regex (MEDIUM, partial)
 
 **Where:** `runs/2026-05-05-spec/spec/entitlements.plist.md` §8 lines 144–158
-specifies `.gitleaks.toml` rules (Apple App-Specific Password,
-PEM private key); `.github/workflows/ci.yml` line 142 runs
-`gitleaks detect --no-banner --source . --redact`.
+specifies `.gitleaks.toml` rules (Apple App-Specific Password regex +
+PEM private key regex). `.gitleaks.toml` is **staged in working tree**
+(seen in `git status` at audit time, alongside this audit report) and
+adds rules for `INTERNAL_API_KEY`, HuggingFace tokens, and OpenAI keys.
+However it omits:
 
-**What:** the `.gitleaks.toml` file is not present at repo root. gitleaks
-falls back to its default ruleset. The default catches AWS / GitHub /
-Slack / Stripe etc. tokens but **does not have a regex for Apple
-App-Specific Passwords** (4-quartet `xxxx-xxxx-xxxx-xxxx`). Per spec the
-project's primary credential class IS the Apple App-Specific Password
-used for notarization — exactly the regex that's missing.
+- the Apple App-Specific Password regex (`[a-z]{4}-[a-z]{4}-[a-z]{4}-[a-z]{4}`)
+  from the spec, and
+- the PEM `-----BEGIN ... PRIVATE KEY( BLOCK)?-----` regex.
 
-**Evidence:** `ls /Users/kimsejun/Documents/GitHub/he-was-socrates/.gitleaks.toml` → no such file.
+**What:** the project's primary credential class IS the Apple App-Specific
+Password (used for `xcrun notarytool` per `entitlements.plist.md` §6 line
+121: "set with `xcrun notarytool store-credentials`. NEVER committed.").
+The default ruleset + the staged custom rules do not catch a literal
+4-quartet password if one is accidentally pasted in.
 
-**Severity rationale:** medium because (a) the default ruleset still
-provides general coverage, (b) `.env`/`*.p12` files are gitignored anyway,
-but (c) the spec promises this control as part of SC7-011 and operating
-without it is non-compliant.
+**Evidence:** `.gitleaks.toml` lines 17–33 (no regex for `[a-z]{4}-[a-z]{4}-[a-z]{4}-[a-z]{4}` or PEM PRIVATE KEY blocks).
 
-**Remediation:** create `.gitleaks.toml` at repo root with the rules in
-`entitlements.plist.md` §8 + a couple of generally-useful rules
-(GitHub PAT, OpenAI API key, etc.). Re-run gitleaks locally to confirm
-no incidental leaks.
+**Severity rationale:** medium because (a) the staged file does cover the
+broader threat surface adequately for general use, (b) `.env`/`*.p12`
+files are gitignored anyway, but (c) the SC7-011 + entitlements.plist.md
+spec explicitly names the Apple ASP regex as required.
+
+**Remediation:** add to `.gitleaks.toml`:
+
+```toml
+[[rules]]
+id = "apple-app-specific-password"
+description = "Apple App-Specific Password (4 quartets of lowercase a–z)"
+regex = '''[a-z]{4}-[a-z]{4}-[a-z]{4}-[a-z]{4}'''
+
+[[rules]]
+id = "private-key-pem"
+description = "PEM private key block"
+regex = '''-----BEGIN ((RSA|EC|OPENSSH|PGP) )?PRIVATE KEY( BLOCK)?-----'''
+```
+
+Re-run `gitleaks detect --no-banner --source .` locally to confirm no
+incidental matches in the codebase or tests.
 
 **Owner:** repo maintainer.
 
