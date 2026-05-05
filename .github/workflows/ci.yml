@@ -172,3 +172,21 @@ jobs:
         run: |
           test -x tools/oracles/rhubarb-1.14.0/rhubarb
           tools/oracles/rhubarb-1.14.0/rhubarb --version
+
+      - name: Sanity-check apple-phoneme-availability.json shape
+        # PR-ζ guard against empirical-probe artifact drift. The file
+        # iter5 references must always carry a verdict field; if a
+        # contributor commits a malformed update, this catches it before
+        # downstream consumers (the iter5 SPEC delta + TTSManager pipeline
+        # comments) get out of sync.
+        run: |
+          test -f runs/2026-05-05-spec/spec/apple-phoneme-availability.json
+          python3 -c '
+          import json, sys
+          with open("runs/2026-05-05-spec/spec/apple-phoneme-availability.json") as f:
+              d = json.load(f)
+          assert "verdict" in d, "missing verdict"
+          assert "voices" in d, "missing voices"
+          assert "fixtures" in d, "missing fixtures"
+          print(f"verdict: {d[\"verdict\"]}, voices: {len(d[\"voices\"])}, fixtures: {len(d[\"fixtures\"])}")
+          '

@@ -177,7 +177,11 @@ public final class TTSManager: NSObject {
     /// ~140 ms / character for slowed (0.95×) Korean speech is a reasonable
     /// rule of thumb; English is faster (~95 ms / char). Used by JamoTimeline
     /// fallback when phoneme markers are absent.
-    public static func estimateDurationMs(text: String, language: Language) -> Double {
+    ///
+    /// `nonisolated` because the function is pure (no actor-isolated state)
+    /// — lets non-MainActor test contexts call it without an implicit
+    /// `await` hop (Swift 6 `ActorIsolatedCall` diagnostic).
+    public nonisolated static func estimateDurationMs(text: String, language: Language) -> Double {
         let perChar: Double = (language == .ko) ? 140.0 : 95.0
         return Double(text.count) * perChar + 200.0
     }
