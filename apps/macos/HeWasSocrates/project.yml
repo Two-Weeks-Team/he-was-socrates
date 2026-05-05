@@ -1,7 +1,7 @@
 name: HeWasSocrates
 
 options:
-  bundleIdPrefix: engineering.twoweeks
+  bundleIdPrefix: com.twoweeks
   deploymentTarget:
     macOS: "14.0"
   developmentLanguage: en
@@ -9,14 +9,21 @@ options:
   generateEmptyDirectories: true
   createIntermediateGroups: true
 
+# Bundle ID is canonicalized to `com.twoweeks.hewassocrates` per
+# runs/2026-05-05-spec/spec/entitlements.plist.md and error-catalog.md.
+# Per-developer DEVELOPMENT_TEAM lives in Local.xcconfig (gitignored);
+# Config.xcconfig is the committed default with an optional #include?.
+configFiles:
+  Debug: Config.xcconfig
+  Release: Config.xcconfig
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     GENERATE_INFOPLIST_FILE: NO
-    PRODUCT_BUNDLE_IDENTIFIER: engineering.twoweeks.HeWasSocrates
-    DEVELOPMENT_TEAM: ""
+    PRODUCT_BUNDLE_IDENTIFIER: com.twoweeks.hewassocrates
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
@@ -37,22 +44,21 @@ targets:
         excludes:
           - "Resources/Info.plist"
           - "Resources/HeWasSocrates.entitlements"
-    resources:
-      - path: HeWasSocrates/Resources
-        excludes:
-          - "Info.plist"
-          - "HeWasSocrates.entitlements"
-      # Viseme PNGs come from repo-level assets/ directory, copied at build time.
+      # Repo-level assets — pulled into Copy Resources via buildPhase: resources.
+      # The previous `resources:` block was silently dropped by xcodegen 2.44.1
+      # when combined with `destinationFilters` + external paths, leaving the
+      # .app without face_halftone.png / visemes/ at runtime.
       - path: ../../../assets/face_halftone.png
-        destinationFilters: [macOS]
+        buildPhase: resources
       - path: ../../../assets/visemes
-        destinationFilters: [macOS]
         type: folder
-    info:
-      path: HeWasSocrates/Resources/Info.plist
-      properties: {}
-    entitlements:
-      path: HeWasSocrates/Resources/HeWasSocrates.entitlements
+        buildPhase: resources
+    # NOTE: do NOT add `info:` or `entitlements:` blocks here. xcodegen 2.44.1
+    # treats those as WRITE specifications and overwrites the committed files
+    # with an empty `<dict/>`. The existing files are authored under
+    # runs/2026-05-05-spec/spec/entitlements.plist.md and must be preserved
+    # verbatim. We point INFOPLIST_FILE / CODE_SIGN_ENTITLEMENTS at them via
+    # build settings (below) so xcodegen only references, never rewrites.
     dependencies:
       - package: SocraticEngine
         product: SocraticEngine

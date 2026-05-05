@@ -3,15 +3,15 @@ import Foundation
 /// NSError domains for the engine layer per
 /// `runs/2026-05-05-spec/spec/error-catalog.md`.
 public enum SocraticErrorDomain {
-    public static let stt   = "engineering.twoweeks.HeWasSocrates.STT"
-    public static let tts   = "engineering.twoweeks.HeWasSocrates.TTS"
-    public static let model = "engineering.twoweeks.HeWasSocrates.Model"
-    public static let viseme = "engineering.twoweeks.HeWasSocrates.Viseme"
-    public static let mode  = "engineering.twoweeks.HeWasSocrates.Mode"
-    public static let media = "engineering.twoweeks.HeWasSocrates.Media"
-    public static let sandbox = "engineering.twoweeks.HeWasSocrates.Sandbox"
-    public static let storage = "engineering.twoweeks.HeWasSocrates.Storage"
-    public static let osCompat = "engineering.twoweeks.HeWasSocrates.OSCompat"
+    public static let stt = "com.twoweeks.hewassocrates.stt"
+    public static let tts = "com.twoweeks.hewassocrates.tts"
+    public static let model = "com.twoweeks.hewassocrates.model"
+    public static let viseme = "com.twoweeks.hewassocrates.viseme"
+    public static let mode = "com.twoweeks.hewassocrates.mode"
+    public static let media = "com.twoweeks.hewassocrates.media"
+    public static let sandbox = "com.twoweeks.hewassocrates.sandbox"
+    public static let storage = "com.twoweeks.hewassocrates.storage"
+    public static let osCompat = "com.twoweeks.hewassocrates.oscompat"
 }
 
 public enum SocraticErrorCode: Int {

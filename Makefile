@@ -1,4 +1,4 @@
-.PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app help \
+.PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app run bootstrap help \
         doctor probe-phonemes ci-local secret-scan
 
 help:
@@ -22,12 +22,25 @@ help:
 	@echo "  • Full Xcode (not just CommandLineTools): /Applications/Xcode.app"
 	@echo "  • xcodegen:        brew install xcodegen"
 	@echo "  • assets first:    make assets"
+	@echo "  • Metal Toolchain: auto-downloaded by 'make app' on first run (~688 MB)"
+	@echo "  • Optional signing override:"
+	@echo "      cp apps/macos/HeWasSocrates/Local.xcconfig.example \\"
+	@echo "         apps/macos/HeWasSocrates/Local.xcconfig"
+	@echo "      # then edit DEVELOPMENT_TEAM and re-run: make xcodeproj"
 	@echo ""
 	@echo "  Local CI / tooling:"
 	@echo "    make doctor          — check toolchain (Swift, Xcode, xcodegen, py3, gitleaks)"
 	@echo "    make ci-local        — run the same gates CI does (assets-verify + tests + lint)"
 	@echo "    make secret-scan     — gitleaks scan for committed secrets"
 	@echo "    make probe-phonemes  — Stage-5 day-1 Apple phoneme availability probe"
+	@echo ""
+	@echo "  End-to-end:"
+	@echo "    make bootstrap       — fresh-clone setup (assets + xcodeproj + app)"
+	@echo "    make run             — launch the built .app (first launch downloads"
+	@echo "                            ~3.97 GB Gemma 4 weights)"
+	@echo "    HEWASSOCRATES_GEMMA_MODE=stub make run"
+	@echo "                          — launch with canned stub responses (skips MLX"
+	@echo "                            download; useful for UI smoke tests)"
 
 assets:
 	bash scripts/build-visemes.sh
@@ -70,11 +83,57 @@ app:
 		echo "Install Xcode from the App Store or run: xcode-select --switch /Applications/Xcode.app" >&2; \
 		exit 1; \
 	fi
+	@if [ ! -f apps/macos/HeWasSocrates/HeWasSocrates.xcodeproj/project.pbxproj ]; then \
+		echo "xcodeproj missing. Run: make xcodeproj" >&2; exit 1; \
+	fi
+	@# Probe for Metal Toolchain (Xcode 26+ ships it as a downloadable component).
+	@# mlx-swift's Cmlx target invokes `metal` to compile shaders, so the
+	@# toolchain MUST be installed before the build can succeed. Auto-download
+	@# is non-interactive (no Apple ID required, ~688 MB).
+	@if ! xcrun --sdk macosx --find metal >/dev/null 2>&1; then \
+		echo "Metal Toolchain missing — downloading (~688 MB, ~1 min on fast link)..."; \
+		xcodebuild -downloadComponent MetalToolchain || { \
+			echo "Metal Toolchain download failed. Run manually: xcodebuild -downloadComponent MetalToolchain" >&2; \
+			exit 1; \
+		}; \
+	fi
+	@# -skipMacroValidation: mlx-swift-lm exports MLXHuggingFaceMacros (a Swift
+	@# Macro target). Xcode 15+ requires explicit user trust via the UI on first
+	@# use; CLI builds need this flag to bypass the trust prompt. Same pattern
+	@# Apple's own CI uses for projects depending on third-party macros.
 	cd apps/macos/HeWasSocrates && \
 		xcodebuild -project HeWasSocrates.xcodeproj \
 		           -scheme HeWasSocrates \
 		           -configuration Debug \
+		           -skipMacroValidation \
 		           build
+
+# `make bootstrap` — full fresh-clone setup. Runs assets, generates the
+# xcodeproj, builds the .app. Designed to "just work" on a clean Apple Silicon
+# Mac with full Xcode + Homebrew deps installed (see Brewfile).
+bootstrap: assets xcodeproj app
+	@echo ""
+	@echo "Bootstrap complete. Launch with: make run"
+	@echo "  • First launch downloads ~3.97 GB Gemma 4 E4B 4-bit weights."
+	@echo "  • Cached at ~/Library/Caches/com.apple.MLX/ for subsequent runs."
+	@echo "  • Optional signing override: cp apps/macos/HeWasSocrates/Local.xcconfig.example \\"
+	@echo "                                  apps/macos/HeWasSocrates/Local.xcconfig"
+
+# `make run` — launch the built .app. Resolves the actual build product path
+# from xcodebuild's settings so DerivedData relocations don't break this.
+run:
+	@APP_DIR="$$(cd apps/macos/HeWasSocrates && \
+		xcodebuild -project HeWasSocrates.xcodeproj \
+		           -scheme HeWasSocrates \
+		           -configuration Debug \
+		           -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/^[[:space:]]*BUILT_PRODUCTS_DIR =/ {print $$2; exit}')"; \
+	APP="$$APP_DIR/HeWasSocrates.app"; \
+	if [ ! -d "$$APP" ]; then \
+		echo "App not built yet. Run: make app" >&2; exit 1; \
+	fi; \
+	echo "Launching $$APP"; \
+	open "$$APP"
 
 assets-verify:
 	@if [ ! -f assets/.build-manifest.json ]; then \

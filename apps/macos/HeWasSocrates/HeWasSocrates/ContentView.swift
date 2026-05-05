@@ -1,22 +1,37 @@
-import SwiftUI
 import SocraticEngine
+import SwiftUI
 
 /// Root view of the He Was Socrates fullscreen experience.
-/// Phase 1 skeleton: ink-black bg + placeholder REST viseme. Phase 3 wires
-/// in audio + caption + thought-silhouette + mode-chip + offline-proof badge.
+///
+/// Wires the entire turn loop end-to-end:
+///   Spacebar push-to-talk → AudioInputManager (on-device SFSpeechRecognizer)
+///     → FunctionCallOrchestrator → GemmaService(.real, gemma-4-e4b-it-4bit)
+///     → TTSManager (Yuna ko / Samantha en)
+///     → VisemeDriver (30 fps frame swap, 16 visemes)
+///
+/// First launch downloads the Gemma 4 E4B 4-bit weights (~3.97 GB) into
+/// `~/Library/Caches/com.apple.MLX/...`. Progress is surfaced as a status
+/// overlay; subsequent launches reuse the cached weights.
 struct ContentView: View {
-    @State private var currentViseme: VisemeID = .REST
-    @State private var didDismissEsc: Bool = false
+    @StateObject private var vm = SocraticAppViewModel()
+    @State private var spaceIsDown: Bool = false
 
     var body: some View {
         ZStack {
             // background_ink_black per design-approved.json
             Color(red: 0.123, green: 0.115, blue: 0.184).ignoresSafeArea()
 
-            BustView(viseme: currentViseme)
+            BustView(viseme: vm.currentViseme)
 
             VStack {
                 Spacer()
+                StatusOverlay(
+                    phase: vm.phase,
+                    partialTranscript: vm.partialTranscript,
+                    loadProgress: vm.loadProgress
+                )
+                .padding(.bottom, 24)
+
                 Text("He Was Socrates")
                     .font(.custom("Times New Roman", size: 18))
                     .foregroundColor(Color(white: 0.55))
@@ -24,17 +39,200 @@ struct ContentView: View {
                     .accessibilityHidden(true)
             }
         }
-        .background(KeyEventHandlerView { keyCode in
-            // Esc keyCode = 53. Exit fullscreen → quit.
-            if keyCode == 53 {
-                NSApp.terminate(nil)
-            }
-            // Spacebar keyCode = 49 — Phase 3 will start STT push-to-talk.
-        })
+        .background(
+            KeyEventHandlerView(
+                onKeyDown: { keyCode in handleKeyDown(keyCode) },
+                onKeyUp: { keyCode in handleKeyUp(keyCode) }
+            )
+        )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("He Was Socrates — a Socratic bust that asks questions")
+        .task { await vm.bootstrap() }
+    }
+
+    private func handleKeyDown(_ keyCode: UInt16) {
+        switch keyCode {
+        case 53:  // Esc — exit fullscreen → quit
+            NSApp.terminate(nil)
+        case 49:  // Spacebar — push-to-talk press
+            guard !spaceIsDown else { return }
+            spaceIsDown = true
+            vm.beginListening()
+        default:
+            break
+        }
+    }
+
+    private func handleKeyUp(_ keyCode: UInt16) {
+        if keyCode == 49 && spaceIsDown {
+            spaceIsDown = false
+            vm.endListening()
+        }
     }
 }
+
+// MARK: - ViewModel
+
+/// Bridges `EngineCoordinator` (an @MainActor type with closure callbacks)
+/// to SwiftUI's `@Published` reactive surface.
+@MainActor
+final class SocraticAppViewModel: ObservableObject {
+    private let coordinator: EngineCoordinator
+    private var bootstrapStarted: Bool = false
+    private var loadProgressPoll: Task<Void, Never>?
+
+    @Published var phase: EngineCoordinator.Phase = .bootstrapping
+    @Published var currentViseme: VisemeID = .REST
+    @Published var partialTranscript: String = ""
+    @Published var caption: String = ""
+    @Published var loadProgress: Double = 0
+
+    init(gemmaMode: GemmaService.RuntimeMode = SocraticAppViewModel.defaultGemmaMode()) {
+        self.coordinator = EngineCoordinator(gemmaMode: gemmaMode)
+        wire()
+    }
+
+    /// Honors `HEWASSOCRATES_GEMMA_MODE=stub` for headless / smoke runs.
+    /// Defaults to `.real` so a fresh install on any Mac runs the full
+    /// on-device Gemma 4 E4B 4-bit path.
+    static func defaultGemmaMode() -> GemmaService.RuntimeMode {
+        if let v = ProcessInfo.processInfo.environment["HEWASSOCRATES_GEMMA_MODE"],
+            v.lowercased() == "stub"
+        {
+            return .stub
+        }
+        return .real
+    }
+
+    private func wire() {
+        coordinator.onPhaseChanged = { [weak self] newPhase in
+            self?.phase = newPhase
+        }
+        coordinator.onPartialTranscript = { [weak self] partial in
+            self?.partialTranscript = partial
+        }
+        coordinator.onCaptionUpdate = { [weak self] text in
+            self?.caption = text
+        }
+        coordinator.viseme.onVisemeChanged = { [weak self] visemeID in
+            Task { @MainActor [weak self] in
+                self?.currentViseme = visemeID
+            }
+        }
+    }
+
+    func bootstrap() async {
+        guard !bootstrapStarted else { return }
+        bootstrapStarted = true
+
+        loadProgressPoll = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                let state = await self.coordinator.gemma.loadState
+                switch state {
+                case .loading(let p):
+                    self.loadProgress = p
+                case .ready:
+                    self.loadProgress = 1.0
+                    return
+                case .failed:
+                    return
+                case .unloaded:
+                    break
+                }
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            }
+        }
+
+        await coordinator.bootstrap()
+        loadProgressPoll?.cancel()
+    }
+
+    func beginListening() {
+        do {
+            try coordinator.beginListening()
+        } catch {
+            phase = .failed("listen: \(error.localizedDescription)")
+        }
+    }
+
+    func endListening() {
+        coordinator.endListening()
+    }
+}
+
+// MARK: - Status overlay
+
+/// Renders a single line below the bust matching the current `Phase`. Plus
+/// a determinate progress bar while Gemma weights are downloading.
+struct StatusOverlay: View {
+    let phase: EngineCoordinator.Phase
+    let partialTranscript: String
+    let loadProgress: Double
+
+    var body: some View {
+        Group {
+            switch phase {
+            case .bootstrapping:
+                VStack(spacing: 6) {
+                    Text(loadingLabel)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundColor(Color(white: 0.55))
+                    ProgressView(value: loadProgress)
+                        .progressViewStyle(.linear)
+                        .frame(width: 360)
+                        .tint(Color(white: 0.85))
+                }
+                .accessibilityLabel("Loading Gemma 4 model: \(Int(loadProgress * 100)) percent")
+
+            case .idle:
+                Text("Press Space — 누르고 말하라")
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundColor(Color(white: 0.55))
+
+            case .listening:
+                Text(partialTranscript.isEmpty ? "Listening…" : partialTranscript)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(white: 0.85))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 80)
+
+            case .thinking:
+                Text("Thinking…")
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundColor(Color(white: 0.55))
+
+            case .surfacing:
+                Text("Recalling past wonders…")
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundColor(Color(white: 0.55))
+
+            case .speaking(let reply, let deferred):
+                Text((deferred ? "⊘ " : "") + reply)
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(white: 0.92))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 80)
+
+            case .failed(let msg):
+                Text("⚠︎ \(msg)")
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundColor(Color(red: 0.95, green: 0.45, blue: 0.45))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 80)
+            }
+        }
+    }
+
+    private var loadingLabel: String {
+        if loadProgress > 0 {
+            return "Gemma 4 E4B 4-bit · \(Int(loadProgress * 100))%"
+        }
+        return "Gemma 4 E4B 4-bit · 준비 중"
+    }
+}
+
+// MARK: - Bust view (viseme PNG swap)
 
 /// Renders the active viseme PNG centered on screen, scaled to ~52% height
 /// per design-approved.json `layout.bust_screen_height_fraction`.
@@ -53,12 +251,12 @@ struct BustView: View {
                         .interpolation(.none)
                         .scaledToFit()
                 } else {
-                    // Phase 1 fallback if PNGs not yet bundled in Resources.
+                    // Fallback if PNGs aren't bundled (dev hot-reload edge case).
                     Circle()
                         .fill(Color(red: 0.92, green: 0.87, blue: 0.77))
                         .frame(width: bustWidth * 0.6, height: bustHeight * 0.6)
                         .overlay(
-                            Text("Phase 1 placeholder · viseme \(viseme.rawValue)")
+                            Text("missing viseme: \(viseme.rawValue)")
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(Color(white: 0.2))
                         )
@@ -71,9 +269,11 @@ struct BustView: View {
     }
 
     private func loadVisemeImage(_ id: VisemeID) -> NSImage? {
-        // Phase 1: try Bundle.main first (when Xcode bundles the PNGs from
-        // Resources/visemes/). Falls back to nil → placeholder above.
-        if let url = Bundle.main.url(forResource: id.resourceName, withExtension: "png", subdirectory: "visemes") {
+        if let url = Bundle.main.url(
+            forResource: id.resourceName,
+            withExtension: "png",
+            subdirectory: "visemes"
+        ) {
             return NSImage(contentsOf: url)
         }
         if let url = Bundle.main.url(forResource: id.resourceName, withExtension: "png") {
@@ -83,24 +283,31 @@ struct BustView: View {
     }
 }
 
-/// Bridge for AppKit key events into SwiftUI (since SwiftUI macOS lacks
-/// global keyboard event capture for non-text views).
+// MARK: - Key event handler
+
+/// Bridge for AppKit key events into SwiftUI (since SwiftUI on macOS lacks
+/// global keyboard event capture for non-text views, and we need both
+/// keyDown AND keyUp to drive push-to-talk).
 struct KeyEventHandlerView: NSViewRepresentable {
     let onKeyDown: (UInt16) -> Void
+    let onKeyUp: (UInt16) -> Void
 
     func makeNSView(context: Context) -> KeyHandlerNSView {
         let view = KeyHandlerNSView()
         view.onKeyDown = onKeyDown
+        view.onKeyUp = onKeyUp
         return view
     }
 
     func updateNSView(_ nsView: KeyHandlerNSView, context: Context) {
         nsView.onKeyDown = onKeyDown
+        nsView.onKeyUp = onKeyUp
     }
 }
 
 final class KeyHandlerNSView: NSView {
     var onKeyDown: ((UInt16) -> Void)?
+    var onKeyUp: ((UInt16) -> Void)?
 
     override var acceptsFirstResponder: Bool { true }
 
@@ -110,7 +317,12 @@ final class KeyHandlerNSView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
+        guard !event.isARepeat else { return }
         onKeyDown?(event.keyCode)
+    }
+
+    override func keyUp(with event: NSEvent) {
+        onKeyUp?(event.keyCode)
     }
 }
 

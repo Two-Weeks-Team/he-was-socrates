@@ -1,0 +1,15 @@
+// Local.xcconfig.example — copy to `Local.xcconfig` (gitignored) and edit.
+//
+//   cp apps/macos/HeWasSocrates/Local.xcconfig.example \
+//      apps/macos/HeWasSocrates/Local.xcconfig
+//   $EDITOR apps/macos/HeWasSocrates/Local.xcconfig
+//   make xcodeproj
+//
+// DEVELOPMENT_TEAM is your 10-character Apple Developer Team ID. Find it at
+// https://developer.apple.com/account → Membership, or in Xcode under
+// Settings → Accounts → (your account) → Manage Certificates.
+//
+// Leave this file as-is in the repo. It is committed as a template; the
+// real Local.xcconfig is gitignored and stays on your machine only.
+
+DEVELOPMENT_TEAM = ABCDE12345
