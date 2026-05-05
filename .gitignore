@@ -59,6 +59,10 @@ secrets/
 *.pem
 *.p12
 
+# Per-developer Xcode signing override (DEVELOPMENT_TEAM etc.)
+# The .example template IS committed; the real Local.xcconfig is local-only.
+apps/macos/HeWasSocrates/Local.xcconfig
+
 # Python (helper scripts only)
 __pycache__/
 *.py[cod]
