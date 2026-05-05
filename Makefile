@@ -1,5 +1,5 @@
 .PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app run bootstrap help \
-        doctor probe-phonemes ci-local secret-scan install-gemma-weights
+        doctor probe-phonemes ci-local secret-scan install-gemma-weights install-oracles
 
 help:
 	@echo "He Was Socrates — build targets"
@@ -33,6 +33,8 @@ help:
 	@echo "    make ci-local        — run the same gates CI does (assets-verify + tests + lint)"
 	@echo "    make secret-scan     — gitleaks scan for committed secrets"
 	@echo "    make probe-phonemes  — Stage-5 day-1 Apple phoneme availability probe"
+	@echo "    make install-oracles — provision Rhubarb + g2pK build-time test oracles"
+	@echo "                            (per viseme-best-practices.md §7.7)"
 	@echo ""
 	@echo "  End-to-end:"
 	@echo "    make bootstrap            — fresh-clone setup (assets + xcodeproj + app +"
@@ -146,6 +148,14 @@ install-gemma-weights:
 		.venv-build/bin/pip install --quiet huggingface_hub; \
 	}
 	@.venv-build/bin/python3 scripts/install_gemma_weights.py
+
+# `make install-oracles` — provision build-time test oracles per
+# viseme-best-practices.md §7.7. Pulls Rhubarb Lip Sync (MIT) and g2pK
+# (Apache-2.0). Both are build-time only — never shipped in the .app.
+# Idempotent; re-runs skip what's already installed. See
+# scripts/install-oracles.sh for the env-var skip flags.
+install-oracles:
+	@bash scripts/install-oracles.sh
 
 # `make run` — launch the built .app. Resolves the actual build product path
 # from xcodebuild's settings so DerivedData relocations don't break this.

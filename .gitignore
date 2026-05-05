@@ -101,3 +101,4 @@ assets/preview/*.png
 
 # Force-track the canonical asset manifest
 !assets/.build-manifest.json
+tools/oracles/
