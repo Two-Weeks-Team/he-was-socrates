@@ -51,14 +51,26 @@ public actor WonderingLog {
     /// Append a wonder. Returns the assigned `Wonder` (with id stamped).
     /// Returns the EXISTING entry instead of duplicating if the content
     /// fingerprint already exists in this session-day.
+    ///
+    /// PR-η F4: existing-row fingerprint must use the entry's own
+    /// `createdAt` for the day-bucket. Earlier code defaulted to "today"
+    /// for both sides of the comparison; cross-midnight sessions would
+    /// then double-store the same utterance because the bucket date
+    /// rolled forward while the row's bucket was effectively re-derived
+    /// to match. With Phase-4 Core Data the fingerprint lives on the
+    /// row, so the dedup key must be derivable purely from the row.
     public func append(_ wonder: Wonder) -> Wonder {
         let fingerprint = Self.contentFingerprint(
             utterance: wonder.userUtterance,
-            sessionId: currentSession.id
+            sessionId: currentSession.id,
+            on: wonder.createdAt
         )
         if let existing = entries.first(where: {
-            Self.contentFingerprint(utterance: $0.userUtterance, sessionId: currentSession.id)
-                == fingerprint
+            Self.contentFingerprint(
+                utterance: $0.userUtterance,
+                sessionId: currentSession.id,
+                on: $0.createdAt
+            ) == fingerprint
         }) {
             return existing
         }
