@@ -25,6 +25,12 @@ public actor FunctionCallOrchestrator {
 
     public struct TurnOutput: Sendable {
         public let mode: ModeClassification
+        /// Reserved — iter2 §A7 stall-fallback surface. `EngineCoordinator`
+        /// in Phase 1–3 does NOT read this field. Populated only by the
+        /// `.surfacePastWonder` parser case for forward compatibility
+        /// with the Phase-4 surface_past_wonder + ask_back composite turn.
+        /// CONTRIBUTING.md L27-31 prohibits removing the field; PR-δ
+        /// annotates it so a reader doesn't mistake the orphan for a bug.
         public let surfacedPastWonder: String?
         public let socraticReply: String
         public let deferred: Bool
@@ -36,8 +42,8 @@ public actor FunctionCallOrchestrator {
         case medical
         case financial
         case emergency
-        case welfare      // added per SC2 finding (idea.spec.json no_go alignment)
-        case insurance    // added per SC2 finding
+        case welfare  // added per SC2 finding (idea.spec.json no_go alignment)
+        case insurance  // added per SC2 finding
         case other
     }
 
@@ -55,7 +61,8 @@ public actor FunctionCallOrchestrator {
     ///
     /// In stub mode the GemmaService produces a canned JSON-shape response
     /// so the entire pipeline is exercised without real MLX inference.
-    public func runTurn(_ input: TurnInput, correlationId: UUID = UUID()) async throws -> TurnOutput {
+    public func runTurn(_ input: TurnInput, correlationId: UUID = UUID()) async throws -> TurnOutput
+    {
         let userTurn = SystemPrompt.userTurn(
             utterance: input.utterance,
             language: input.language,
@@ -64,7 +71,10 @@ public actor FunctionCallOrchestrator {
 
         let result: FunctionCallParser.Result
         do {
-            result = try await gemma.runTurn(systemPrompt: SystemPrompt.composed, userTurn: userTurn)
+            result = try await gemma.runTurn(
+                systemPrompt: SystemPrompt.composed,
+                userTurn: userTurn
+            )
         } catch {
             throw EngineError.make(
                 domain: SocraticErrorDomain.model,
@@ -83,7 +93,11 @@ public actor FunctionCallOrchestrator {
         switch result {
         case .askBack(let question, let language):
             return TurnOutput(
-                mode: ModeClassification(mode: .curiousAdult, confidence: 0.85, reasoningSummary: "stub default"),
+                mode: ModeClassification(
+                    mode: .curiousAdult,
+                    confidence: 0.85,
+                    reasoningSummary: "stub default"
+                ),
                 surfacedPastWonder: nil,
                 socraticReply: question,
                 deferred: false,
@@ -92,7 +106,11 @@ public actor FunctionCallOrchestrator {
 
         case .deferToHuman(_, _, let explanation):
             return TurnOutput(
-                mode: ModeClassification(mode: .other, confidence: 0.95, reasoningSummary: "regulated advice"),
+                mode: ModeClassification(
+                    mode: .other,
+                    confidence: 0.95,
+                    reasoningSummary: "regulated advice"
+                ),
                 surfacedPastWonder: nil,
                 socraticReply: explanation,
                 deferred: true,
@@ -104,7 +122,11 @@ public actor FunctionCallOrchestrator {
             // the surface_past_wonder + ask_back combo. Stub: treat connector
             // as the reply directly.
             return TurnOutput(
-                mode: ModeClassification(mode: .curiousAdult, confidence: 0.80, reasoningSummary: "surfacing"),
+                mode: ModeClassification(
+                    mode: .curiousAdult,
+                    confidence: 0.80,
+                    reasoningSummary: "surfacing"
+                ),
                 surfacedPastWonder: connector,
                 socraticReply: connector,
                 deferred: false,
@@ -114,7 +136,11 @@ public actor FunctionCallOrchestrator {
         case .modeClassify(let mode, let confidence, let reasoning):
             // Single mode_classify isn't a full reply — synthesize a placeholder.
             return TurnOutput(
-                mode: ModeClassification(mode: mode, confidence: confidence, reasoningSummary: reasoning),
+                mode: ModeClassification(
+                    mode: mode,
+                    confidence: confidence,
+                    reasoningSummary: reasoning
+                ),
                 surfacedPastWonder: nil,
                 socraticReply: "(awaiting follow-up ask_back)",
                 deferred: false,

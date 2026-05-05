@@ -85,9 +85,14 @@ public final class EngineCoordinator {
                 self?.onPartialTranscript?(partial)
             }
         }
-        audio.onError = { [weak self] err in
+        audio.onError = { [weak self] _ in
+            // PR-δ: encode failure as a stable key; the SwiftUI layer
+            // (FailedMessage) renders the localized title + recovery
+            // hint. The raw NSError context is dropped here on purpose
+            // — production telemetry should hook the audio.onError edge
+            // directly when SC7 logging lands.
             Task { @MainActor [weak self] in
-                self?.transition(to: .failed("audio: \(err.localizedDescription)"))
+                self?.transition(to: .failed(PhaseFailureKey.audioRuntimeError))
             }
         }
 
@@ -154,18 +159,24 @@ public final class EngineCoordinator {
 
         let permission = await audio.requestPermissions()
         if case .denied(let reason) = permission {
-            transition(to: .failed("permission denied: \(reason)"))
+            // PR-δ: route mic vs speech to distinct keys so the recovery
+            // hint can deep-link to the correct System Settings pane.
+            let key: String =
+                reason == "microphone"
+                ? PhaseFailureKey.micDenied
+                : PhaseFailureKey.speechRecognitionDenied
+            transition(to: .failed(key))
             return
         }
         if case .restricted = permission {
-            transition(to: .failed("permission restricted"))
+            transition(to: .failed(PhaseFailureKey.speechRecognitionRestricted))
             return
         }
 
         do {
             try await gemma.loadModel()
         } catch {
-            transition(to: .failed("gemma load: \(error.localizedDescription)"))
+            transition(to: .failed(PhaseFailureKey.gemmaLoadFailed))
             return
         }
 
@@ -221,7 +232,7 @@ public final class EngineCoordinator {
         do {
             output = try await orchestrator.runTurn(input, correlationId: correlationId)
         } catch {
-            transition(to: .failed("orchestrator: \(error.localizedDescription)"))
+            transition(to: .failed(PhaseFailureKey.orchestratorError))
             return
         }
 
@@ -245,7 +256,7 @@ public final class EngineCoordinator {
         do {
             try await tts.speak(output.socraticReply, voice: voicePref)
         } catch {
-            transition(to: .failed("tts: \(error.localizedDescription)"))
+            transition(to: .failed(PhaseFailureKey.ttsRuntimeError))
         }
     }
 
@@ -340,7 +351,7 @@ public final class EngineCoordinator {
             // `warmup` is wedged. Surface a clean failure so the user
             // gets a recoverable phase rather than an indefinite black
             // screen. Encoded key per PR-δ failure-key plan.
-            self.transition(to: .failed("bootstrap.timeout"))
+            self.transition(to: .failed(PhaseFailureKey.bootstrapTimeout))
 
         default:
             // Active turn or surfacing — full teardown then idle.

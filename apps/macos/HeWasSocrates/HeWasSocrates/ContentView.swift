@@ -46,7 +46,9 @@ struct ContentView: View {
             )
         )
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("He Was Socrates — a Socratic bust that asks questions")
+        // PR-δ: phase-driven VoiceOver label. Updates only on phase
+        // transitions (handful per turn), not on viseme swaps (30 fps).
+        .accessibilityLabel("He Was Socrates · \(FailedMessage.voiceOverLabel(for: vm.phase))")
         .task { await vm.bootstrap() }
     }
 
@@ -226,12 +228,19 @@ struct StatusOverlay: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 80)
 
-            case .failed(let msg):
-                Text("⚠︎ \(msg)")
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundColor(Color(red: 0.95, green: 0.45, blue: 0.45))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 80)
+            case .failed(let key):
+                VStack(spacing: 6) {
+                    Text("⚠︎ \(FailedMessage.title(for: key))")
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundColor(Color(red: 0.95, green: 0.45, blue: 0.45))
+                    if let recovery = FailedMessage.recovery(for: key) {
+                        Text(recovery)
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(white: 0.55))
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.horizontal, 80)
             }
         }
     }
@@ -241,6 +250,82 @@ struct StatusOverlay: View {
             return "Gemma 4 E4B 4-bit · \(Int(loadProgress * 100))%"
         }
         return "Gemma 4 E4B 4-bit · 준비 중"
+    }
+}
+
+// MARK: - Failure-key localization (PR-δ)
+
+/// Maps `PhaseFailureKey` strings (carried in `Phase.failed(String)`) to
+/// localized title + optional recovery hint shown in the StatusOverlay.
+/// Keeping the lookup in the SwiftUI layer means the engine layer
+/// remains free of UI strings, and adding a new locale is a single-file
+/// edit. Rendered in 단정한 평어체 per the locked Korean voice.
+enum FailedMessage {
+    static func title(for key: String) -> String {
+        switch key {
+        case PhaseFailureKey.micDenied:
+            return "마이크 권한이 없다"
+        case PhaseFailureKey.speechRecognitionDenied:
+            return "음성 인식 권한이 없다"
+        case PhaseFailureKey.speechRecognitionRestricted:
+            return "음성 인식이 제한되어 있다"
+        case PhaseFailureKey.audioRuntimeError:
+            return "오디오 입력 오류"
+        case PhaseFailureKey.gemmaLoadFailed:
+            return "Gemma 4 모델을 불러오지 못했다"
+        case PhaseFailureKey.modelMalformedOutput:
+            return "모델 응답을 해석할 수 없다"
+        case PhaseFailureKey.orchestratorError:
+            return "추론 중 오류가 발생했다"
+        case PhaseFailureKey.ttsVoiceMissing:
+            return "음성을 찾을 수 없다"
+        case PhaseFailureKey.ttsRuntimeError:
+            return "음성 합성 중 오류"
+        case PhaseFailureKey.bootstrapTimeout:
+            return "초기화가 시간 안에 끝나지 않았다"
+        case PhaseFailureKey.turnTimeout:
+            return "응답이 시간 안에 끝나지 않았다"
+        default:
+            // Unknown key — surface the raw string so a developer can
+            // diagnose, but prefix it with the same warning ideogram so
+            // the user still gets a consistent visual cue.
+            return key
+        }
+    }
+
+    static func recovery(for key: String) -> String? {
+        switch key {
+        case PhaseFailureKey.micDenied:
+            return "시스템 설정 → 개인 정보 보호 및 보안 → 마이크에서 허용하라."
+        case PhaseFailureKey.speechRecognitionDenied:
+            return "시스템 설정 → 개인 정보 보호 및 보안 → 음성 인식에서 허용하라."
+        case PhaseFailureKey.speechRecognitionRestricted:
+            return "기기 관리자에 의해 제한되어 있다. 정책을 확인하라."
+        case PhaseFailureKey.gemmaLoadFailed:
+            return "터미널에서 `make install-gemma-weights`를 다시 실행하라."
+        case PhaseFailureKey.bootstrapTimeout:
+            return "잠시 뒤 다시 시도하라. 그래도 멈추면 앱을 다시 실행하라."
+        case PhaseFailureKey.turnTimeout:
+            return "Spacebar를 다시 눌러 새로 묻어라."
+        default:
+            return nil
+        }
+    }
+
+    /// Phase-level VoiceOver label. Replaces the per-viseme spam (30 fps)
+    /// with a single human-readable phase string. Closes finding N (RCA
+    /// + Critic agreed: announcing every viseme swap is unusable for
+    /// VoiceOver users).
+    static func voiceOverLabel(for phase: EngineCoordinator.Phase) -> String {
+        switch phase {
+        case .bootstrapping: return "준비 중"
+        case .idle: return "대기 중. Spacebar를 눌러 말하라."
+        case .listening: return "듣는 중"
+        case .thinking: return "생각 중"
+        case .surfacing: return "지난 호기심 떠올리는 중"
+        case .speaking(let reply, _): return "응답: \(reply)"
+        case .failed(let key): return "오류: \(title(for: key))"
+        }
     }
 }
 
@@ -314,7 +399,13 @@ struct BustView: View {
             }
             .frame(width: bustWidth, height: bustHeight)
             .position(x: proxy.size.width / 2, y: proxy.size.height * (0.50 - 0.05))
-            .accessibilityLabel("Socrates bust, currently in viseme \(viseme.rawValue)")
+            // PR-δ: per-viseme accessibility label removed. Updating
+            // accessibilityLabel at 30 fps queues a VoiceOver utterance
+            // for every frame — unusable for VoiceOver users (finding
+            // N + N-CRIT-9). The bust is now hidden from accessibility;
+            // the live narration comes from the phase-driven label on
+            // ContentView itself (see `accessibilityLabel(_:)` there).
+            .accessibilityHidden(true)
         }
     }
 
