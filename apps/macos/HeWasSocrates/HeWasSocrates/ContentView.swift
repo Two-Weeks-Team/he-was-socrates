@@ -1,5 +1,5 @@
-import SwiftUI
 import SocraticEngine
+import SwiftUI
 
 /// Root view of the He Was Socrates fullscreen experience.
 ///
@@ -39,10 +39,12 @@ struct ContentView: View {
                     .accessibilityHidden(true)
             }
         }
-        .background(KeyEventHandlerView(
-            onKeyDown: { keyCode in handleKeyDown(keyCode) },
-            onKeyUp:   { keyCode in handleKeyUp(keyCode) }
-        ))
+        .background(
+            KeyEventHandlerView(
+                onKeyDown: { keyCode in handleKeyDown(keyCode) },
+                onKeyUp: { keyCode in handleKeyUp(keyCode) }
+            )
+        )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("He Was Socrates — a Socratic bust that asks questions")
         .task { await vm.bootstrap() }
@@ -50,9 +52,9 @@ struct ContentView: View {
 
     private func handleKeyDown(_ keyCode: UInt16) {
         switch keyCode {
-        case 53:   // Esc — exit fullscreen → quit
+        case 53:  // Esc — exit fullscreen → quit
             NSApp.terminate(nil)
-        case 49:   // Spacebar — push-to-talk press
+        case 49:  // Spacebar — push-to-talk press
             guard !spaceIsDown else { return }
             spaceIsDown = true
             vm.beginListening()
@@ -95,7 +97,8 @@ final class SocraticAppViewModel: ObservableObject {
     /// on-device Gemma 4 E4B 4-bit path.
     static func defaultGemmaMode() -> GemmaService.RuntimeMode {
         if let v = ProcessInfo.processInfo.environment["HEWASSOCRATES_GEMMA_MODE"],
-           v.lowercased() == "stub" {
+            v.lowercased() == "stub"
+        {
             return .stub
         }
         return .real
@@ -266,7 +269,11 @@ struct BustView: View {
     }
 
     private func loadVisemeImage(_ id: VisemeID) -> NSImage? {
-        if let url = Bundle.main.url(forResource: id.resourceName, withExtension: "png", subdirectory: "visemes") {
+        if let url = Bundle.main.url(
+            forResource: id.resourceName,
+            withExtension: "png",
+            subdirectory: "visemes"
+        ) {
             return NSImage(contentsOf: url)
         }
         if let url = Bundle.main.url(forResource: id.resourceName, withExtension: "png") {
