@@ -1,0 +1,68 @@
+He Was Socrates — Dual License
+
+================================================================================
+CODE LICENSE: Apache License, Version 2.0
+================================================================================
+
+All source code in this repository (specifically: files under `apps/`,
+`packages/`, `scripts/`, and any `*.swift`, `*.py`, `*.sh`, `*.js`, `*.ts`,
+`*.html`, `*.css` files at the repo root) is licensed under the Apache
+License, Version 2.0 (the "Code License"); you may not use this code
+except in compliance with the Code License. You may obtain a copy of the
+Code License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the Code License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the Code License for the specific language governing permissions and
+limitations under the Code License.
+
+This Code License is chosen to remain compatible with the Apache 2.0
+license under which Google's Gemma 4 weights are distributed.
+
+================================================================================
+DOCUMENTATION / SPECIFICATION / MEDIA LICENSE: CC-BY-4.0
+================================================================================
+
+All non-code content in this repository (specifically: files in `docs/`,
+`spec/`, `runs/`, `memory/`, `HANDOFF.md`, `README.md`, and any non-code
+images / videos / writeups) is licensed under the Creative Commons
+Attribution 4.0 International License (the "Content License").
+
+You should have received a copy of the Content License along with this
+work. If not, see:
+
+    https://creativecommons.org/licenses/by/4.0/
+
+This Content License is chosen to comply with the winner license
+required by The Gemma 4 Good Hackathon (Kaggle competition rules
+section 1.5: "Open Source: You hereby license and will license your
+winning Submission and the source code used to generate the Submission
+under CC-BY 4.0").
+
+================================================================================
+ATTRIBUTION
+================================================================================
+
+If you are required to provide attribution under either license,
+please cite this work as:
+
+    Two-Weeks-Team. (2026). He Was Socrates: A macOS-native Socratic
+    interlocutor for The Gemma 4 Good Hackathon.
+    https://github.com/[ORG]/he-was-socrates
+
+================================================================================
+THIRD-PARTY NOTICES
+================================================================================
+
+This work uses Google's Gemma 4 model weights, distributed under the
+Apache License, Version 2.0. See https://ai.google.dev/gemma/terms.
+
+This work uses MLX-Swift (Apple, MIT-style license), Apple's Speech
+framework and AVFoundation (Apple Software License Agreement, embedded
+in macOS), and may use espeak-ng (GPL-3.0) for grapheme-to-phoneme
+conversion in the lip-sync pipeline. The espeak-ng dependency, if used,
+is invoked as a separate process and is not statically linked into the
+distributed binary.

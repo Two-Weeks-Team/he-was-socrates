@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "schema_note": "9 semantic anchor fields + 2 meta. PF idea-clarifier (I1) format. _filled_ratio denominator = 9.",
+  "run_id": "2026-05-05-spec",
+  "concept_name": "He Was Socrates",
+  "captured_kst": "2026-05-05T14:25+09:00",
+
+  "target_user": {
+    "primary_persona": "Curious adult and learning student, single UI, mode auto-detected by Gemma function-call",
+    "specific_situation_examples": [
+      "어른: '왜 어떤 노래는 들으면 우는지?' (음악·기억의 메타 호기심)",
+      "학생(초중등): '얼음이 왜 미끄럽지?' (현상에 대한 why-curiosity)",
+      "어른: '내가 왜 이 결정을 미루지?' (자기성찰)",
+      "학생(고등): '왜 e^(iπ)+1=0인가?' (개념의 직관적 이해)"
+    ],
+    "user_does_NOT_include": "법률·의료·금융 자문이 필요한 사람, 답을 즉시 받아야 하는 사람, 시간에 쫓기는 작업 컨텍스트의 사용자"
+  },
+
+  "primary_surface": {
+    "type": "macOS native fullscreen application",
+    "os_min": "macOS 14 (Sonoma)",
+    "language": "Swift + SwiftUI",
+    "distribution": "DMG (notarized) for hackathon demo, Mac App Store 후보 (post-submission)",
+    "fullscreen_takeover": true,
+    "menu_bar_auto_hide": true,
+    "secondary_surfaces_post_mvp": ["iPad universal", "iOS phone (not in MVP)"]
+  },
+
+  "ai_capability_required": {
+    "model_family": "Gemma 4",
+    "model_variant": "E4B (gemma-4-e4b-it-4bit, MLX quantized Q4)",
+    "runtime": "MLX-Swift on Apple Silicon (M-series)",
+    "load_bearing_features": [
+      "configurable thinking mode — visible UI element (thought silhouette + word-boundary highlight)",
+      "256K context — multi-year wondering log compression and selective injection",
+      "native function calling — mode_classify, ask_back, surface_past_wonder, defer_to_human"
+    ],
+    "non_load_bearing_features_used": [
+      "audio input via E4B (optional; primary STT path is macOS Speech framework)",
+      "image input (not in MVP, possible post-MVP for diagram-based wondering)"
+    ],
+    "why_gemma4_specifically": "Apache 2.0 open weights → Mac App Store 배포 가능, MLX-Swift 직접 추론 → 0 byte cloud, configurable thinking mode → Socratic reasoning 가시화 가능, 128K+ context → 다년 wondering log를 RAG 없이 직접 주입"
+  },
+
+  "success_criteria": {
+    "demo_day_metrics": [
+      "TTFT (time to first viseme): ≤ 8s on M2/M3, ≤ 12s on M1",
+      "viseme-audio drift: ≤ 50ms RMS",
+      "STT accuracy on Korean+English mixed: ≥ 90% word accuracy (Speech framework baseline)",
+      "mode_classify accuracy on labeled 50-sample test: ≥ 80%",
+      "Gemma 'answers given' rate: ≤ 5% (95%+ should be re-questions)"
+    ],
+    "user_outcome_metrics": [
+      "wondering log entries per session: median ≥ 3",
+      "session length: median ≥ 4 minutes",
+      "next-day re-open rate: not measured in MVP (privacy: no telemetry)"
+    ],
+    "video_metrics": [
+      "Storytelling 30/30 rubric target",
+      "3-minute YouTube must demonstrate at least 2 personas (adult + student) and at least one 14-month time-jump scene"
+    ]
+  },
+
+  "no_go": {
+    "absolute_rejects": [
+      "answer-on-demand (must remain Socratic)",
+      "voice cloning of any living person",
+      "any cloud network call (App Sandbox: no Outgoing)",
+      "regulated advice (legal/medical/financial/welfare/insurance)",
+      "automated decisions affecting user rights or welfare",
+      "child-data without parental consent flow (M08)",
+      "TODO/mock/stub in shipped code",
+      "any external dependency that requires runtime download from a non-Apple source"
+    ]
+  },
+
+  "regulatory_domain": {
+    "applicable": ["GDPR (EU users via Mac App Store later)", "COPPA (학생 모드, 13세 미만)", "Apple App Store Review Guidelines"],
+    "approach": "on-device only · 0 byte egress · 사용자 발화 영구 저장은 사용자 명시 동의 시만 · Core Data DB 암호화(File Protection complete) · 학생 모드는 부모/교사 승인 흐름 게이트 + COPPA-compliant 데이터 흐름 다이어그램 SPEC.md에 포함",
+    "out_of_scope": "HIPAA, FDA, 의료기기 등급 — 본 앱은 의료 도구 아님, '소크라테스적 호기심 도구'로 명시"
+  },
+
+  "distribution": {
+    "primary": "Direct DMG download from project page (notarized) for hackathon demo",
+    "secondary_planned": "Mac App Store after hackathon",
+    "code_repo": "this repo (he-was-socrates), Apache-2.0",
+    "hackathon_writeup": "Kaggle Writeup ≤1500 words",
+    "demo_video": "YouTube public ≤3 min",
+    "live_demo": "downloadable DMG link in Writeup Attachments"
+  },
+
+  "time_budget": {
+    "deadline_kst": "2026-05-19T08:59+09:00",
+    "today_kst": "2026-05-05",
+    "days_remaining": 14,
+    "weekly_milestones": [
+      {"week": "W1 (May 5-11)", "goal": "SpecDD complete + scaffold MVP loop (STT→Gemma→TTS→viseme) on dummy phrases"},
+      {"week": "W2 (May 12-18)", "goal": "real Gemma E4B integration + UI polish + 256K wondering log + video shoot + Writeup"}
+    ]
+  },
+
+  "business_model": {
+    "monetization_post_hackathon": "free DMG, Apache 2.0. Mac App Store free tier. Post-MVP: optional 'Voice Pack' DLC (additional TTS voices) at $4.99 if demand.",
+    "sustainability_partner": "TBD — candidates: Khan Academy 한국지부 / OER 공동체 / 한국교총 / EduTech 비영리. Submission 전 1개 명명 의무 (BP D3 mitigation)",
+    "ngo_pitch": "오픈소스 + on-device + COPPA-friendly · 학교 디스트릭 무료 배포",
+    "operating_cost_per_user_per_month_usd": 0
+  },
+
+  "_filled_ratio": 1.0,
+  "_filled_ratio_note": "9/9 fields populated at handoff. SpecDD critics may revise individual fields but full re-fill not required.",
+  "_owner": "Two-Weeks-Team (he-was-socrates@github)"
+}

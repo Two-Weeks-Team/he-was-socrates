@@ -1,0 +1,75 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+Icon?
+
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+xcuserdata/
+*.moved-aside
+*.swp
+*.lock
+.swiftpm/
+Package.resolved
+
+# MLX / Model artifacts (do not commit)
+*.mlx
+*.gguf
+*.safetensors
+*.bin
+models/
+checkpoints/
+
+# Audio / Video / large media
+*.wav
+*.mp3
+*.mp4
+*.mov
+*.aiff
+demo-recordings/
+!docs/video-script.md
+
+# Test artifacts
+TestResults/
+.coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# Env / Secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.p12
+
+# Python (helper scripts only)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Node (if any tooling)
+node_modules/
+.pnpm-store/
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+.cache/

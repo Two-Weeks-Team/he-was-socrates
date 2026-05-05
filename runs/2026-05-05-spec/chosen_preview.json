@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "schema_note": "Locked snapshot of gallery 2026-05-04 advocate preview #14, post-pivot to He Was Socrates. Canonical input to SpecDD. Do not mutate; if changes needed, fork.",
+  "source_gallery_run_id": "2026-05-04-gemma4-good",
+  "source_gallery_path": "~/Documents/Hackathons/hackathon-submissions/projects/gemma-4-good-hackathon/planning/gallery-2026-05-04/",
+  "source_advocate_id": "14",
+  "source_advocate_name": "P14 The Educator (revised)",
+  "locked_at_kst": "2026-05-05T14:25+09:00",
+  "lock_authority": "Two-Weeks-Team user (Gate H1 verdict 2026-05-05 13:00 KST)",
+  "preview_6tuple": {
+    "concept_name": "He Was Socrates",
+    "one_line": "macOS 풀스크린 소크라테스 — 듣고, 생각하고, 입 모양 동기화로 역질문만 하는 살아있는 흉상.",
+    "target_persona_situation": "단일 UI 자동 감지: (어른) 'why does some music make me cry?' / (학생) '얼음이 미끄러워요'. 풀스크린이 검게 변하면 화면 한가운데 소크라테스가 듣고, 생각하고, 역질문으로 답한다.",
+    "primary_surface": "macOS native fullscreen (Swift/SwiftUI/MLX-Swift/Speech framework STT/AVSpeechSynthesizer TTS/16-viseme lip-sync @30fps)",
+    "gemma4_critical_capability": "E4B + thinking mode (가시화) + 256K wondering log + native function calling (ask_back, surface_past_wonder, mode_classify, defer_to_human). 셋 모두 load-bearing.",
+    "demo_hook_3min": "0:10 풀스크린 검은 화면 페이드인, 흉상 눈을 뜬다 / 0:30 사용자 '왜 어떤 노래는 들으면 우는지?' / 0:45 viseme OW로 '그 노래를 처음 들은 건 누구와 함께였나?' / 1:30 학생 모드 '얼음이 미끄러워요' → '미끄러운 건 얼음 때문일까, 네 손가락이 밀어낸 무엇 때문일까?' / 2:30 14개월 후 빗속 타이어 질문 → 256K log에서 얼음 wondering surface / 2:55 '소크라테스는 답하지 않는다. 묻는다.'",
+    "track_strategy": {
+      "main_track_eligible": true,
+      "impact_track_pick": "Future of Education",
+      "special_tech_bonus": "none",
+      "stack_rationale": "macOS 네이티브 + MLX-Swift는 어느 Special Tech bonus와도 매핑이 어색. Main + Impact 100K+10K 풀어택, 깨끗한 한 가지 path."
+    },
+    "advocate_angle": "성공 KPI = Gemma가 답하지 않은 횟수. 어른은 재미를, 학생은 배움을, 같은 인터페이스에서 자동 감지된다."
+  },
+  "panel_signals_at_pivot_time": {
+    "tp_tech": {"status": "uncull/uncluk", "note": "thinking mode + 256K + function-call 3가지 모두 architecture에서 load-bearing"},
+    "up_ux": {"status": "unevaluated_in_revised", "note": "D2 (tonal monoculture, joy/education slot) 해소 candidate"},
+    "rp_risk": {"status": "coppa_flag", "note": "child-mode 사용시 COPPA flow + 데이터 흐름 다이어그램 의무 (M08)"},
+    "bp_business": {"status": "needs_partner", "note": "sustainability partner 명시 의무 (M12)"}
+  },
+  "stack_decisions_locked": {
+    "language": "Swift + SwiftUI",
+    "min_os": "macOS 14",
+    "model_runtime": "MLX-Swift, gemma-4-e4b-it-4bit",
+    "stt": "macOS Speech framework (SFSpeechRecognizer, on-device only)",
+    "tts": "AVSpeechSynthesizer (system voices: Korean Yuna/Heami, English Samantha/Alex)",
+    "lip_sync": "16-viseme set (AA EE IH OH OW UH M P B F V TH S SH R REST), g2p via espeak-ng or built-in, 30fps frame swap",
+    "fullscreen": "NSWindow.toggleFullScreen + NSApplication.presentationOptions auto-hide menu bar",
+    "wondering_log_storage": "Core Data or SwiftData, on-device only, JSON export",
+    "mode_detection": "Gemma function-call mode_classify(curious_adult|learning_student|skeptical|other)",
+    "special_tech_bonus": "none"
+  },
+  "rejected_alternatives_at_pivot": [
+    {"name": "Original Wonder Ledger (paper-style notebook UI, child-only)", "reason": "user pivot to broader audience + face/lip-sync"},
+    {"name": "SadTalker / Audio2Face photoreal lip-sync", "reason": "compound risk + heavy dep + cc-by-nc parts"},
+    {"name": "Static face + audio only (no lip-sync)", "reason": "user explicitly required mouth-sync"},
+    {"name": "Cactus/LiteRT/llama.cpp/Ollama/Unsloth Special Tech bonus", "reason": "macOS native MLX-Swift는 어느 것과도 자연스럽지 않음"},
+    {"name": "Python implementation", "reason": "macOS 네이티브 풀스크린+Speech+AVSpeechSynthesizer+MLX 모두 Swift가 자연"}
+  ]
+}
