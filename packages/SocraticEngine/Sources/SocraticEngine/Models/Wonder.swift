@@ -17,14 +17,11 @@ public struct Wonder: Codable, Sendable, Identifiable {
     public let surfaceLater: Bool
     public let schemaVersion: Int
 
-    /// Stable derivation key — content fingerprint for SC5 dedup. NOT the
-    /// primary id (which is a fresh UUID), but used by WonderingLog to detect
-    /// "user said the same thing in the same session."
-    public var contentFingerprint: String {
-        // SHA-256(utterance + day-bucketed-timestamp + sessionPlaceholder).
-        // Real implementation in Storage/WonderingLog.swift uses CryptoKit.
-        return "\(userUtterance.lowercased())|\(language.rawValue)"
-    }
+    // PR-η F5: removed an unused stub `contentFingerprint` getter that
+    // disagreed with `WonderingLog.contentFingerprint(...)` (the
+    // SHA-256-of-utterance|sessionId|day-bucket version actually used at
+    // runtime). Two definitions of the same SC5-01 dedup key invited
+    // drift; `WonderingLog` is the single source of truth.
 
     public init(
         id: UUID = UUID(),

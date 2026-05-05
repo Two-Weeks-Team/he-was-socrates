@@ -84,7 +84,14 @@ public final class VisemeDriver {
                 timer.invalidate()
                 return
             }
-            Task { @MainActor [weak self] in
+            // PR-η F10: the timer runs on `RunLoop.main`, so this body
+            // already executes on the main thread. `MainActor.assumeIsolated`
+            // (WWDC24 #10169) lets `tick()` run synchronously without
+            // spawning 30 Tasks/sec through the cooperative pool — drops
+            // 30 Hz of hop overhead AND removes a re-entrancy window
+            // inside the tick body that the schedule loop assumes won't
+            // be interleaved.
+            MainActor.assumeIsolated {
                 self?.tick()
             }
         }

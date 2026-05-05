@@ -51,8 +51,29 @@ public final class TTSManager: NSObject {
         super.init()
         #if canImport(AVFAudio)
         synthesizer.delegate = self
+        // PR-η F6: wire the locale-change observer the PR-γ comment
+        // promised. `NSLocale.currentLocaleDidChangeNotification` fires
+        // when the user installs a new system voice or switches the
+        // system language; either event can change which Premium /
+        // Enhanced voice resolves for a given BCP-47 string. Without
+        // this, the voice cache survives until process restart.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLocaleChange),
+            name: NSLocale.currentLocaleDidChangeNotification,
+            object: nil
+        )
         #endif
     }
+
+    #if canImport(AVFAudio)
+    @objc private func handleLocaleChange() {
+        // The notification can fire from any queue; bounce to MainActor.
+        Task { @MainActor [weak self] in
+            self?.invalidateVoiceCache()
+        }
+    }
+    #endif
 
     // MARK: - Voice resolution
 
@@ -193,17 +214,17 @@ extension TTSManager: AVSpeechSynthesizerDelegate {
         _ synthesizer: AVSpeechSynthesizer,
         didStart utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor [weak self] in
-            guard let self else { return }
+        // PR-η F1: AVSpeechSynthesizerDelegate is documented to fire on
+        // the main thread (Apple Speech docs + WWDC18 #236). Spawning a
+        // detached `Task { @MainActor }` per delegate event would push
+        // the work through the cooperative pool and re-enter MainActor
+        // ASYNCHRONOUSLY — defeating the iter5 contract that the
+        // JamoTimeline schedule must reach VisemeDriver BEFORE the first
+        // audible syllable. `MainActor.assumeIsolated` runs the body in
+        // the same run-loop tick the delegate fires on, with no hop.
+        // Sendable-clean per WWDC24 #10169.
+        MainActor.assumeIsolated {
             self.onUtteranceStart?()
-            // macOS 26 emits zero `AVSpeechSynthesisMarker.phoneme` events for
-            // every system voice we ship — verdict "no-markers-anywhere" in
-            // runs/2026-05-05-spec/spec/apple-phoneme-availability.json.
-            // Surface the JamoTimeline fallback synchronously at audio start
-            // so VisemeDriver can begin lip-sync in time with the speech;
-            // waiting for didFinish (the previous behaviour) only ingested
-            // the schedule AFTER the audio had already played, so no visible
-            // mouth motion ever happened during the actual utterance.
             let estimated = TTSManager.estimateDurationMs(
                 text: self.lastSpokenText,
                 language: self.lastSpokenLanguage
@@ -222,8 +243,8 @@ extension TTSManager: AVSpeechSynthesizerDelegate {
         utterance: AVSpeechUtterance
     ) {
         let text = utterance.speechString
-        Task { @MainActor [weak self] in
-            self?.onWillSpeakWord?(characterRange, text)
+        MainActor.assumeIsolated {
+            self.onWillSpeakWord?(characterRange, text)
         }
     }
 
@@ -231,8 +252,8 @@ extension TTSManager: AVSpeechSynthesizerDelegate {
         _ synthesizer: AVSpeechSynthesizer,
         didFinish utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor [weak self] in
-            self?.onUtteranceEnd?()
+        MainActor.assumeIsolated {
+            self.onUtteranceEnd?()
         }
     }
 
@@ -240,8 +261,8 @@ extension TTSManager: AVSpeechSynthesizerDelegate {
         _ synthesizer: AVSpeechSynthesizer,
         didCancel utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor [weak self] in
-            self?.onUtteranceCancel?()
+        MainActor.assumeIsolated {
+            self.onUtteranceCancel?()
         }
     }
 }

@@ -408,20 +408,6 @@ struct BustView: View {
             .accessibilityHidden(true)
         }
     }
-
-    private func loadVisemeImage(_ id: VisemeID) -> NSImage? {
-        if let url = Bundle.main.url(
-            forResource: id.resourceName,
-            withExtension: "png",
-            subdirectory: "visemes"
-        ) {
-            return NSImage(contentsOf: url)
-        }
-        if let url = Bundle.main.url(forResource: id.resourceName, withExtension: "png") {
-            return NSImage(contentsOf: url)
-        }
-        return nil
-    }
 }
 
 // MARK: - Key event handler
