@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions (questions, ideas, show-and-tell)
+    url: https://github.com/Two-Weeks-Team/he-was-socrates/discussions
+    about: For open-ended questions, please start a Discussion instead of an Issue.
+  - name: SpecDD lock & amendment process
+    url: https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/runs/2026-05-05-spec/spec/SPEC.md
+    about: Read this before proposing changes that touch the frozen spec.

@@ -1,0 +1,44 @@
+# EditorConfig — He Was Socrates
+# https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Swift — 4-space indent, 100-column line guideline (matches .swift-format).
+[*.swift]
+indent_size = 4
+tab_width = 4
+max_line_length = 100
+
+# Python build-pipeline scripts (Pillow + numpy compose).
+[*.py]
+indent_size = 4
+
+# Makefiles must use real tabs.
+[{Makefile,*.mk}]
+indent_style = tab
+indent_size = 4
+
+# Shell helpers in scripts/.
+[*.sh]
+indent_size = 2
+
+# YAML — GitHub Actions workflows, Dependabot, issue forms.
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON — Package.resolved, asset manifest, probe verdict.
+[*.json]
+indent_size = 2
+
+# Markdown allows trailing whitespace (Markdown's two-space line-break syntax).
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off

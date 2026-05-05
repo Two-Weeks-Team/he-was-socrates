@@ -1,0 +1,107 @@
+name: Bug report
+description: Something is broken in the macOS app or the SocraticEngine library.
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug report. He Was Socrates is a macOS-only,
+        Apple-Silicon-only, fully on-device app — please make sure your
+        environment matches before submitting.
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      description: "Apple menu  > About This Mac > macOS X.Y.Z"
+      placeholder: "14.5.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: chip
+    attributes:
+      label: Apple Silicon chip
+      description: He Was Socrates does not run on Intel Macs.
+      options:
+        - M1
+        - M1 Pro / Max / Ultra
+        - M2
+        - M2 Pro / Max / Ultra
+        - M3
+        - M3 Pro / Max
+        - M4
+        - M4 Pro / Max
+        - Other / unsure
+    validations:
+      required: true
+
+  - type: input
+    id: xcode-version
+    attributes:
+      label: Xcode version
+      description: "`xcodebuild -version` (or 'N/A — running prebuilt .app')"
+      placeholder: "Xcode 16.3 (Build version 16C5032h)"
+    validations:
+      required: false
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App / commit version
+      description: "Either the app version string from About box, or the git commit SHA you built from."
+      placeholder: "v0.1.0-dev (commit abcdef0)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal numbered steps from a clean app launch.
+      placeholder: |
+        1. Launch the app.
+        2. Click the orb.
+        3. Say "안녕".
+        4. Observe …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include exact error text, console logs, or screenshots if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / console output
+      description: Paste relevant log lines (Console.app filtered to "HeWasSocrates", or `make engine-test` output).
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am running on Apple Silicon (M-series), not Intel.
+          required: true
+        - label: I rebuilt assets via `make assets` if I changed anything in `scripts/` or `assets/`.
+          required: false
