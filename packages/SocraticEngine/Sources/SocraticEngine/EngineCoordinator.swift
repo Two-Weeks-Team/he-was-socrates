@@ -156,6 +156,12 @@ public final class EngineCoordinator {
             return
         }
 
+        // Warm the inference path so turn 1 doesn't eat a 1-2 s GPU pipeline
+        // cold-start on top of the actual generation. Failure here is
+        // non-fatal — the first real turn would simply pay the warm-up cost
+        // itself, with the same bust UX we already shipped.
+        await gemma.warmup()
+
         viseme.start()
         transition(to: .idle)
     }
@@ -163,6 +169,7 @@ public final class EngineCoordinator {
     public func shutdown() {
         viseme.stop()
         tts.cancel()
+        Task { await gemma.resetSession() }
         transition(to: .idle)
     }
 
