@@ -53,10 +53,11 @@ public final class VisemeDriver {
     public init(phonemeMap: PhonemeMap = .default) {
         self.phonemeMap = phonemeMap
     }
-
-    deinit {
-        timer?.invalidate()
-    }
+    // Note: no explicit deinit. Timer closure uses [weak self] so a dead
+    // VisemeDriver gracefully no-ops while the timer self-invalidates on the
+    // next tick. Swift 6 strict concurrency forbids accessing the non-Sendable
+    // Timer from a nonisolated deinit, so callers should invoke `stop()`
+    // explicitly before releasing.
 
     // MARK: - Lifecycle
 
@@ -64,7 +65,12 @@ public final class VisemeDriver {
         guard !isRunning else { return }
         isRunning = true
         let interval = 1.0 / renderRate
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] timer in
+            // Self-invalidate when the driver is deallocated.
+            guard self != nil else {
+                timer.invalidate()
+                return
+            }
             Task { @MainActor [weak self] in
                 self?.tick()
             }

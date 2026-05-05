@@ -320,6 +320,66 @@ struct FunctionCallOrchestratorTests {
     }
 }
 
+@Suite("EngineCoordinator wiring")
+@MainActor struct EngineCoordinatorTests {
+
+    @Test func initialPhaseIsBootstrapping() {
+        let coord = EngineCoordinator()
+        #expect(coord.phase == .bootstrapping)
+    }
+
+    @Test func phaseTransitionFiresCallback() async {
+        let coord = EngineCoordinator()
+        var phases: [EngineCoordinator.Phase] = []
+        coord.onPhaseChanged = { phases.append($0) }
+        // Direct internal transition through public mutator path:
+        coord.shutdown()
+        // shutdown leaves phase = .idle (one transition from .bootstrapping).
+        #expect(phases.contains(.idle))
+    }
+
+    @Test func wonderingLogCompressedHistoryStub() async {
+        let log = WonderingLog()
+        // Append two wonders.
+        _ = await log.append(Wonder(
+            userUtterance: "음악이 왜 슬픈가?",
+            socraticReply: "노래는 자네 안의 무엇과 만나는가?",
+            mode: .curiousAdult, modeConfidence: 0.9, language: .ko
+        ))
+        _ = await log.append(Wonder(
+            userUtterance: "왜 시간은 빠르지?",
+            socraticReply: "시간이 빠른 것인가, 자네의 주의가 다른 곳에 있는 것인가?",
+            mode: .curiousAdult, modeConfidence: 0.85, language: .ko
+        ))
+        let count = await log.count()
+        #expect(count == 2)
+    }
+
+    @Test func gemmaStubLoadsAndProducesSocraticReply() async throws {
+        let coord = EngineCoordinator(gemmaMode: .stub)
+        try await coord.gemma.loadModel()
+        // Run an orchestrator turn directly (simulating handleFinalTranscript path).
+        let input = FunctionCallOrchestrator.TurnInput(
+            utterance: "왜 어떤 노래는 우는가?",
+            language: .ko
+        )
+        let out = try await coord.orchestrator.runTurn(input)
+        #expect(!out.deferred)
+        #expect(out.socraticReply.contains("?"))
+    }
+
+    @Test func gemmaStubDeferRoutesThroughCoordinator() async throws {
+        let coord = EngineCoordinator(gemmaMode: .stub)
+        try await coord.gemma.loadModel()
+        let input = FunctionCallOrchestrator.TurnInput(
+            utterance: "법률 자문이 필요해",
+            language: .ko
+        )
+        let out = try await coord.orchestrator.runTurn(input)
+        #expect(out.deferred)
+    }
+}
+
 @Suite("VisemeDriver scheduling")
 @MainActor struct VisemeDriverTests {
     @Test func ingestScheduleAdvancesViseme() {
