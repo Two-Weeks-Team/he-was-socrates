@@ -1,0 +1,70 @@
+# gitleaks configuration — He Was Socrates
+# Scope: prevent committed secrets in a fully on-device, no-cloud Swift app.
+# Inherits the upstream default ruleset and adds project-specific allowlists.
+
+[extend]
+# Pull in the upstream default rules (AWS keys, Slack tokens, generic API
+# tokens, etc.) so we don't have to redefine them.
+useDefault = true
+
+# -----------------------------------------------------------------------------
+# Custom rules — placeholders for future shared-key patterns. The Social
+# Seeding family uses an `INTERNAL_API_KEY` env-var convention (see workspace
+# CLAUDE.md). He Was Socrates is fully on-device with no such key today, but
+# we reserve the regex slot so a future leak is caught.
+# -----------------------------------------------------------------------------
+
+[[rules]]
+id = "internal-api-key"
+description = "Reserved: INTERNAL_API_KEY-shaped value (32+ hex/base64 chars after `INTERNAL_API_KEY=`)"
+regex = '''(?i)INTERNAL_API_KEY\s*[:=]\s*['"]?[A-Za-z0-9+/=_-]{32,}['"]?'''
+keywords = ["INTERNAL_API_KEY"]
+
+[[rules]]
+id = "huggingface-token"
+description = "HuggingFace user access token (hf_…)"
+regex = '''hf_[A-Za-z0-9]{30,}'''
+keywords = ["hf_"]
+
+[[rules]]
+id = "openai-key"
+description = "OpenAI / OpenAI-compatible API key"
+regex = '''(sk|pk)-[A-Za-z0-9]{20,}'''
+keywords = ["sk-", "pk-"]
+
+# -----------------------------------------------------------------------------
+# Allowlist
+# -----------------------------------------------------------------------------
+
+[allowlist]
+description = "Project-wide allowlist for SpecDD artifacts, example values, docs"
+paths = [
+    # Frozen SpecDD run artifacts contain SHA-locked example payloads, scenario
+    # transcripts, and SHA hashes — none are secrets but their structure can
+    # match generic-token patterns.
+    '''runs/2026-05-05-spec/.*''',
+    # Local writable preview-editor config; tracked-as-ignored in .gitignore
+    # but listed here for safety in case someone force-adds it.
+    '''assets/\.preview-config\.json$''',
+    # Markdown documentation files are allowed to contain *example* tokens
+    # for illustration; real secrets in .md would still be caught by the
+    # rules above if they're not wrapped in fenced code with the literal
+    # placeholder strings below.
+    '''.*\.md$''',
+    # The build-manifest is committed and contains SHA256 digests of viseme
+    # PNGs. Hashes can occasionally trip generic high-entropy heuristics.
+    '''assets/\.build-manifest\.json$''',
+]
+regexes = [
+    # Common documentation placeholders.
+    '''YOUR_API_KEY_HERE''',
+    '''sk-EXAMPLE[A-Za-z0-9]+''',
+    '''hf_EXAMPLE[A-Za-z0-9]+''',
+    '''xxxxxx{4,}''',
+]
+stopwords = [
+    "example",
+    "placeholder",
+    "redacted",
+    "fake",
+]

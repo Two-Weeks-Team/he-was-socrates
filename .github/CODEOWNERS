@@ -1,0 +1,9 @@
+# CODEOWNERS — He Was Socrates
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# IMPORTANT: The "critic" personas inside `runs/2026-05-05-spec/spec/critic-feedback/`
+# are SpecDD review artifacts — they are NOT GitHub identities and CANNOT be
+# code-owners. Do not list them here. The single human maintainer below owns
+# every path until the team grows.
+
+* @ComBba

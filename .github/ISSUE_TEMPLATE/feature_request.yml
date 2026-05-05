@@ -1,0 +1,70 @@
+name: Feature request
+description: Suggest an enhancement to He Was Socrates.
+title: "[Feature] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening a feature request, please note that He Was Socrates
+        has a frozen SpecDD lock at `runs/2026-05-05-spec/spec/lock.sha256`.
+        Features that require modifying any of the 17 SHA-locked artifacts
+        need a SpecDD amendment cycle, not a regular feature PR.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user-visible pain point does this address? Who feels it?
+      placeholder: "When a parent uses the app with a Korean child, …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest change that would solve the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you weigh? Why did you reject them?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: spec-impact
+    attributes:
+      label: SpecDD impact
+      description: Does this require touching the frozen spec lock?
+      options:
+        - "No — fits within current SPEC.md"
+        - "Maybe — needs a SpecDD review"
+        - "Yes — requires an amendment cycle"
+        - "Unsure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Additional context
+      description: Mockups, links to similar features in other apps, related issues, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I have searched existing issues and discussions for the same idea.
+          required: true
+        - label: This feature is consistent with the on-device, no-cloud, COPPA-aware constraints in `SPEC.md` §7-§9.
+          required: true

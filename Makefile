@@ -1,4 +1,5 @@
-.PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app help
+.PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app help \
+        doctor probe-phonemes ci-local secret-scan
 
 help:
 	@echo "He Was Socrates — build targets"
@@ -21,6 +22,12 @@ help:
 	@echo "  • Full Xcode (not just CommandLineTools): /Applications/Xcode.app"
 	@echo "  • xcodegen:        brew install xcodegen"
 	@echo "  • assets first:    make assets"
+	@echo ""
+	@echo "  Local CI / tooling:"
+	@echo "    make doctor          — check toolchain (Swift, Xcode, xcodegen, py3, gitleaks)"
+	@echo "    make ci-local        — run the same gates CI does (assets-verify + tests + lint)"
+	@echo "    make secret-scan     — gitleaks scan for committed secrets"
+	@echo "    make probe-phonemes  — Stage-5 day-1 Apple phoneme availability probe"
 
 assets:
 	bash scripts/build-visemes.sh
@@ -83,3 +90,76 @@ assets-verify:
 	fi; \
 	rm $$TMP; \
 	echo "manifest verified: deterministic build"
+
+# -----------------------------------------------------------------------------
+# Local CI / tooling targets (Phase 6 setup).
+# -----------------------------------------------------------------------------
+
+# `make doctor` — non-fatal toolchain audit. Prints a green-check / red-X table.
+# Critical tools (Swift, Xcode/xcodebuild, xcodegen) — exit 1 if missing.
+# Nice-to-haves (gitleaks, swift-format) — warn but do not fail.
+doctor:
+	@status=0; \
+	check_critical() { \
+		name="$$1"; cmd="$$2"; ver="$$3"; \
+		if eval "$$cmd" >/dev/null 2>&1; then \
+			printf "  \033[32m✓\033[0m  %-14s %s\n" "$$name" "$$ver"; \
+		else \
+			printf "  \033[31m✗\033[0m  %-14s MISSING (critical)\n" "$$name"; \
+			status=1; \
+		fi; \
+	}; \
+	check_optional() { \
+		name="$$1"; cmd="$$2"; ver="$$3"; \
+		if eval "$$cmd" >/dev/null 2>&1; then \
+			printf "  \033[32m✓\033[0m  %-14s %s\n" "$$name" "$$ver"; \
+		else \
+			printf "  \033[33m–\033[0m  %-14s not installed (optional)\n" "$$name"; \
+		fi; \
+	}; \
+	echo "He Was Socrates — toolchain doctor"; \
+	echo "──────────────────────────────────"; \
+	check_critical "swift"     'swift --version'              "$$(swift --version 2>/dev/null | head -1)"; \
+	check_critical "xcodebuild" 'xcrun -find xcodebuild'      "$$(xcrun -find xcodebuild 2>/dev/null)"; \
+	check_critical "xcodegen"  'xcodegen --version'           "$$(xcodegen --version 2>/dev/null | head -1)"; \
+	check_critical "python3"   'python3 --version'            "$$(python3 --version 2>/dev/null)"; \
+	check_optional "swift-format" 'swift-format --version'    "$$(swift-format --version 2>/dev/null)"; \
+	check_optional "gitleaks"  'gitleaks version'             "$$(gitleaks version 2>/dev/null)"; \
+	echo "──────────────────────────────────"; \
+	if [ "$$status" -eq 0 ]; then \
+		echo "All critical tools present."; \
+	else \
+		echo "One or more critical tools are missing — see brew bundle install." >&2; \
+	fi; \
+	exit $$status
+
+# `make probe-phonemes` — Stage-5 day-1 Apple phoneme availability probe.
+# Builds and runs the standalone tool at tools/ApplePhonemeProbe/. Always
+# exits 0 (the probe is informational); writes the verdict JSON to
+# runs/2026-05-05-spec/spec/apple-phoneme-availability.json.
+probe-phonemes:
+	@echo "Building tools/ApplePhonemeProbe..."
+	cd tools/ApplePhonemeProbe && swift build -c release
+	@echo "Running probe (informational, exits 0 even on missing voices)..."
+	cd tools/ApplePhonemeProbe && \
+		PROBE_BIN="$$(swift build -c release --show-bin-path)/ApplePhonemeProbe" && \
+		(cd "$(CURDIR)" && "$$PROBE_BIN")
+
+# `make ci-local` — run the same gates CI does, in the same order.
+# Useful as a pre-push hook. Will exit non-zero on the first failing gate.
+ci-local: assets-verify engine-test
+	@if command -v swift-format >/dev/null 2>&1; then \
+		echo "Running swift-format lint..."; \
+		swift-format lint -r packages apps tools; \
+	else \
+		echo "swift-format not installed — skipping lint. Run 'brew bundle install'." >&2; \
+		exit 1; \
+	fi
+	@echo "ci-local: all gates passed."
+
+# `make secret-scan` — local gitleaks scan against the working tree.
+secret-scan:
+	@if ! command -v gitleaks >/dev/null 2>&1; then \
+		echo "gitleaks not installed. Run: brew install gitleaks" >&2; exit 1; \
+	fi
+	gitleaks detect --no-banner --source . --redact

@@ -1,0 +1,86 @@
+# Dependabot configuration — He Was Socrates
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Notes
+#   • Swift Package Manager support is currently in preview at GitHub.
+#     If `swift` ecosystem is not yet honored on the repo's Dependabot
+#     account, the `github-actions` block will still work and the Swift
+#     deps fall back to manual `swift package update`.
+#   • Auto-merging of patch-only updates is intentionally NOT done here.
+#     `dependabot.yml` cannot enable auto-merge by itself; a separate
+#     `auto-merge.yml` workflow that filters on the `version-update:semver-patch`
+#     label is required. The grouping below makes that follow-up trivial.
+version: 2
+
+updates:
+  # ---- Swift Package Manager dependencies (mlx-swift-lm, swift-huggingface,
+  #      swift-transformers, swift-testing). Grouped by upstream family.
+  - package-ecosystem: "swift"
+    directory: "/packages/SocraticEngine"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "automated"
+      - "swift"
+    assignees:
+      - "ComBba"
+    groups:
+      mlx-stack:
+        patterns:
+          - "mlx-swift*"
+          - "mlx-*"
+      huggingface-stack:
+        patterns:
+          - "swift-huggingface"
+          - "swift-transformers"
+      apple-toolchain:
+        patterns:
+          - "swift-testing"
+      swift-patches:
+        # Catch-all bucket for patch-only updates across all Swift deps so a
+        # downstream auto-merge workflow can target them via the
+        # `version-update:semver-patch` Dependabot label.
+        update-types:
+          - "patch"
+
+  # ---- Swift package for the standalone Apple-phoneme probe tool.
+  - package-ecosystem: "swift"
+    directory: "/tools/ApplePhonemeProbe"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "automated"
+      - "swift"
+      - "tools"
+    assignees:
+      - "ComBba"
+
+  # ---- GitHub Actions versions (single grouped PR per week).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+      - "automated"
+      - "github-actions"
+    assignees:
+      - "ComBba"
+    groups:
+      gh-actions-all:
+        patterns:
+          - "*"
