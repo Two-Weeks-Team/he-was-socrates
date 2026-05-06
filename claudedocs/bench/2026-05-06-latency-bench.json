@@ -2,157 +2,157 @@
   "device" : {
     "gpuActiveBytesAfter" : 4272513344,
     "gpuActiveBytesBefore" : 0,
-    "gpuCacheBytes" : 3585765252,
-    "gpuPeakBytes" : 5103461714,
+    "gpuCacheBytes" : 3594839444,
+    "gpuPeakBytes" : 5103461978,
     "metalLibLoaded" : true,
     "mlxDefaultDevice" : "Device(gpu, 0)",
     "mlxDefaultDeviceType" : "Optional(MLX.DeviceType.gpu)"
   },
   "host" : "mbp.local",
   "kvGroupSize" : 64,
-  "loadMs" : 2175.849853515625,
+  "loadMs" : 2111.746826171875,
   "modelTag" : "mlx-community/gemma-4-e4b-it-4bit",
   "reuseProbe" : {
     "shots" : [
       {
         "chunkCount" : 34,
-        "firstChunkMs" : 268.149169921875,
+        "firstChunkMs" : 264.6943359375,
         "label" : "fast-path",
         "rawChars" : 89,
-        "wallMs" : 808.3271484375
+        "wallMs" : 798.268310546875
       },
       {
         "chunkCount" : 34,
-        "firstChunkMs" : 4424.5009765625,
+        "firstChunkMs" : 4569.540771484375,
         "label" : "slow-fallback",
         "rawChars" : 89,
-        "wallMs" : 4973.7529296875
+        "wallMs" : 5113.77197265625
       }
     ],
-    "ttftRatio" : 16.50014795067825,
+    "ttftRatio" : 17.26346260980568,
     "utterance" : "왜 사람들은 자신과 다른 의견을 가진 사람을 미워하게 될까?"
   },
   "summary" : {
-    "maxMs" : 1201.001953125,
-    "meanMs" : 906.0789306640625,
-    "medianMs" : 812.58349609375,
-    "minMs" : 757.0380859375,
+    "maxMs" : 1190.39892578125,
+    "meanMs" : 884.137548828125,
+    "medianMs" : 808.5662841796875,
+    "minMs" : 705.18701171875,
     "n" : 10,
-    "p10Ms" : 757.5427978515625,
-    "p90Ms" : 1192.199267578125
+    "p10Ms" : 720.4650390625001,
+    "p90Ms" : 1132.4721923828124
   },
-  "timestamp" : "2026-05-06T02:43:47Z",
+  "timestamp" : "2026-05-06T03:04:15Z",
   "turns" : [
     {
       "chunkCount" : 34,
       "closingBraceAt" : 88,
       "deferred" : false,
-      "firstChunkMs" : 266.645751953125,
+      "firstChunkMs" : 276.860595703125,
       "label" : "ask-back/curious-adult-1",
       "rawChars" : 89,
       "replyChars" : 21,
       "trailingChars" : 0,
-      "wallMs" : 805.659912109375
+      "wallMs" : 818.204833984375
     },
     {
-      "chunkCount" : 39,
-      "closingBraceAt" : 99,
+      "chunkCount" : 44,
+      "closingBraceAt" : 110,
       "deferred" : false,
-      "firstChunkMs" : 191.93603515625,
+      "firstChunkMs" : 191.399169921875,
       "label" : "ask-back/stuck-thinker-1",
-      "rawChars" : 100,
-      "replyChars" : 32,
+      "rawChars" : 111,
+      "replyChars" : 43,
       "trailingChars" : 0,
-      "wallMs" : 819.507080078125
+      "wallMs" : 879.118896484375
     },
     {
       "chunkCount" : 39,
       "closingBraceAt" : 95,
       "deferred" : false,
-      "firstChunkMs" : 190.79931640625,
+      "firstChunkMs" : 189.0869140625,
       "label" : "ask-back/curious-adult-2",
       "rawChars" : 96,
       "replyChars" : 28,
       "trailingChars" : 0,
-      "wallMs" : 819.9091796875
+      "wallMs" : 798.927734375
     },
     {
-      "chunkCount" : 63,
-      "closingBraceAt" : 175,
+      "chunkCount" : 59,
+      "closingBraceAt" : 162,
       "deferred" : true,
-      "firstChunkMs" : 191.23291015625,
+      "firstChunkMs" : 190.849609375,
       "label" : "defer/regulated-medical",
-      "rawChars" : 176,
-      "replyChars" : 41,
+      "rawChars" : 163,
+      "replyChars" : 32,
       "trailingChars" : 0,
-      "wallMs" : 1201.001953125
+      "wallMs" : 1110.61474609375
     },
     {
-      "chunkCount" : 36,
-      "closingBraceAt" : 91,
+      "chunkCount" : 37,
+      "closingBraceAt" : 90,
       "deferred" : false,
-      "firstChunkMs" : 191.334228515625,
+      "firstChunkMs" : 188.70703125,
       "label" : "ask-back/curious-adult-3",
-      "rawChars" : 92,
-      "replyChars" : 24,
+      "rawChars" : 91,
+      "replyChars" : 23,
       "trailingChars" : 0,
-      "wallMs" : 767.110107421875
+      "wallMs" : 767.493896484375
     },
     {
-      "chunkCount" : 36,
-      "closingBraceAt" : 95,
+      "chunkCount" : 33,
+      "closingBraceAt" : 89,
       "deferred" : false,
-      "firstChunkMs" : 183.18701171875,
+      "firstChunkMs" : 181.4228515625,
       "label" : "ask-back/stuck-thinker-2",
-      "rawChars" : 96,
-      "replyChars" : 28,
+      "rawChars" : 90,
+      "replyChars" : 22,
       "trailingChars" : 0,
-      "wallMs" : 757.598876953125
+      "wallMs" : 705.18701171875
     },
     {
-      "chunkCount" : 58,
+      "chunkCount" : 59,
       "closingBraceAt" : 132,
       "deferred" : false,
-      "firstChunkMs" : 266.64501953125,
+      "firstChunkMs" : 263.43408203125,
       "label" : "ask-back/curious-adult-4",
       "rawChars" : 133,
       "replyChars" : 65,
       "trailingChars" : 0,
-      "wallMs" : 1191.22119140625
+      "wallMs" : 1190.39892578125
     },
     {
-      "chunkCount" : 61,
-      "closingBraceAt" : 170,
+      "chunkCount" : 59,
+      "closingBraceAt" : 164,
       "deferred" : true,
-      "firstChunkMs" : 204.339111328125,
+      "firstChunkMs" : 205.175048828125,
       "label" : "defer/regulated-financial",
-      "rawChars" : 171,
-      "replyChars" : 35,
+      "rawChars" : 165,
+      "replyChars" : 29,
       "trailingChars" : 0,
-      "wallMs" : 1182.260986328125
+      "wallMs" : 1126.035888671875
     },
     {
       "chunkCount" : 34,
       "closingBraceAt" : 87,
       "deferred" : false,
-      "firstChunkMs" : 204.708984375,
+      "firstChunkMs" : 189.49072265625,
       "label" : "ask-back/curious-adult-5",
       "rawChars" : 88,
       "replyChars" : 20,
       "trailingChars" : 0,
-      "wallMs" : 757.0380859375
+      "wallMs" : 723.23095703125
     },
     {
       "chunkCount" : 34,
       "closingBraceAt" : 86,
       "deferred" : false,
-      "firstChunkMs" : 196.93994140625,
+      "firstChunkMs" : 188.910888671875,
       "label" : "ask-back/stuck-thinker-3",
       "rawChars" : 87,
       "replyChars" : 19,
       "trailingChars" : 0,
-      "wallMs" : 759.48193359375
+      "wallMs" : 722.16259765625
     }
   ],
-  "warmupMs" : 4571.169921875
+  "warmupMs" : 4875.08203125
 }

@@ -199,12 +199,16 @@ public actor GemmaService {
                     generateParameters: params.toMLX()
                 )
             } catch {
-                // Disk read failed — fall through to the slow path so the
-                // turn still completes (correctness > perf). A
-                // self-healing pass could re-warm here, but reusing the
-                // same warmup logic without recursion needs more
-                // structuring; deferred to a follow-up if disk failures
-                // are observed.
+                // Persistent disk failure (corruption, file vanished,
+                // OS evicted under pressure, etc.). Clear the URL so
+                // subsequent turns skip the failing read entirely
+                // instead of paying the I/O cost on every turn for the
+                // rest of the session, and remove the file so a fresh
+                // `warmup()` call (or a future self-heal pass) rebuilds
+                // cleanly. This turn falls through to the slow fallback
+                // (gemini-code-assist PR-Λ review #32, line 201).
+                systemCacheURL = nil
+                try? FileManager.default.removeItem(at: cacheURL)
             }
         }
         // Slow fallback: legacy `instructions:` path with full system
@@ -312,22 +316,25 @@ public actor GemmaService {
             guard let container = modelContainer else { return }
 
             // 1. Build a one-shot ChatSession with the locked Korean system
-            //    prompt as `instructions:` and `maxTokens: 8`. This single
-            //    streamResponse triggers the system-prompt prefill exactly
-            //    once; the 8-token decode tail keeps the warmup itself
-            //    cheap (~150-300ms beyond the unavoidable prefill).
+            //    prompt as `instructions:` and run a single `streamResponse`
+            //    to populate the KV cache with the system prefill plus a
+            //    minimal "ready" exchange. The session's `GenerateParameters`
+            //    inherits the actor-default `maxTokens: 192` so the decode
+            //    reaches EOS naturally and the saved cache contains a
+            //    *complete* <system → user → assistant + EOS> exchange.
             //
-            //    `maxTokens: 8` is honored here because we set it on the
-            //    session's `GenerateParameters` directly, bypassing the
-            //    `generate(systemPrompt:userTurn:maxTokens:)` signature
-            //    that historically dropped the argument on the floor
-            //    (PR-λ verify-2 finding).
-            var warmParams = generateParameters
-            warmParams.maxTokens = 8
+            //    An earlier draft set `warmParams.maxTokens = 8` to keep
+            //    bootstrap fast, but capping warmup decode below the EOS
+            //    boundary leaves the persisted KV state mid-assistant
+            //    response without a turn boundary, conditioning every
+            //    subsequent turn as a continuation of the warmup rather
+            //    than a clean conversation (chatgpt-codex-connector PR-Λ
+            //    review #32 line 370, P1). The decode-to-EOS adds
+            //    ~500-800 ms to warmup, paid once at bootstrap.
             let warmSession = ChatSession(
                 container,
                 instructions: SystemPrompt.composed,
-                generateParameters: warmParams.toMLX()
+                generateParameters: generateParameters.toMLX()
             )
             do {
                 for try await _ in warmSession.streamResponse(to: "ready") {}
