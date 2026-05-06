@@ -84,6 +84,9 @@ node_modules/
 *.log
 logs/
 
+# Exception: bench evidence is committed for audit traceability.
+!claudedocs/bench/*.log
+
 # Temporary
 tmp/
 temp/
