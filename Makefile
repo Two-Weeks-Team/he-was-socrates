@@ -1,5 +1,6 @@
 .PHONY: assets assets-clean assets-verify preview-server engine engine-test xcodeproj app run bootstrap help \
-        doctor probe-phonemes ci-local secret-scan install-gemma-weights install-oracles
+        doctor probe-phonemes ci-local secret-scan install-gemma-weights install-oracles \
+        bench-latency-build bench-latency
 
 help:
 	@echo "He Was Socrates — build targets"
@@ -46,6 +47,11 @@ help:
 	@echo "    HEWASSOCRATES_GEMMA_MODE=stub make run"
 	@echo "                               — launch with canned stub responses (skips MLX"
 	@echo "                                 load; useful for UI smoke tests)"
+	@echo ""
+	@echo "  Latency benchmark (PR-λ, MLX live measurement):"
+	@echo "    make bench-latency-build  — compile-only smoke (CI-runnable, no weights needed)"
+	@echo "    make bench-latency        — compile + run; reuses sandboxed Gemma weights"
+	@echo "                                 via HF_HUB_CACHE; emits claudedocs/bench/*.json"
 
 assets:
 	bash scripts/build-visemes.sh
@@ -253,6 +259,58 @@ ci-local: assets-verify engine-test
 		exit 1; \
 	fi
 	@echo "ci-local: all gates passed."
+
+# `make bench-latency-build` — compile-only smoke for the LatencyBench
+# executable. Doesn't require the 3.97 GB Gemma 4 weights; this is what CI
+# can run to keep the bench tool from bit-rotting after merges.
+bench-latency-build:
+	@swift build -c release \
+		--package-path packages/SocraticEngine \
+		--product LatencyBench
+	@echo "bench-latency-build: ok ($$(swift run --package-path packages/SocraticEngine --product LatencyBench --skip-build </dev/null >/dev/null 2>&1; echo built))"
+
+# `make bench-latency` — full live measurement on this machine. Locates and
+# colocates the MLX `default.metallib` next to the bench binary (mlx-swift's
+# fallback search path #4 in `Source/Cmlx/mlx/mlx/backend/metal/device.cpp`),
+# points HF_HUB_CACHE at the sandboxed app's HuggingFace cache so the bench
+# can reuse staged Gemma 4 E4B 4-bit weights without a 3.97 GB re-download,
+# then runs the bench and writes the JSON to `claudedocs/bench/`.
+#
+# Reproducibility guard for PR-λ. Without this target, anyone re-running
+# the bench on a fresh clone has to manually copy the metallib + export
+# HF_HUB_CACHE — the trap we documented in claudedocs/bench/2026-05-06-...log.
+bench-latency: bench-latency-build
+	@set -e; \
+	BIN_DIR=packages/SocraticEngine/.build/release; \
+	BENCH_BIN=$$BIN_DIR/LatencyBench; \
+	if [ ! -x "$$BENCH_BIN" ]; then \
+		echo "LatencyBench binary missing at $$BENCH_BIN" >&2; exit 1; \
+	fi; \
+	mkdir -p $$BIN_DIR/Resources; \
+	if [ ! -f "$$BIN_DIR/Resources/default.metallib" ]; then \
+		METALLIB=$$(find $$HOME/Library/Developer/Xcode/DerivedData -path '*/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib' 2>/dev/null | head -1); \
+		if [ -z "$$METALLIB" ]; then \
+			echo "Cannot locate mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib in DerivedData." >&2; \
+			echo "Run 'make app' once first to populate Xcode DerivedData with the metallib bundle, then retry." >&2; \
+			exit 2; \
+		fi; \
+		cp "$$METALLIB" "$$BIN_DIR/Resources/default.metallib"; \
+		echo "metallib: copied $$METALLIB → $$BIN_DIR/Resources/default.metallib"; \
+	fi; \
+	HF_CACHE_DEFAULT=$$HOME/Library/Containers/com.twoweeks.hewassocrates/Data/Library/Caches/huggingface/hub; \
+	if [ -z "$$HF_HUB_CACHE" ]; then export HF_HUB_CACHE=$$HF_CACHE_DEFAULT; fi; \
+	if [ ! -d "$$HF_HUB_CACHE/models--mlx-community--gemma-4-e4b-it-4bit" ]; then \
+		echo "HF cache at $$HF_HUB_CACHE has no Gemma 4 E4B 4-bit weights." >&2; \
+		echo "Run 'make install-gemma-weights' first, or run the .app once so it stages weights." >&2; \
+		exit 3; \
+	fi; \
+	mkdir -p claudedocs/bench; \
+	OUT_JSON=claudedocs/bench/$$(date -u +%Y-%m-%d)-latency-bench.json; \
+	OUT_LOG=claudedocs/bench/$$(date -u +%Y-%m-%d)-latency-bench.log; \
+	echo "bench-latency: HF_HUB_CACHE=$$HF_HUB_CACHE"; \
+	echo "bench-latency: writing $$OUT_JSON + $$OUT_LOG"; \
+	"$$BENCH_BIN" > "$$OUT_JSON" 2> "$$OUT_LOG"; \
+	echo "bench-latency: ok"
 
 # `make secret-scan` — local gitleaks scan against the working tree.
 secret-scan:

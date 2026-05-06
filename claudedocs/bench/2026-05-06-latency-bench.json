@@ -2,7 +2,7 @@
   "device" : {
     "gpuActiveBytesAfter" : 4701905216,
     "gpuActiveBytesBefore" : 0,
-    "gpuCacheBytes" : 25894494652,
+    "gpuCacheBytes" : 25894499772,
     "gpuPeakBytes" : 5613096902,
     "metalLibLoaded" : true,
     "mlxDefaultDevice" : "Device(gpu, 0)",
@@ -10,79 +10,79 @@
   },
   "host" : "kimsejunui-macbookpro.local",
   "kvGroupSize" : 64,
-  "loadMs" : 2030.242919921875,
+  "loadMs" : 2124.48095703125,
   "modelTag" : "mlx-community/gemma-4-e4b-it-4bit",
   "summary" : {
-    "maxMs" : 7443.688232421875,
-    "meanMs" : 6006.16513671875,
-    "medianMs" : 6007.2781982421875,
-    "minMs" : 5227.876220703125,
+    "maxMs" : 6944.304931640625,
+    "meanMs" : 6005.795385742187,
+    "medianMs" : 6053.1527099609375,
+    "minMs" : 5302.749267578125,
     "n" : 10,
-    "p10Ms" : 5378.696313476563,
-    "p90Ms" : 6633.279321289062
+    "p10Ms" : 5434.206616210937,
+    "p90Ms" : 6640.963623046875
   },
-  "timestamp" : "2026-05-06T00:23:17Z",
+  "timestamp" : "2026-05-06T00:58:46Z",
   "turns" : [
     {
       "deferred" : false,
       "label" : "ask-back/curious-adult-1",
       "replyChars" : 21,
-      "wallMs" : 5227.876220703125
+      "wallMs" : 5302.749267578125
     },
     {
       "deferred" : false,
       "label" : "ask-back/stuck-thinker-1",
       "replyChars" : 29,
-      "wallMs" : 5395.4541015625
+      "wallMs" : 5448.81298828125
     },
     {
       "deferred" : false,
       "label" : "ask-back/curious-adult-2",
       "replyChars" : 29,
-      "wallMs" : 5546.234130859375
+      "wallMs" : 5535.138916015625
     },
     {
       "deferred" : true,
       "label" : "defer/regulated-medical",
       "replyChars" : 39,
-      "wallMs" : 6098.093994140625
+      "wallMs" : 6106.317138671875
     },
     {
       "deferred" : false,
       "label" : "ask-back/curious-adult-3",
       "replyChars" : 23,
-      "wallMs" : 5707.50830078125
+      "wallMs" : 5856.668212890625
     },
     {
       "deferred" : false,
       "label" : "ask-back/stuck-thinker-2",
       "replyChars" : 34,
-      "wallMs" : 6011.185302734375
+      "wallMs" : 6006.168701171875
     },
     {
       "deferred" : false,
       "label" : "ask-back/curious-adult-4",
       "replyChars" : 32,
-      "wallMs" : 6003.37109375
+      "wallMs" : 6100.13671875
     },
     {
       "deferred" : true,
       "label" : "defer/regulated-financial",
       "replyChars" : 36,
-      "wallMs" : 6543.23388671875
+      "wallMs" : 6607.259033203125
     },
     {
       "deferred" : false,
       "label" : "ask-back/curious-adult-5",
       "replyChars" : 24,
-      "wallMs" : 6085.006103515625
+      "wallMs" : 6150.39794921875
     },
     {
       "deferred" : false,
       "label" : "ask-back/stuck-thinker-3",
       "replyChars" : 23,
-      "wallMs" : 7443.688232421875
+      "wallMs" : 6944.304931640625
     }
   ],
-  "warmupMs" : 5025.477294921875
+  "warmupMs" : 5062.547119140625
 }

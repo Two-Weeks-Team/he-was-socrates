@@ -188,3 +188,48 @@ jobs:
           python3 -m json.tool "$FILE" >/dev/null
           jq -e '.verdict and .voices and .fixtures' "$FILE" >/dev/null
           echo "✓ apple-phoneme-availability.json shape ok"
+
+  # -------------------------------------------------------------------------
+  # 6) LatencyBench compile-only smoke. PR-λ added an executable target
+  #    (`tools/LatencyBench`) that loads the real Gemma 4 weights through
+  #    the same call paths the app uses and prints decode wall-clock per
+  #    turn. Running the bench requires 4 GB of staged weights, which CI
+  #    won't have — but the *compile* step still needs to succeed, otherwise
+  #    a future PR can break the bench tool without anyone noticing until
+  #    the next time someone tries to reproduce the latency floor claim.
+  #
+  #    This job catches that drift early. It is intentionally compile-only.
+  #    The Makefile's `bench-latency` target handles the live-run side
+  #    (sandbox HF cache + metallib colocation) for local reproducibility.
+  # -------------------------------------------------------------------------
+  bench-latency-compile:
+    name: LatencyBench compile-only smoke
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Select Xcode (Swift 6.1+ required by mlx-swift-lm)
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: latest-stable
+
+      - name: Cache SwiftPM (~/.swiftpm + .build)
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.swiftpm
+            packages/SocraticEngine/.build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('packages/SocraticEngine/Package.swift', 'packages/SocraticEngine/Package.resolved') }}
+          restore-keys: |
+            swiftpm-${{ runner.os }}-
+
+      - name: Build LatencyBench (release, no run)
+        run: make bench-latency-build
+
+      - name: Confirm binary exists
+        # If a future PR removes the executable target without removing the
+        # Makefile alias, `swift build` exits 0 but no binary is produced.
+        # This step makes that an explicit failure.
+        run: test -x packages/SocraticEngine/.build/release/LatencyBench
