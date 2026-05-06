@@ -59,7 +59,6 @@ targets:
       - path: ../../../assets/face_halftone.png
         buildPhase: resources
       - path: ../../../assets/visemes
-        type: folder
         buildPhase: resources
     # NOTE: do NOT add `info:` or `entitlements:` blocks here. xcodegen 2.44.1
     # treats those as WRITE specifications and overwrites the committed files
