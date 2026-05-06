@@ -8,7 +8,10 @@ import PackageDescription
 let package = Package(
     name: "SocraticEngine",
     platforms: [
-        .macOS(.v14),
+        // SPEC.md.iter6-macos26-floor.md: floor 14 → 26. String form chosen over
+        // .v26 named constant for SwiftPM-version portability (named constants
+        // require the SwiftPM version that registered macOS 26 as a known tier).
+        .macOS("26.0"),
     ],
     products: [
         .library(

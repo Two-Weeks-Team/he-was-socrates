@@ -42,7 +42,7 @@
 	<string>public.app-category.education</string>
 
 	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>26.0</string>
 
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 Two-Weeks-Team. Apache-2.0 (code) + CC-BY-4.0 (content).</string>

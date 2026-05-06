@@ -15,7 +15,8 @@ import PackageDescription
 let package = Package(
     name: "ApplePhonemeProbe",
     platforms: [
-        .macOS(.v14),
+        // SPEC.md.iter6-macos26-floor.md: floor 14 → 26.
+        .macOS("26.0"),
     ],
     products: [
         .executable(

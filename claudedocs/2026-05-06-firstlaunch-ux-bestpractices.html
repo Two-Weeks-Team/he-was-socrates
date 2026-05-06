@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light" data-layout="scroll">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>He Was Socrates · 첫 실행 UX 베스트 프랙티스 보고서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f6f8fa;
+  --surface-2: #eef1f5;
+  --border: #d0d7de;
+  --border-strong: #afb8c1;
+  --text: #1f2328;
+  --text-2: #656d76;
+  --text-muted: #8b949e;
+  --accent: #0969da;
+  --accent-soft: #ddf4ff;
+  --success: #1a7f37;
+  --success-soft: #dcffe4;
+  --warning: #9a6700;
+  --warning-soft: #fff8c5;
+  --error: #d1242f;
+  --error-soft: #ffebe9;
+  --tip: #8250df;
+  --tip-soft: #fbefff;
+  --code-bg: #f6f8fa;
+  --code-border: #d0d7de;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-strong: 0 8px 24px rgba(140,149,159,0.2);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+
+/* TOC */
+aside.toc {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  padding: 32px 20px; border-right: 1px solid var(--border);
+  background: var(--surface); font-size: 13px;
+}
+@media (max-width: 960px) { aside.toc { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); } }
+aside.toc .toc-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px; }
+aside.toc ol { list-style: none; }
+aside.toc ol ol { padding-left: 12px; margin-top: 4px; }
+aside.toc li { padding: 4px 0; }
+aside.toc a { color: var(--text-2); text-decoration: none; display: block; padding: 4px 8px; border-radius: 4px; border-left: 2px solid transparent; }
+aside.toc a:hover { background: var(--surface-2); color: var(--text); }
+aside.toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); font-weight: 500; }
+
+/* Main */
+main { padding: 48px 56px; max-width: 980px; }
+@media (max-width: 960px) { main { padding: 32px 24px; } }
+
+header.report-header { padding-bottom: 32px; margin-bottom: 32px; border-bottom: 2px solid var(--border); }
+header.report-header h1 { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.02em; }
+header.report-header .subtitle { font-size: 16px; color: var(--text-2); margin-bottom: 20px; }
+header.report-header .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+header.report-header .badge { font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text-2); }
+header.report-header .badge.accent { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+h2 { font-size: 24px; font-weight: 700; margin-top: 56px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); letter-spacing: -0.01em; scroll-margin-top: 16px; }
+h3 { font-size: 18px; font-weight: 600; margin-top: 32px; margin-bottom: 12px; scroll-margin-top: 16px; }
+h4 { font-size: 15px; font-weight: 600; margin-top: 20px; margin-bottom: 8px; color: var(--text); }
+h2:first-child, section:first-child h2 { margin-top: 0; }
+
+p { margin-bottom: 14px; }
+ul, ol { margin: 12px 0 16px 24px; }
+li { margin: 4px 0; }
+strong { font-weight: 600; color: var(--text); }
+em { color: var(--text-2); }
+
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+a:hover { border-bottom-color: var(--accent); }
+
+/* Code */
+code { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; font-size: 13px; background: var(--surface-2); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+pre { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 8px; padding: 16px 20px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.55; margin: 16px 0; position: relative; }
+pre code { background: none; padding: 0; border: none; font-size: inherit; }
+pre .lang-label { position: absolute; top: 8px; right: 12px; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+pre .copy-btn { position: absolute; top: 8px; right: 60px; font-size: 10px; padding: 3px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-2); opacity: 0; transition: opacity 0.15s; }
+pre:hover .copy-btn { opacity: 1; }
+pre .copy-btn:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+.kw { color: #cf222e; font-weight: 500; }
+.str { color: #0a3069; }
+.num { color: #0550ae; }
+.cmt { color: #6e7781; font-style: italic; }
+.fn { color: #8250df; }
+.tp { color: #953800; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--border); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface); font-weight: 600; color: var(--text); border-bottom-width: 2px; }
+tbody tr:nth-child(even) { background: var(--surface); }
+tbody tr:last-child td { border-bottom: none; }
+td.cell-success { color: var(--success); font-weight: 500; }
+td.cell-warning { color: var(--warning); font-weight: 500; }
+td.cell-error { color: var(--error); font-weight: 500; }
+
+/* Callouts */
+.callout { border-left: 4px solid; border-radius: 6px; padding: 14px 18px; margin: 18px 0; background: var(--surface); display: flex; gap: 12px; align-items: flex-start; }
+.callout .icon { font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+.callout .body { flex: 1; }
+.callout .body p:last-child { margin-bottom: 0; }
+.callout-info { border-left-color: var(--accent); background: var(--accent-soft); }
+.callout-success { border-left-color: var(--success); background: var(--success-soft); }
+.callout-warning { border-left-color: var(--warning); background: var(--warning-soft); }
+.callout-error { border-left-color: var(--error); background: var(--error-soft); }
+.callout-tip { border-left-color: var(--tip); background: var(--tip-soft); }
+.callout-title { font-weight: 600; margin-bottom: 4px; }
+
+/* Friction Card */
+.friction-card { border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 24px 0; background: var(--bg); box-shadow: var(--shadow); }
+.friction-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.friction-num { background: var(--accent); color: white; font-weight: 700; font-size: 14px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.friction-title { flex: 1; }
+.friction-title h3 { margin: 0; font-size: 17px; }
+.friction-title .severity { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; vertical-align: 2px; }
+.severity-high { background: var(--error-soft); color: var(--error); }
+.severity-mid { background: var(--warning-soft); color: var(--warning); }
+.severity-low { background: var(--success-soft); color: var(--success); }
+.friction-meta { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+
+.kvgrid { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; font-size: 13px; margin: 12px 0; }
+.kvgrid dt { font-weight: 600; color: var(--text-2); }
+.kvgrid dd { color: var(--text); }
+
+/* Decision Matrix Cards */
+.tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 20px 0; }
+.tier-card { border: 2px solid var(--border); border-radius: 10px; padding: 18px; background: var(--bg); position: relative; }
+.tier-card.recommended { border-color: var(--success); background: linear-gradient(180deg, var(--success-soft) 0%, var(--bg) 30%); }
+.tier-card.not-recommended { opacity: 0.7; }
+.tier-card .tier-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em; }
+.tier-card .tier-name { font-size: 18px; font-weight: 700; margin: 4px 0 8px; }
+.tier-card.recommended .recommend-badge { position: absolute; top: -10px; right: 14px; background: var(--success); color: white; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 12px; letter-spacing: 0.04em; }
+.tier-card .tier-effort { font-size: 12px; color: var(--text-2); margin-bottom: 10px; }
+.tier-card ul { margin: 8px 0 0 18px; font-size: 13px; }
+.tier-card li { margin: 3px 0; }
+
+/* File reference */
+.fileref { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); background: var(--accent-soft); padding: 2px 6px; border-radius: 3px; border: 1px solid transparent; }
+
+/* Path quality bar */
+.recommendation-block { background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%); border-left: 4px solid var(--accent); padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.recommendation-block .label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 6px; }
+
+/* Floating top button */
+.scroll-top-btn { position: fixed; bottom: 24px; right: 24px; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: white; border: none; cursor: pointer; box-shadow: var(--shadow-strong); font-size: 20px; display: none; align-items: center; justify-content: center; z-index: 100; }
+.scroll-top-btn.visible { display: flex; }
+.scroll-top-btn:hover { background: #0860ca; }
+
+/* Print */
+@media print {
+  body { background: white; color: black; font-size: 11px; }
+  .layout { display: block; }
+  aside.toc, .scroll-top-btn, pre .copy-btn { display: none; }
+  main { padding: 0; max-width: 100%; }
+  h2, h3 { page-break-after: avoid; }
+  pre, table, .friction-card, .callout { page-break-inside: avoid; }
+  a { color: inherit; text-decoration: underline; }
+}
+
+footer.report-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="toc-title">목차</div>
+  <ol>
+    <li><a href="#summary">요약</a></li>
+    <li><a href="#current-state">1. 현재 코드베이스 상태</a></li>
+    <li><a href="#friction-matrix">2. 7개 마찰 항목</a>
+      <ol>
+        <li><a href="#friction-1">F1 · 한국어 TTS (Yuna)</a></li>
+        <li><a href="#friction-2">F2 · 한국어 STT 자산</a></li>
+        <li><a href="#friction-3">F3 · 4GB 모델 다운로드</a></li>
+        <li><a href="#friction-4">F4 · 마이크 권한 시점</a></li>
+        <li><a href="#friction-5">F5 · 음성 인식 권한</a></li>
+        <li><a href="#friction-6">F6 · Pre-flight 체크</a></li>
+        <li><a href="#friction-7">F7 · 부트스트랩 진행 텍스트</a></li>
+      </ol>
+    </li>
+    <li><a href="#cross-cutting">3. 횡단 발견</a>
+      <ol>
+        <li><a href="#deeplinks">시스템 설정 deeplink</a></li>
+        <li><a href="#sandbox">App Sandbox</a></li>
+        <li><a href="#hig">Apple HIG 인용</a></li>
+        <li><a href="#tahoe">macOS 26 신 API</a></li>
+      </ol>
+    </li>
+    <li><a href="#decision">4. 의사결정 매트릭스</a></li>
+    <li><a href="#deviations">5. 핸드오프 계획 보정</a></li>
+    <li><a href="#implementation">6. 구현 스니펫</a></li>
+    <li><a href="#references">참고 자료</a></li>
+  </ol>
+</aside>
+
+<main>
+
+<header class="report-header">
+  <h1>He Was Socrates — 첫 실행 UX 베스트 프랙티스 보고서 <span style="font-size:14px;color:var(--text-muted);font-weight:500;vertical-align:6px;">v2</span></h1>
+  <div class="subtitle">macOS 26 Tahoe floor · 한국어 + 영어 동시 지원 기준의 7개 마찰 지점에 대한 Apple 공식 자료 기반 권장사항 + 현재 코드베이스 매핑</div>
+  <div class="meta">
+    <span class="badge accent">Research Report v2</span>
+    <span class="badge">생성일 2026-05-06</span>
+    <span class="badge">main HEAD <code>3f02a34</code></span>
+    <span class="badge">D-13 (마감 2026-05-19)</span>
+    <span class="badge" style="background: var(--tip-soft); border-color: var(--tip); color: var(--tip);">macOS 26 floor</span>
+    <span class="badge" style="background: var(--tip-soft); border-color: var(--tip); color: var(--tip);">ko-KR + en-US</span>
+    <span class="badge">Generated by Claude Code</span>
+  </div>
+</header>
+
+<section id="summary">
+<h2>요약 (Executive Summary)</h2>
+
+<div class="callout callout-info">
+  <div class="icon">📋</div>
+  <div class="body">
+    <div class="callout-title">핵심 결론 (v2 — macOS 26 floor + 양언어)</div>
+    <p>floor를 <strong>macOS 26 Tahoe</strong>로 올리고 <strong>한국어와 영어를 모두 첫 실행에 다운로드</strong>하기로 결정함에 따라:</p>
+    <ul>
+      <li><strong>F2 (STT 자산)이 가장 큰 변화</strong>: deeplink 안내 → <code>AssetInventory.assetInstallationRequest(supporting:)</code> in-app 한 번 탭 설치 + Progress 바로 전환. ko_KR + en_US 둘 다 한 요청으로 묶음.</li>
+      <li><strong>F1 (TTS 음성)은 여전히 deeplink</strong>: macOS 26에도 <code>AVSpeechSynthesisVoice</code>의 프로그래밍적 설치 API는 추가되지 않음 (Apple Forum #758460 + WWDC25/26 발표 미언급). Yuna(ko-KR) + Samantha(en-US) 둘 다 enhanced/premium은 사용자 수동 다운로드 필요.</li>
+      <li><strong>F4–F7은 다국어와 무관</strong>: 권한·진행 표시·pre-flight 패턴 동일.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout callout-warning">
+  <div class="icon">⚠️</div>
+  <div class="body">
+    <div class="callout-title">사용자 결정에 따른 영향 사항 (반드시 검토 필요)</div>
+    <ol>
+      <li><strong><code>LSMinimumSystemVersion</code> 14.0 → 26.0 변경</strong>: <span class="fileref">Info.plist:44-45</span> 수정. macOS 14 (Sonoma) / 15 (Sequoia) 사용자는 앱 실행 불가 — 핵카톤 평가자 환경 확인 필수.</li>
+      <li><strong>SpecDD delta 문서 필요</strong>: floor 변경은 <code>runs/2026-05-05-spec/</code>의 가정을 바꾸므로 <span class="fileref">SPEC.md.iter6-macos26-floor.md</span> 같은 새 delta 추가가 정공법.</li>
+      <li><strong>CI 영향</strong>: <span class="fileref">.github/workflows/ci.yml</span> 현재 <code>macos-15</code> runner 사용 — macOS 26 floor에서도 빌드는 가능 (lower OS는 higher SDK로 빌드 가능). 단, 26 전용 API 사용 시 런타임 검증을 위해 <code>macos-26</code> runner 추가 권장.</li>
+      <li><strong>Gemma 가중치 사이드카(T2.1) 권장 안함</strong>: 현재 OS-mediated MLX 캐시는 NO-CLOUD invariant-preserving. 사이드카 도입은 비기술 사용자 마찰 2배.</li>
+    </ol>
+  </div>
+</div>
+
+<h3>권장 진행 경로</h3>
+
+<div class="tier-grid">
+  <div class="tier-card not-recommended">
+    <div class="tier-label">Tier A · 최소 안전망</div>
+    <div class="tier-name">F4·F5·F7만</div>
+    <div class="tier-effort">~0.5일</div>
+    <ul>
+      <li>마이크/STT 권한 시점 변경</li>
+      <li>부트스트랩 단계별 텍스트</li>
+    </ul>
+    <p style="font-size:12px;color:var(--text-2);margin-top:10px;">Voice/STT 누락 시 여전히 fail-after-the-fact</p>
+  </div>
+  <div class="tier-card recommended">
+    <span class="recommend-badge">권장</span>
+    <div class="tier-label">Tier B · 본 보고서 채택</div>
+    <div class="tier-name">F1–F7 + macOS 26 + 양언어</div>
+    <div class="tier-effort">~2–2.5일</div>
+    <ul>
+      <li>Pre-flight 체크 화면 (양언어)</li>
+      <li>Yuna + Samantha enhanced deeplink</li>
+      <li><code>AssetInventory</code> in-app STT 다운로드 (ko_KR + en_US)</li>
+      <li>다운로드 단계 + ETA + pause</li>
+      <li>권한 시점 in-context</li>
+      <li><code>LSMinimumSystemVersion</code> 26.0 + SpecDD delta</li>
+    </ul>
+    <p style="font-size:12px;color:var(--success);margin-top:10px;font-weight:500;">엔타이틀먼트 변경 0, Phase enum 변경 0</p>
+  </div>
+  <div class="tier-card not-recommended">
+    <div class="tier-label">Tier B-Lite · 양언어 생략</div>
+    <div class="tier-name">F1–F7 한국어만</div>
+    <div class="tier-effort">~1.5–2일</div>
+    <ul>
+      <li>영어 voice/STT 검사 생략</li>
+      <li>나머지 동일</li>
+    </ul>
+    <p style="font-size:12px;color:var(--text-2);margin-top:10px;">사용자가 영어로 말하면 fail-after-the-fact 발생</p>
+  </div>
+</div>
+
+<p>핵심 결정에 따라 <strong>Tier B</strong>가 채택. 모든 권장사항이 Apple HIG가 직접 명시하거나(권한, 진행 표시) macOS 26 공식 API(<code>SpeechAnalyzer</code> + <code>AssetInventory</code>) 또는 커뮤니티-canonical reference(deeplink)로 검증된 패턴을 따른다. NO-CLOUD 불변식과 안정 surface(<code>Phase</code> enum) 모두 유지하나 <strong>SpecDD delta 1건</strong> + <strong>Info.plist 1줄 변경</strong>이 추가된다.</p>
+
+</section>
+
+<section id="current-state">
+<h2>1. 현재 코드베이스 상태</h2>
+
+<h3>1.1 부트스트랩 흐름과 안정 surface</h3>
+
+<p><span class="fileref">EngineCoordinator.swift:24-40</span>의 <code>Phase</code> enum은 <code>CONTRIBUTING.md L27-31</code>에 의해 안정 공개 surface로 잠겨있다. 새 case 추가는 SpecDD delta 문서 필요. 현재 사례:</p>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="kw">public enum</span> <span class="tp">Phase</span>: <span class="tp">Sendable</span>, <span class="tp">Equatable</span> {
+    <span class="kw">case</span> bootstrapping
+    <span class="kw">case</span> idle
+    <span class="kw">case</span> listening
+    <span class="kw">case</span> thinking(correlationId: <span class="tp">UUID</span>)
+    <span class="kw">case</span> surfacing(correlationId: <span class="tp">UUID</span>)  <span class="cmt">// reserved per CONTRIBUTING.md</span>
+    <span class="kw">case</span> speaking(reply: <span class="tp">String</span>, deferred: <span class="tp">Bool</span>)
+    <span class="kw">case</span> failed(<span class="tp">String</span>)  <span class="cmt">// payload = PhaseFailureKey dot-string</span>
+}</code></pre>
+
+<p>부트스트랩은 <span class="fileref">EngineCoordinator.swift:168-202</span>에서 직선적으로 진행한다. 권한 → 모델 로드 → 워밍업 → idle. 600초 워치독(line 321) 외에 사용자가 보는 것은 numeric 진행률뿐이다.</p>
+
+<div class="kvgrid">
+  <dt>Watchdog 예산</dt>
+  <dd>bootstrapping 600초, listening 60초, thinking 60초, surfacing 10초, speaking 60초, failed 5초(자동 idle 복귀)</dd>
+  <dt>실패 키 surface</dt>
+  <dd><span class="fileref">PhaseFailureKey.swift</span> — 13개 상수, dot-notation, 안정 surface</dd>
+  <dt>회복 힌트 위치</dt>
+  <dd><span class="fileref">ContentView.swift:300-321</span> <code>FailedMessage.recovery(for:)</code> — 7개 키 커버, <strong><code>ttsVoiceMissing</code> 누락</strong></dd>
+</div>
+
+<h3>1.2 7개 마찰 지점이 코드에 어떻게 나타나는가</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>F#</th><th>증상</th><th>현재 처리</th><th>위치</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>F1</td>
+      <td>한국어 TTS 음성 0개</td>
+      <td>"음성을 찾을 수 없다" 메시지만, recovery 힌트 <strong>없음</strong></td>
+      <td><span class="fileref">TTSManager.swift:97-116</span> resolveVoice + <span class="fileref">ContentView.swift:300</span></td>
+    </tr>
+    <tr>
+      <td>F2</td>
+      <td>ko-KR STT 자산 미설치</td>
+      <td>recovery 힌트 있음 ("Siri 및 Spotlight 한국어")</td>
+      <td><span class="fileref">AudioInputManager.swift:236-244</span> + <span class="fileref">ContentView.swift:312-313</span></td>
+    </tr>
+    <tr>
+      <td>F3</td>
+      <td>4GB Gemma 가중치 다운로드</td>
+      <td><code>loadProgress: Double</code>만 표시(0..1 numeric, 단계 텍스트 없음)</td>
+      <td><span class="fileref">GemmaService.swift:118-148</span> + <span class="fileref">ContentView.swift:248-253</span></td>
+    </tr>
+    <tr>
+      <td>F4</td>
+      <td>마이크 TCC 권한</td>
+      <td>bootstrap에서 일괄 요청, recovery 힌트 있음</td>
+      <td><span class="fileref">AudioInputManager.swift:99-119</span> + <span class="fileref">ContentView.swift:302-303</span></td>
+    </tr>
+    <tr>
+      <td>F5</td>
+      <td>음성 인식 TCC 권한</td>
+      <td>bootstrap에서 일괄 요청, recovery 힌트 있음</td>
+      <td><span class="fileref">AudioInputManager.swift:140-187</span> + <span class="fileref">ContentView.swift:304-307</span></td>
+    </tr>
+    <tr>
+      <td>F6</td>
+      <td>Pre-flight 사전 검사</td>
+      <td><strong>없음</strong> — 모든 검사가 fail-after-the-fact</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>F7</td>
+      <td>~7s 부트스트랩 동안 텍스트</td>
+      <td>"Gemma 4 E4B 4-bit · NN%" 한 줄 + 스피너</td>
+      <td><span class="fileref">ContentView.swift:188-200, 248-253</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>1.3 변경해서는 안 되는 invariant</h3>
+
+<div class="callout callout-error">
+  <div class="icon">🚨</div>
+  <div class="body">
+    <div class="callout-title">CLAUDE.md absolute invariants — 어떤 권장사항도 이를 위반하지 않는다</div>
+    <ul>
+      <li><strong>Zero bytes leave the device</strong>: <code>com.apple.security.network.client</code> 추가 금지. <span class="fileref">HeWasSocrates.entitlements:11-12</span> intentional absent 주석. <code>AssetInventory</code> 다운로드는 OS-mediated이므로 앱 entitlement에 영향 없음.</li>
+      <li><strong>한국어 평어체 system prompt verbatim</strong> — UI 카피도 동일 톤 ("필요해", "않아"). 영어 카피는 평어체 lock 대상이 아니나 일관된 톤 유지.</li>
+      <li><strong><code>EngineCoordinator.Phase</code> 안정 surface</strong> — 새 case 추가 = SpecDD delta. UI-only 진행 상태는 ViewModel의 새 published 속성으로 surface.</li>
+      <li><strong><code>runs/2026-05-05-spec/</code> read-only</strong> — 새 delta 문서 <code>SPEC.md.iter6-macos26-floor.md</code>는 동일 디렉터리에 추가 (기존 파일 수정 아님).</li>
+    </ul>
+  </div>
+</div>
+
+</section>
+
+<section id="friction-matrix">
+<h2>2. 7개 마찰 항목 — 베스트 프랙티스 + 권장</h2>
+
+<!-- F1 -->
+<div class="friction-card" id="friction-1">
+  <div class="friction-header">
+    <div class="friction-num">1</div>
+    <div class="friction-title">
+      <h3>TTS 음성 미설치 — Yuna(ko-KR) + Samantha(en-US) 양 언어 <span class="severity severity-high">HIGH</span></h3>
+      <div class="friction-meta">증상: <code>AVSpeechSynthesisVoice.speechVoices()</code>가 ko-KR 0개, en-US는 default 품질만. 양 언어 모두 enhanced/premium은 사용자가 직접 다운로드 필요.</div>
+    </div>
+  </div>
+
+<h4>Apple 공식 입장 — macOS 26에서도 변경 없음</h4>
+<p>Apple Developer Forums <a href="https://developer.apple.com/forums/thread/758460">Thread #758460</a>: "<em>there appears to be no API for apps to know if enhanced or premium voices are available to download but not yet installed on a device — the only available API is <code>AVSpeechSynthesisVoice.speechVoices()</code> which returns voices already available on the device</em>." <strong>WWDC25/26 발표에서도 이를 대체하는 API는 추가되지 않았다.</strong> macOS 26 floor에서도 detect → deeplink가 유일한 길.</p>
+
+<p><a href="https://useyourloaf.com/blog/synthesized-speech-from-text/">useyourloaf reference</a>: "<em>Premium quality voice requires you to download it to use, and enhanced quality voice also requires downloading … all preinstalled voices are default quality.</em>" — Samantha(en-US)도 default 품질만 사전 설치되며, enhanced/premium 품질은 Yuna와 동일하게 사용자 수동 다운로드.</p>
+
+<h4>권장 패턴 (양 언어 동시 detect)</h4>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="kw">extension</span> <span class="tp">TTSManager</span> {
+    <span class="cmt">/// 한국어 + 영어 모두 enhanced 이상 품질의 음성이 설치되어 있는가.</span>
+    <span class="cmt">/// default 품질 fallback은 audio quality가 매우 robotic하여 사용자가</span>
+    <span class="cmt">/// "망가졌다"고 인식 — UX 측면에서 "없는 것과 동일"로 분류.</span>
+    <span class="kw">public func</span> <span class="fn">missingHighQualityVoices</span>() -> [<span class="tp">String</span>] {
+        <span class="kw">let</span> all = <span class="tp">AVSpeechSynthesisVoice</span>.<span class="fn">speechVoices</span>()
+        <span class="kw">let</span> needsHQ: (<span class="tp">String</span>) -> <span class="tp">Bool</span> = { lang <span class="kw">in</span>
+            !all.<span class="fn">contains</span> { $0.language == lang &&
+                ($0.quality == .enhanced || $0.quality == .premium) }
+        }
+        <span class="kw">var</span> missing: [<span class="tp">String</span>] = []
+        <span class="kw">if</span> needsHQ(<span class="str">"ko-KR"</span>) { missing.<span class="fn">append</span>(<span class="str">"ko-KR"</span>) }  <span class="cmt">// Yuna 권장</span>
+        <span class="kw">if</span> needsHQ(<span class="str">"en-US"</span>) { missing.<span class="fn">append</span>(<span class="str">"en-US"</span>) }  <span class="cmt">// Samantha 권장</span>
+        <span class="kw">return</span> missing
+    }
+}</code></pre>
+
+<h4>System Settings deeplink (한 anchor로 양 언어 커버)</h4>
+
+<p><a href="https://gist.github.com/rmcdongit/f66ff91e0dad78d4d6346a75ded4b751">rmcdongit canonical reference</a>(Sequoia 15.2 검증) + macOS 26 Tahoe community 업데이트 추적:</p>
+
+<pre><span class="lang-label">url-scheme</span><button class="copy-btn">copy</button><code>x-apple.systempreferences:com.apple.preference.universalaccess?SpokenContent</code></pre>
+
+<p>이 anchor 하나가 시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성 팝업을 연다. 사용자는 한 화면에서 한국어 Yuna와 영어 Samantha 둘 다 enhanced/premium 품질로 다운로드.</p>
+
+<h4>UX 흐름 — 양 언어 통합 sheet</h4>
+
+<pre><span class="lang-label">text</span><button class="copy-btn">copy</button><code>┌──────────────────────────────────────────────┐
+│ 음성을 다운로드해야 한다                        │
+│                                              │
+│ 너의 목소리를 위해 두 음성이 필요해.            │
+│   • 한국어 — Yuna (고품질)        [필요]     │
+│   • English — Samantha (Enhanced) [설치됨]    │
+│                                              │
+│ 시스템 설정에서 한 번만 받으면 된다.            │
+│                                              │
+│ [시스템 설정 열기]  [다시 확인]  [나중에]       │
+└──────────────────────────────────────────────┘</code></pre>
+
+<h4>회복 힌트 (T1.1, 5분 — 양언어 카피)</h4>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// ContentView.swift FailedMessage.recovery(for:) 에 추가</span>
+<span class="kw">case</span> <span class="tp">PhaseFailureKey</span>.ttsVoiceMissing:
+    <span class="kw">return</span> <span class="str">"시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성에서\n한국어(Yuna)와 영어(Samantha) 모두 고품질로 다운로드하라."</span></code></pre>
+
+<h4>참조 사례</h4>
+<ul>
+  <li><strong>Apple Translate</strong>(macOS): 다국어 모드일 때 다운로드 필요 sheet에서 양 언어 검사를 한 번에 묶어 보여줌 — canonical Apple-shaped 패턴.</li>
+  <li><strong>Speech Central / Voice Dream Reader</strong>(App Store): 누락 detect + 시스템 설정 경로 스크린샷 sheet.</li>
+  <li><strong>MacWhisper</strong>: 반대 접근 — Whisper 모델은 OS 자산이 아니므로 "Manage Models" 화면 in-app으로 처리.</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  T1.1 양언어 recovery 힌트 + Tier B pre-flight 화면이 양 언어 음성 검사를 onboarding 단계로 이동. <strong>fallback 정책 정의 필요</strong>: enhanced 누락 시 default voice로 silently downgrade vs hard block — 본 프로젝트는 단정한 평어체 톤이 default voice의 robotic 음질과 어울리지 않으므로 hard block(사용자가 다운로드 완료할 때까지 대기) 권장.
+</div>
+</div>
+
+<!-- F2 -->
+<div class="friction-card" id="friction-2">
+  <div class="friction-header">
+    <div class="friction-num">2</div>
+    <div class="friction-title">
+      <h3>STT 자산 — ko_KR + en_US 양 언어 in-app 다운로드 <span class="severity severity-high">HIGH</span></h3>
+      <div class="friction-meta">macOS 26 Tahoe floor 채택으로 <strong>deeplink 안내 → <code>AssetInventory</code> in-app 한 번 탭 다운로드로 패턴 전환</strong>. ko_KR + en_US 두 locale 자산을 한 요청으로 묶음.</div>
+    </div>
+  </div>
+
+<h4>macOS 26 신 패턴 — <code>SpeechAnalyzer</code> + <code>AssetInventory</code></h4>
+
+<p><a href="https://developer.apple.com/videos/play/wwdc2025/277/">WWDC25 Session 277 "Bring advanced speech-to-text to your app"</a> + <a href="https://developer.apple.com/documentation/speech/speechanalyzer">SpeechAnalyzer doc</a> + <a href="https://developer.apple.com/documentation/speech/assetinventory">AssetInventory doc</a>:</p>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="kw">import</span> <span class="tp">Speech</span>
+
+<span class="cmt">// 1. Build transcribers for both locales</span>
+<span class="kw">let</span> transcriberKo = <span class="tp">SpeechTranscriber</span>(
+    locale: <span class="tp">Locale</span>(identifier: <span class="str">"ko_KR"</span>),
+    transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: []
+)
+<span class="kw">let</span> transcriberEn = <span class="tp">SpeechTranscriber</span>(
+    locale: <span class="tp">Locale</span>(identifier: <span class="str">"en_US"</span>),
+    transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: []
+)
+
+<span class="cmt">// 2. Single request covering BOTH locales' assets</span>
+<span class="kw">if let</span> installRequest = <span class="kw">try await</span> <span class="tp">AssetInventory</span>.<span class="fn">assetInstallationRequest</span>(
+    supporting: [transcriberKo, transcriberEn]
+) {
+    <span class="cmt">// installRequest.progress is a Foundation.Progress — bind to ProgressView</span>
+    <span class="kw">try await</span> installRequest.<span class="fn">downloadAndInstall</span>()
+}
+
+<span class="cmt">// 3. Verify (idempotent — safe to call always)</span>
+<span class="kw">let</span> installedKo = <span class="kw">await</span> <span class="tp">SpeechTranscriber</span>.<span class="fn">isAvailable</span>(for: <span class="tp">Locale</span>(identifier: <span class="str">"ko_KR"</span>))
+<span class="kw">let</span> installedEn = <span class="kw">await</span> <span class="tp">SpeechTranscriber</span>.<span class="fn">isAvailable</span>(for: <span class="tp">Locale</span>(identifier: <span class="str">"en_US"</span>))</code></pre>
+
+<p>지원 locale 확인: <code>ko_KR</code>, <code>en_US</code> 모두 <code>SpeechTranscriber.supportedLocales()</code> 목록에 포함 — <a href="https://www.callstack.com/blog/on-device-speech-transcription-with-apple-speechanalyzer">callstack tutorial</a> + <a href="https://antongubarenko.substack.com/p/ios-26-speechanalyzer-guide">antongubarenko guide</a> 교차 검증.</p>
+
+<h4>현재 코드와의 통합 전략</h4>
+
+<p><span class="fileref">AudioInputManager.swift:69-73</span>이 <code>SFSpeechRecognizer</code>를 직접 보유. macOS 26 floor에서는 두 가지 길이 있다:</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>전략</th><th>변경 범위</th><th>Phase enum 영향</th><th>권장도</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>(A) <strong>STT는 SF, 자산 설치만 SpeechAnalyzer</strong></td>
+      <td>preflight에 <code>AssetInventory</code> 호출 추가, STT 본체는 그대로</td>
+      <td>없음</td>
+      <td class="cell-success"><strong>본 보고서 권장</strong></td>
+    </tr>
+    <tr>
+      <td>(B) STT 본체를 <code>SpeechAnalyzer</code>로 교체</td>
+      <td><span class="fileref">AudioInputManager.swift</span> 절반 재작성</td>
+      <td>없음 (callback 동일 형태 유지 가능)</td>
+      <td>마감(D-13) 위험</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-tip">
+  <div class="icon">💡</div>
+  <div class="body">
+    <p><strong>전략 (A) 채택 이유</strong>: <code>AssetInventory.assetInstallationRequest</code>은 <code>SFSpeechRecognizer</code>가 소비하는 자산과 <strong>동일 자산</strong>을 다운로드한다 (둘 다 OS-level on-device speech model 사용). 따라서 SpeechAnalyzer로 다운받고 SF로 사용하는 혼용은 동작한다. 65개 테스트와의 회귀 위험 최소화 + 마감 안에서 안전.</p>
+  </div>
+</div>
+
+<h4>UX 흐름 — Pre-flight 안에 통합</h4>
+
+<pre><span class="lang-label">text</span><button class="copy-btn">copy</button><code>Pre-flight 화면 안의 STT 행:
+
+  ⏳ 음성 인식 자료 — 한국어 + 영어 (~140 MB)   [다운로드]
+
+[다운로드] tap →
+
+  ⏬ 음성 인식 자료 다운로드 — 87 MB / 140 MB · 약 30초
+
+완료 →
+
+  ✅ 음성 인식 자료 — 한국어 + 영어              [설치됨]</code></pre>
+
+<h4>Fallback — macOS 26에서 <code>AssetInventory</code> API 실패 시</h4>
+
+<p><code>AssetInstallationRequest</code>이 <code>throw</code>하거나 <code>nil</code> 반환 시 (예: 네트워크 중단, OS-level 정책 차단) deeplink fallback 유지:</p>
+
+<pre><span class="lang-label">url-scheme</span><button class="copy-btn">copy</button><code>x-apple.systempreferences:com.apple.preference.speech?Dictation</code></pre>
+
+<h4>참조 사례</h4>
+<ul>
+  <li><strong>Apple Translate</strong>: 오프라인 언어 다운로드 in-app sheet — canonical "이 기능은 일회성 다운로드가 필요합니다" 패턴.</li>
+  <li><strong>macOS 26 Setup Assistant의 Dictation onboarding</strong>: gold standard "explain → download" 흐름.</li>
+  <li><strong>Apple SpeechTranscriber 샘플 코드</strong>(<a href="https://developer.apple.com/documentation/speech/transcribing-speech-to-text">"Transcribing speech to text"</a>): <code>AssetInventory</code> 호출 패턴 reference 구현.</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  전략 (A) — <code>AssetInventory</code>로 양 언어 자산 in-app 다운로드, STT 본체는 <code>SFSpeechRecognizer</code> 유지. Pre-flight 화면 STT 행이 in-app 다운로드 버튼 + Progress 바를 직접 보여줌. 마감 안에서 안전한 큰 UX 향상.
+</div>
+</div>
+
+<!-- F3 -->
+<div class="friction-card" id="friction-3">
+  <div class="friction-header">
+    <div class="friction-num">3</div>
+    <div class="friction-title">
+      <h3>Gemma 4 가중치 ~3.97 GB 첫 실행 다운로드 <span class="severity severity-high">HIGH</span></h3>
+      <div class="friction-meta">증상: 0..1 numeric만 표시. ETA, MB-of-MB, pause/resume 없음. 사용자는 5–30분 동안 진행 상황을 모름.</div>
+    </div>
+  </div>
+
+<h4>Apple HIG의 3가지 명시 규칙</h4>
+<ol>
+  <li><strong>Determinate progress + 의미 있는 라벨</strong> — Apple HIG: "<em>include a label above an activity indicator to give extra context and avoid vague terms like loading or authenticating</em> ... <em>only use progress bars for tasks that are quantifiable</em>" (<a href="https://developer.apple.com/design/human-interface-guidelines">HIG · Progress Indicators</a>).</li>
+  <li><strong><code>URLSessionDownloadTask</code> + resume data</strong> — <a href="https://developer.apple.com/documentation/foundation/url_loading_system/pausing_and_resuming_downloads">Pausing and resuming downloads</a>: <code>cancel(byProducingResumeData:)</code> + <code>session.downloadTask(withResumeData:)</code>. HuggingFace는 <code>Accept-Ranges: bytes</code> + <code>ETag</code> 모두 제공.</li>
+  <li><strong>Phase-aware 라벨</strong> — 다운로드 페이즈 ≠ 검증 페이즈 ≠ 압축 해제 페이즈. 각 단계가 분리된 라벨을 가져야 함.</li>
+</ol>
+
+<h4>Background Assets / On-Demand Resources는 적용 불가</h4>
+<div class="callout callout-warning">
+  <div class="icon">⚠️</div>
+  <div class="body">
+    <p><strong>ODR</strong>: Apple 공식 — "<em>macOS and watchOS don't support on-demand resources</em>" (<a href="https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/On_Demand_Resources_Guide/">archive doc</a>). 항상 macOS 미지원.</p>
+    <p><strong>Background Assets</strong>: <a href="https://developer.apple.com/videos/play/wwdc2025/325/">WWDC25 Session 325</a>는 "Apple-Hosted" 변형이 App Store + Apple CDN과만 통합됨을 명시. Developer-ID 서명 + HuggingFace = 적용 안 됨.</p>
+  </div>
+</div>
+
+<h4>핸드오프 T2.1 (가중치 사이드카) 재평가</h4>
+
+<div class="callout callout-error">
+  <div class="icon">🚨</div>
+  <div class="body">
+    <div class="callout-title">사이드카 도입 권장하지 않음</div>
+    <p><strong>현재 구현은 invariant-preserving이다</strong>: <span class="fileref">GemmaService.swift:120-128</span>의 <code>LLMModelFactory.shared.loadContainer(...)</code>는 <strong>OS-mediated MLX 캐시</strong>가 다운로드를 수행한다. 앱 자신의 <code>URLSession</code>이 아니므로 <code>com.apple.security.network.client</code> 엔타이틀먼트 없이도 동작한다.</p>
+    <p>사이드카 도입 시 두 가지 형태 모두 단점이 있다:</p>
+    <ul>
+      <li><strong>Bundled-in-DMG (4.5GB)</strong>: GitHub Releases 2 GiB cap 초과 → R2/B2 호스팅 필요. DMG 다운로드도 결국 외부 CDN. 사용자는 "왜 4.5GB DMG를 받아야 하지?"</li>
+      <li><strong>WeightsDownloader.app sidecar</strong>: 별도 노터라이즈 + 별도 사용자 신뢰 프롬프트. 비기술 한국 사용자에게 마찰 2배.</li>
+    </ul>
+    <p><strong>권장</strong>: 기존 OS-mediated 다운로드를 유지하고 SwiftUI <code>Progress</code>/<code>ProgressView</code>로 UI만 강화.</p>
+  </div>
+</div>
+
+<h4>권장 5단계 UX (HIG + 사례 합성)</h4>
+
+<pre><span class="lang-label">flow</span><button class="copy-btn">copy</button><code>1. 사전점검   디스크 공간 확인 (≥5 GB 헤드룸)
+              부족 시 "디스크 공간 부족" sheet + 실제 여유 표시
+
+2. 동의      "약 4 GB 다운로드. Wi-Fi 권장. 한 번만 받으면 됩니다."
+              SHA-256 공개 옵션. Primary "다운로드 시작"
+
+3. 다운로드   determinate ProgressView
+              "Gemma 4 모델 다운로드 — 1.2 GB / 3.97 GB · 약 4분 남음"
+              [일시 중지] [취소]
+
+4. 검증      "모델 검증 중..." (별도 phase, HIG에서 권장)
+
+5. 워밍업    "흉상 깨우는 중..." (현재 ~5초)
+              부트스트랩의 마지막 단계</code></pre>
+
+<h4>참조 사례 (모두 prior art)</h4>
+<ul>
+  <li><strong>LM Studio</strong>: Downloads 탭 + 퍼센트 + 속도. <a href="https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/1031">issue #1031</a> + <a href="https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/1222">#1222</a>: 큰 다운로드 timeout + checksum 실패 → 교훈: <code>ETag</code> 일치 검증 후 resume, 서버측 변경 시 fresh restart.</li>
+  <li><strong>Ollama macOS app</strong> (2025): 첫 모델 사용 시 ~2 GB 다운로드 (<a href="https://ollama.com/blog/new-app">blog</a>). <a href="https://github.com/ollama/ollama/issues/8484">issue #8484</a>: 진행률이 역행 → 교훈: 사용자 관점 진행률은 항상 monotonic.</li>
+  <li><strong>WhisperKit / MacWhisper</strong>: "Manage Models" 화면 — 단일 모델 앱에는 과하나 "크기 명시 + 진행률 영속 + Apple Silicon-only 사전 명시" 패턴은 그대로 차용.</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  <strong>T1.3 강화 + T2.1 폐기</strong>. 기존 MLX 캐시 다운로드를 유지하되 <code>loadContainer</code>의 progress 콜백을 SwiftUI <code>Progress</code> 위계에 묶어 단계별 라벨을 제공.
+</div>
+</div>
+
+<!-- F4 -->
+<div class="friction-card" id="friction-4">
+  <div class="friction-header">
+    <div class="friction-num">4</div>
+    <div class="friction-title">
+      <h3>마이크 권한(<code>NSMicrophoneUsageDescription</code>) 시점 <span class="severity severity-mid">MID</span></h3>
+      <div class="friction-meta">증상: 부트스트랩에서 일괄 요청 → 사용자는 첫 Spacebar 전에 컨텍스트 없이 권한 prompt를 받음.</div>
+    </div>
+  </div>
+
+<h4>Apple HIG · Privacy 섹션 명시 권장</h4>
+<p>"<em>Context-related permission requests are less likely to cause surprise: users select an icon in the app (such as a camera or microphone symbol) or tap inside an address field (for location), and the system reacts with a permission request</em>" (<a href="https://developer.apple.com/design/human-interface-guidelines">HIG · Privacy</a>).</p>
+
+<p>Push-to-talk 앱에서 "in-context"란 = <strong>첫 Spacebar 누름 시</strong>. <span class="fileref">ContentView.swift:55-66</span>의 <code>handleKeyDown</code>이 자연스러운 hook 위치.</p>
+
+<h4>Pre-prompt explainer 패턴 (HIG-aligned)</h4>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// 1. 사용자가 첫 Spacebar 누름</span>
+<span class="cmt">// 2. 우리 sheet가 먼저 등장: "스페이스바를 누르면 마이크가 들어주려고 해.</span>
+<span class="cmt">//                              음성은 기기를 떠나지 않아."</span>
+<span class="cmt">// 3. [허용] tap → AVCaptureDevice.requestAccess(for: .audio) 호출</span>
+<span class="cmt">// 4. 그 다음 SFSpeechRecognizer.requestAuthorization (F5와 통합)</span>
+<span class="cmt">// 5. denied 시 deeplink:</span>
+<span class="kw">let</span> url = <span class="tp">URL</span>(string: <span class="str">"x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"</span>)!
+<span class="tp">NSWorkspace</span>.shared.<span class="fn">open</span>(url)</code></pre>
+
+<h4>현재 Info.plist 카피 평가</h4>
+<p><span class="fileref">Info.plist:63-64</span>:</p>
+<pre><span class="lang-label">xml</span><button class="copy-btn">copy</button><code>&lt;string&gt;마이크는 당신의 질문을 듣기 위해서만 사용됩니다.
+음성은 기기를 절대 떠나지 않습니다. (Microphone is used only to hear your question.
+Audio never leaves this device.)&lt;/string&gt;</code></pre>
+
+<div class="callout callout-tip">
+  <div class="icon">💡</div>
+  <div class="body">
+    <p><strong>톤 보정 제안</strong>: "사용됩니다" → "필요해" + "않습니다" → "않아" — 평어체 lock 적용. (system prompt와 일관성)</p>
+    <pre style="margin-top:8px;background:rgba(255,255,255,0.5);"><code>"마이크는 당신의 질문을 듣기 위해서만 필요해. 음성은 기기를 절대 떠나지 않아."</code></pre>
+  </div>
+</div>
+
+<h4>참조</h4>
+<ul>
+  <li>Apple <strong>Voice Memos</strong> — 첫 record tap 시에만 prompt. Canonical 패턴.</li>
+  <li>Bad example: Zoom — 미팅 시작 전 launch 시점에 mic+camera 둘 다 prompt.</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  Bootstrap에서 mic 권한 요청 분리하여 <span class="fileref">ContentView.swift:60</span> <code>handleKeyDown</code>의 <code>vm.beginListening()</code> 직전으로 이동. F5와 통합 explainer로 묶음.
+</div>
+</div>
+
+<!-- F5 -->
+<div class="friction-card" id="friction-5">
+  <div class="friction-header">
+    <div class="friction-num">5</div>
+    <div class="friction-title">
+      <h3>음성 인식 권한(<code>NSSpeechRecognitionUsageDescription</code>) 시점 <span class="severity severity-mid">MID</span></h3>
+      <div class="friction-meta">증상: F4와 동일 패턴이나 두 번째 prompt가 사용자에게 의외로 다가옴.</div>
+    </div>
+  </div>
+
+<h4>권장: F4와 layered explainer로 통합</h4>
+<p>사용자 mental model에서는 "앱이 내 말을 듣는다"가 하나의 capability. TCC가 둘로 분리해도 한 번의 explainer로 묶어야 한다. <strong>순서: explainer → mic 권한 → speech 권한</strong>.</p>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// 통합 explainer sheet 텍스트</span>
+"""
+처음 한 번만 묻는다.
+
+스페이스바를 누르면, 마이크와 음성 인식이 함께 동작해.
+당신이 묻는 동안만 동작하고, 손을 떼면 멈춘다.
+음성은 기기 안에서만 처리된다 — 0 byte도 외부로 나가지 않아.
+
+[허용]    [나중에]
+"""</code></pre>
+
+<h4>현재 Info.plist 카피 평가</h4>
+<p><span class="fileref">Info.plist:66-67</span> — F4와 같은 평어체 보정 권장.</p>
+
+<h4>denied 시 deeplink</h4>
+<pre><span class="lang-label">url-scheme</span><button class="copy-btn">copy</button><code>x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition</code></pre>
+
+<h4>참조</h4>
+<ul>
+  <li>Apple <strong>Translate</strong> — 오프라인 언어 + 음성 인식 권한을 단일 explainer로 묶는 canonical 사례.</li>
+  <li>macOS Setup Assistant의 Voice Control onboarding — gold standard "explain once, prompt twice in sequence".</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  F4와 동일 hook(<code>handleKeyDown</code>) + 단일 explainer. <span class="fileref">AudioInputManager.swift:99-187</span>의 <code>requestPermissions()</code>는 그대로 두되, bootstrap에서 자동 호출하지 않고 첫 Spacebar 누름 직전에 트리거.
+</div>
+</div>
+
+<!-- F6 -->
+<div class="friction-card" id="friction-6">
+  <div class="friction-header">
+    <div class="friction-num">6</div>
+    <div class="friction-title">
+      <h3>Pre-flight 사전 검사 화면 <span class="severity severity-high">HIGH</span></h3>
+      <div class="friction-meta">증상: 모든 검사가 fail-after-the-fact. 사용자는 첫 Spacebar 누름 후에야 누락 발견.</div>
+    </div>
+  </div>
+
+<h4>Apple 패턴: "Setup Assistant" 스타일 통합 화면</h4>
+<p>Apple HIG 자체에 "system requirements check" 전용 doc은 없으나 Setup Assistant + Logic Pro Sound Library Manager 패턴이 직접적 analog. 단일 화면 + 병렬 검사 + 행별 "해결" 버튼.</p>
+
+<h4>이 앱에 필요한 검사 10개 (양 언어)</h4>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>검사</th><th>truth source</th><th>실패 시 액션</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>macOS ≥ 26.0 Tahoe</td>
+      <td><code>ProcessInfo.operatingSystemVersion</code></td>
+      <td class="cell-error">Hard stop · "macOS 26 Tahoe로 업데이트 필요"</td>
+    </tr>
+    <tr>
+      <td>Apple Silicon</td>
+      <td><code>sysctlbyname("hw.optional.arm64", ...)</code></td>
+      <td class="cell-error">Hard stop (Gemma MLX 요구)</td>
+    </tr>
+    <tr>
+      <td>≥ 8 GB 디스크 여유</td>
+      <td><code>URLResourceValues.volumeAvailableCapacityForImportantUsage</code></td>
+      <td class="cell-warning">여유 표시 + sheet</td>
+    </tr>
+    <tr>
+      <td>한국어 TTS (Yuna enhanced+)</td>
+      <td><code>AVSpeechSynthesisVoice.speechVoices()</code> ko-KR + quality</td>
+      <td class="cell-warning">F1 deeplink sheet</td>
+    </tr>
+    <tr>
+      <td>영어 TTS (Samantha enhanced+)</td>
+      <td><code>AVSpeechSynthesisVoice.speechVoices()</code> en-US + quality</td>
+      <td class="cell-warning">F1 deeplink sheet (같은 anchor)</td>
+    </tr>
+    <tr>
+      <td>한국어 STT 자산</td>
+      <td><code>SpeechTranscriber.isAvailable(for: ko_KR)</code></td>
+      <td class="cell-warning"><strong>F2 in-app 다운로드</strong> (<code>AssetInventory</code>)</td>
+    </tr>
+    <tr>
+      <td>영어 STT 자산</td>
+      <td><code>SpeechTranscriber.isAvailable(for: en_US)</code></td>
+      <td class="cell-warning"><strong>F2 in-app 다운로드</strong> (<code>AssetInventory</code>)</td>
+    </tr>
+    <tr>
+      <td>마이크 TCC</td>
+      <td><code>AVCaptureDevice.authorizationStatus(for: .audio)</code></td>
+      <td class="cell-success">Defer (F4 시점)</td>
+    </tr>
+    <tr>
+      <td>음성 인식 TCC</td>
+      <td><code>SFSpeechRecognizer.authorizationStatus()</code></td>
+      <td class="cell-success">Defer (F5 시점)</td>
+    </tr>
+    <tr>
+      <td>Gemma 가중치 캐시</td>
+      <td>MLX 캐시 디렉터리 + SHA</td>
+      <td class="cell-warning">F3 다운로드 흐름</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-tip">
+  <div class="icon">💡</div>
+  <div class="body">
+    <p>핵심 차이: <strong>한국어/영어 STT 자산은 in-app 한 요청으로 묶음</strong>(<code>AssetInventory.assetInstallationRequest(supporting: [transcriberKo, transcriberEn])</code>) — 사용자가 두 번 클릭할 필요 없음. 반면 <strong>TTS 음성은 같은 deeplink anchor 하나가 양 언어 모두 커버</strong>하므로 sheet 한 개로 두 행을 동시에 처리.</p>
+  </div>
+</div>
+
+<h4>안정 surface 보존: <code>Phase</code> 변경 없이 구현</h4>
+
+<div class="callout callout-tip">
+  <div class="icon">💡</div>
+  <div class="body">
+    <p>새로운 <code>Phase.preflightChecking</code> case 추가는 <strong>SpecDD delta 필요</strong>. 대신 <code>SocraticAppViewModel</code>(<span class="fileref">ContentView.swift:81-176</span>)에 새 published 속성 추가 — 엔진 layer 변경 0:</p>
+  </div>
+</div>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// ContentView.swift SocraticAppViewModel 안에 추가</span>
+<span class="kw">enum</span> <span class="tp">PreflightStatus</span> {
+    <span class="kw">case</span> idle, running, allReady, blockedByMissing([<span class="tp">PreflightCheck</span>])
+}
+@<span class="tp">Published</span> <span class="kw">var</span> preflight: <span class="tp">PreflightStatus</span> = .idle
+
+<span class="cmt">// bootstrap() 진입 시점에 위치 — coordinator.bootstrap() 호출 전</span>
+<span class="kw">func</span> <span class="fn">runPreflight</span>() <span class="kw">async</span> {
+    preflight = .running
+    <span class="kw">async let</span> hasYuna = <span class="tp">PreflightCheck</span>.<span class="fn">koreanVoiceInstalled</span>()
+    <span class="kw">async let</span> hasSTT  = <span class="tp">PreflightCheck</span>.<span class="fn">koreanSTTOnDevice</span>()
+    <span class="kw">async let</span> hasDisk = <span class="tp">PreflightCheck</span>.<span class="fn">diskSpaceAvailable</span>(min: 8 * 1024 * 1024 * 1024)
+    <span class="kw">let</span> missing = [<span class="kw">await</span> hasYuna, <span class="kw">await</span> hasSTT, <span class="kw">await</span> hasDisk].<span class="fn">filter</span> { !$0.passed }
+    preflight = missing.isEmpty ? .allReady : .blockedByMissing(missing.<span class="fn">map</span>(\.check))
+}</code></pre>
+
+<h4>참조 사례</h4>
+<ul>
+  <li><strong>Logic Pro Sound Library Manager</strong> — 첫 실행, fresh Mac에서 가장 직접적인 analog. 항목 리스트 + 행별 다운로드 상태 + primary continue.</li>
+  <li><strong>Final Cut Pro / GarageBand additional content</strong> — 같은 구조.</li>
+  <li><strong>Bad example</strong>: <strong>현재 이 앱의 상태</strong> — 사용자가 말하려 할 때 "갑자기 한국어 음성 모델이 없다고 알림".</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  Tier B의 핵심 기여. Phase enum 변경 없이 ViewModel에 PreflightStatus 추가. 검사는 모두 stable API. 새 entitlement 0개.
+</div>
+</div>
+
+<!-- F7 -->
+<div class="friction-card" id="friction-7">
+  <div class="friction-header">
+    <div class="friction-num">7</div>
+    <div class="friction-title">
+      <h3>부트스트랩 진행 텍스트 (~7초) <span class="severity severity-mid">MID</span></h3>
+      <div class="friction-meta">증상: "Gemma 4 E4B 4-bit · NN%" 한 줄. HIG는 "vague terms like loading or authenticating"을 명시적으로 비권장.</div>
+    </div>
+  </div>
+
+<h4>Apple HIG 명시 규칙</h4>
+<ul>
+  <li>"<em>Include a label above an activity indicator to give extra context</em>"</li>
+  <li>"<em>Avoid vague terms like loading or authenticating because they don't usually add any value</em>"</li>
+  <li>"<em>Only use progress bars for tasks that are quantifiable</em>"</li>
+  <li>"<em>If the operation completes in under .75 seconds, you do not want to display the progress indicator</em>"</li>
+</ul>
+
+<h4>현재 부트스트랩 페이즈 분해 (PR-Λ 측정)</h4>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>단계</th><th>위치</th><th>측정 시간</th><th>권장 라벨</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>권한</td>
+      <td><span class="fileref">EngineCoordinator.swift:171-185</span></td>
+      <td>&lt;100ms (이미 grant)</td>
+      <td>표시 안함 (HIG 0.75s 규칙)</td>
+    </tr>
+    <tr>
+      <td>모델 로드</td>
+      <td><span class="fileref">GemmaService.swift:120-128</span> <code>loadContainer</code></td>
+      <td>~1.9s (캐시 hit)</td>
+      <td>"Gemma 모델 메모리에 올리는 중..."</td>
+    </tr>
+    <tr>
+      <td>워밍업</td>
+      <td><span class="fileref">GemmaService.swift:310-386</span> <code>warmup()</code></td>
+      <td>~4.8s</td>
+      <td>"흉상 깨우는 중..."</td>
+    </tr>
+    <tr>
+      <td>viseme cache</td>
+      <td><span class="fileref">ContentView.swift:132</span> <code>VisemeImageCache.preloadAll()</code></td>
+      <td>&lt;100ms</td>
+      <td>표시 안함</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4>권장: <code>Foundation.Progress</code> 위계 + 단계별 라벨</h4>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// SocraticAppViewModel에 추가</span>
+<span class="kw">enum</span> <span class="tp">BootstrapStage</span>: <span class="tp">String</span> {
+    <span class="kw">case</span> downloadingWeights = <span class="str">"Gemma 4 모델 다운로드 중"</span>
+    <span class="kw">case</span> verifying          = <span class="str">"모델 검증 중"</span>
+    <span class="kw">case</span> loadingIntoMemory  = <span class="str">"모델 메모리에 올리는 중"</span>
+    <span class="kw">case</span> warmingUp          = <span class="str">"흉상 깨우는 중"</span>
+}
+@<span class="tp">Published</span> <span class="kw">var</span> bootstrapStage: <span class="tp">BootstrapStage</span> = .loadingIntoMemory
+@<span class="tp">Published</span> <span class="kw">var</span> bootstrapDetail: <span class="tp">String</span> = <span class="str">""</span>  <span class="cmt">// "1.2 / 3.97 GB · 약 4분"</span></code></pre>
+
+<p>StatusOverlay (<span class="fileref">ContentView.swift:188-200</span>)를 단순 numeric에서 단계별 라벨로 교체:</p>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="kw">case</span> .bootstrapping:
+    <span class="tp">VStack</span>(spacing: 6) {
+        <span class="tp">Text</span>(vm.bootstrapStage.rawValue)
+            .font(.system(size: 13, weight: .medium))
+        <span class="kw">if</span> !vm.bootstrapDetail.isEmpty {
+            <span class="tp">Text</span>(vm.bootstrapDetail)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(<span class="tp">Color</span>(white: 0.55))
+        }
+        <span class="tp">ProgressView</span>(value: vm.loadProgress)
+            .progressViewStyle(.linear)
+            .frame(width: 360)
+    }</code></pre>
+
+<h4>참조</h4>
+<ul>
+  <li><strong>Xcode "Loading project..." splash</strong> — 단계별 텍스트 + determinate. Gold standard.</li>
+  <li><strong>Logic Pro</strong> 콘텐츠 로드 — asset family별 단계.</li>
+  <li><strong>WhisperKit / MacWhisper</strong> — "Loading model — first launch may take a few minutes".</li>
+</ul>
+
+<div class="recommendation-block">
+  <div class="label">권장</div>
+  T1.3 정확히 이 구현. ViewModel-only 변경, Phase enum 보존, ~100 LOC.
+</div>
+</div>
+
+</section>
+
+<section id="cross-cutting">
+<h2>3. 횡단 발견 (Cross-Cutting Findings)</h2>
+
+<h3 id="deeplinks">3.1 <code>x-apple.systempreferences:</code> URL scheme 신뢰성</h3>
+
+<div class="callout callout-success">
+  <div class="icon">✅</div>
+  <div class="body">
+    <p><strong>판정: macOS 14/15에서 prefPane 형 anchor는 신뢰 가능.</strong></p>
+  </div>
+</div>
+
+<p>두 canonical reference로 교차 검증:</p>
+<ul>
+  <li><a href="https://gist.github.com/rmcdongit/f66ff91e0dad78d4d6346a75ded4b751">rmcdongit gist</a> — community-maintained, 2024-11-18 Sequoia 15.2 기준 last update. "<em>All sections of System Settings support URLScheme in newer macOS versions</em>".</li>
+  <li><a href="https://macmost.com/mac-settings-links">macmost.com/mac-settings-links</a> — 같은 커버리지, 짧은 접두사 형(<code>com.apple.Accessibility?SpokenContent</code>)도 둘 다 유효.</li>
+</ul>
+
+<p>이 프로젝트가 사용할 4개 deeplink 신뢰성 매트릭스:</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Deeplink</th><th>macOS 14</th><th>macOS 15</th><th>macOS 26</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>com.apple.preference.universalaccess?SpokenContent</code></td>
+      <td class="cell-success">검증</td>
+      <td class="cell-success">검증</td>
+      <td class="cell-warning">유력 (변경 미발표)</td>
+    </tr>
+    <tr>
+      <td><code>com.apple.preference.speech?Dictation</code></td>
+      <td class="cell-success">검증</td>
+      <td class="cell-success">검증</td>
+      <td class="cell-warning">유력 (in-app은 AssetInventory로 대체 권장)</td>
+    </tr>
+    <tr>
+      <td><code>com.apple.preference.security?Privacy_Microphone</code></td>
+      <td class="cell-success">검증</td>
+      <td class="cell-success">검증</td>
+      <td class="cell-success">검증 (Apple 자체 사용 경로)</td>
+    </tr>
+    <tr>
+      <td><code>com.apple.preference.security?Privacy_SpeechRecognition</code></td>
+      <td class="cell-success">검증</td>
+      <td class="cell-success">검증</td>
+      <td class="cell-success">검증</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-tip">
+  <div class="icon">💡</div>
+  <div class="body">
+    <p><strong>방어 코드 권장</strong>: <code>NSWorkspace.shared.open(_:)</code>은 <code>Bool</code> 반환. 특정 anchor 실패 시 root anchor (<code>com.apple.preference.universalaccess</code>)로 fallback:</p>
+    <pre style="margin-top:8px;background:rgba(255,255,255,0.5);"><code><span class="kw">func</span> <span class="fn">openSettings</span>(specific: <span class="tp">String</span>, fallbackRoot: <span class="tp">String</span>) {
+    <span class="kw">if</span> !<span class="tp">NSWorkspace</span>.shared.<span class="fn">open</span>(<span class="tp">URL</span>(string: specific)!) {
+        _ = <span class="tp">NSWorkspace</span>.shared.<span class="fn">open</span>(<span class="tp">URL</span>(string: fallbackRoot)!)
+    }
+}</code></pre>
+  </div>
+</div>
+
+<h3 id="sandbox">3.2 App Sandbox와 시스템 설정 호출</h3>
+
+<div class="callout callout-success">
+  <div class="icon">✅</div>
+  <div class="body">
+    <p><strong>샌드박스 앱에서 <code>x-apple.systempreferences:</code> URL은 추가 entitlement 없이 동작.</strong></p>
+  </div>
+</div>
+
+<p>Apple Developer Forums <a href="https://developer.apple.com/forums/thread/65606">Thread #65606</a> + <a href="https://www.appcoda.com/mac-app-sandbox/">App Sandbox 구성 가이드</a>: <code>NSWorkspace.shared.open</code>의 시스템 URL scheme 처리는 Launch Services 경유로 등록된 핸들러(System Settings.app)에 위임된다. 샌드박스는 이를 일반적인 cross-app 활성화로 인식 — <code>com.apple.security.temporary-exception.shared-preference.read-write</code>나 다른 임시 예외 entitlement 불필요.</p>
+
+<p><strong>현재 entitlement 확인</strong> (<span class="fileref">HeWasSocrates.entitlements</span>):</p>
+<pre><span class="lang-label">xml</span><button class="copy-btn">copy</button><code>&lt;key&gt;com.apple.security.app-sandbox&lt;/key&gt;&lt;true/&gt;
+&lt;!-- com.apple.security.network.client = INTENTIONALLY ABSENT --&gt;
+&lt;!-- com.apple.security.network.server = INTENTIONALLY ABSENT --&gt;
+&lt;key&gt;com.apple.security.device.audio-input&lt;/key&gt;&lt;true/&gt;
+&lt;key&gt;com.apple.security.files.user-selected.read-write&lt;/key&gt;&lt;true/&gt;
+&lt;key&gt;com.apple.security.files.downloads.read-write&lt;/key&gt;&lt;true/&gt;</code></pre>
+
+<p><strong>Tier B 모든 권장사항이 위 entitlement 집합 안에서 구현 가능</strong>. NO-CLOUD invariant 100% 보존.</p>
+
+<p>제한 사항: <code>CFPreferences*</code>나 <code>defaults write</code>로 시스템 설정 값을 직접 변경하는 것은 샌드박스에서 차단된다 — 시도하지 말 것. 단, 본 보고서의 어떤 권장사항도 이를 필요로 하지 않는다.</p>
+
+<h3 id="hig">3.3 Apple HIG에서 직접 인용한 핵심 룰</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>HIG 섹션</th><th>인용</th><th>적용 항목</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Privacy</td>
+      <td>"<em>Context-related permission requests are less likely to cause surprise</em>"</td>
+      <td>F4, F5</td>
+    </tr>
+    <tr>
+      <td>Privacy</td>
+      <td>"<em>Always provide a purpose string to explain the reason for your request</em>"</td>
+      <td>F4, F5 (Info.plist 카피)</td>
+    </tr>
+    <tr>
+      <td>Progress Indicators</td>
+      <td>"<em>Include a label above an activity indicator</em>"</td>
+      <td>F3, F7</td>
+    </tr>
+    <tr>
+      <td>Progress Indicators</td>
+      <td>"<em>Avoid vague terms like loading or authenticating</em>"</td>
+      <td>F7</td>
+    </tr>
+    <tr>
+      <td>Progress Indicators</td>
+      <td>"<em>Only use progress bars for tasks that are quantifiable</em>"</td>
+      <td>F3</td>
+    </tr>
+    <tr>
+      <td>Progress Indicators</td>
+      <td>"<em>If the operation completes in under .75 seconds, do not display the progress indicator</em>"</td>
+      <td>F7 (권한 단계 숨김)</td>
+    </tr>
+    <tr>
+      <td>Onboarding</td>
+      <td>"<em>Defer non-essential setup ... guide users through setup step-by-step rather than overwhelming them upfront</em>"</td>
+      <td>F4, F5, F6</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="tahoe">3.4 macOS 26 Tahoe — 본 프로젝트의 floor</h3>
+
+<p>WWDC 2025 (2025-09 출시, 2026-05-06 기준 8개월 경과)에서 도입된 API들이 현재 floor가 됨에 따른 영향 분석:</p>
+
+<h4>채택하는 API</h4>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>API</th><th>F#</th><th>채택 형태</th><th>현재 코드 영향</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>AssetInventory.assetInstallationRequest(supporting:)</code></td>
+      <td>F2</td>
+      <td>Pre-flight 화면에서 ko_KR + en_US 자산 in-app 다운로드</td>
+      <td><span class="fileref">AudioInputManager.swift</span> 변경 없음 — 자산 설치 후 기존 <code>SFSpeechRecognizer</code> 그대로 사용 가능 (자산 공유)</td>
+    </tr>
+    <tr>
+      <td><code>SpeechTranscriber.isAvailable(for:)</code></td>
+      <td>F2, F6</td>
+      <td>Pre-flight 검사의 STT 행 truth source</td>
+      <td>새 import <code>Speech</code> + 검사 함수 추가</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4>채택하지 않는 API</h4>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>API</th><th>이유</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>SpeechAnalyzer</code> 본체 (STT 교체)</td>
+      <td>전략 (B) — 마감(D-13) 안에서 65개 테스트 회귀 위험. 자산 설치만 신 API, STT 본체는 기존 <code>SFSpeechRecognizer</code> 유지. <strong>핵카톤 후 follow-up</strong> 작업으로 분리.</td>
+    </tr>
+    <tr>
+      <td>Foundation Models framework</td>
+      <td>2026-05 기준 on-device tier가 Gemma 4 E4B보다 작고 한국어 Socratic-tuned 아님. Gemma 선택 유효.</td>
+    </tr>
+    <tr>
+      <td>Liquid Glass / SwiftUI design</td>
+      <td>본 프로젝트의 미니멀 흑백 미학(흉상 + 텍스트만)과 충돌. 시각적 변경 없음.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h4>floor 변경의 부작용 — 반드시 검토</h4>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>영향 영역</th><th>변경 내용</th><th>위험도</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="fileref">Info.plist:44-45</span> <code>LSMinimumSystemVersion</code></td>
+      <td><code>14.0</code> → <code>26.0</code></td>
+      <td class="cell-warning">설정 변경 1줄, 영향은 사용자 base</td>
+    </tr>
+    <tr>
+      <td><span class="fileref">apps/macos/HeWasSocrates/project.yml</span> deployment target</td>
+      <td>14.0 → 26.0 (xcodegen 재생성 필요)</td>
+      <td class="cell-warning"><code>make xcodeproj</code> 재실행</td>
+    </tr>
+    <tr>
+      <td><span class="fileref">packages/SocraticEngine/Package.swift</span> platforms</td>
+      <td>14 → 26 (engine layer가 .app과 함께 floor 일치)</td>
+      <td class="cell-warning">CommandLineTools만으로 빌드되는지 재확인</td>
+    </tr>
+    <tr>
+      <td><span class="fileref">runs/2026-05-05-spec/spec/SPEC.md</span></td>
+      <td>floor 가정 변경 → 새 delta 문서 필요</td>
+      <td class="cell-error"><strong>SpecDD 절차 — <code>SPEC.md.iter6-macos26-floor.md</code> 작성</strong></td>
+    </tr>
+    <tr>
+      <td><span class="fileref">.github/workflows/ci.yml</span></td>
+      <td>현재 <code>macos-15</code> runner — 빌드 자체는 가능 (higher SDK는 lower OS에서 빌드 가능). 26 전용 API 런타임 검증 위해 <code>macos-26</code> runner 추가 권장</td>
+      <td class="cell-warning">선택 — 추가 시 CI 시간 +50%</td>
+    </tr>
+    <tr>
+      <td>핵카톤 평가자 환경</td>
+      <td>Kaggle/Google DeepMind 평가 머신 OS 확인 필요</td>
+      <td class="cell-error"><strong>blocker 가능성 — 우선 확인</strong></td>
+    </tr>
+    <tr>
+      <td>잠재 사용자 base 축소</td>
+      <td>macOS 14 (Sonoma) / 15 (Sequoia) 사용자 차단</td>
+      <td class="cell-warning">데모 영상 시청자 ≠ 실행 가능자</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-error">
+  <div class="icon">🚨</div>
+  <div class="body">
+    <div class="callout-title">우선 확인 필요 — 핵카톤 평가 환경</div>
+    <p>Kaggle/Google DeepMind Hackathon 심사자가 macOS 26 Tahoe 환경에서 앱을 실행할 수 있는지 확인하는 것이 가장 중요하다. macOS 14/15 환경이라면 floor 변경 결정을 재고해야 한다. <strong>제출 페이지/규정에 OS 요구사항 언급이 있는지, 또는 데모 영상으로 실행 검증을 대체할 수 있는지</strong> 확인 후 진행 권장.</p>
+  </div>
+</div>
+
+<div class="callout callout-info">
+  <div class="icon">📝</div>
+  <div class="body">
+    <p><strong>WWDC 2026은 아직 발생하지 않음</strong> (오늘 2026-05-06). 6월 발표 내용은 마감(2026-05-19) 이후이므로 이 프로젝트 계획에는 포함할 수 없다.</p>
+  </div>
+</div>
+
+</section>
+
+<section id="decision">
+<h2>4. 의사결정 매트릭스 (v2 — macOS 26 + 양언어)</h2>
+
+<p>사용자 결정(macOS 26 floor + 양언어 동시 다운로드)에 따라 Tier B가 채택. Tier A는 안전망(scope 충돌 시 fallback), B-Lite는 영어 생략 변형.</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Tier</th><th>커버 항목</th><th>예상 작업량</th><th>엔타이틀먼트</th><th>SpecDD 영향</th><th>적합도</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A · 최소 안전망</strong></td>
+      <td>F4, F5, F7만 (T1.1 + T1.3)</td>
+      <td>~0.5일</td>
+      <td>없음</td>
+      <td>없음</td>
+      <td>scope 축소 시 fallback</td>
+    </tr>
+    <tr style="background: var(--success-soft) !important;">
+      <td><strong>B · 채택</strong></td>
+      <td>F1–F7 + macOS 26 + ko/en 양언어</td>
+      <td>~2–2.5일</td>
+      <td>없음</td>
+      <td><strong>delta 1건 필요</strong> (floor 변경)</td>
+      <td class="cell-success"><strong>본 보고서 채택</strong></td>
+    </tr>
+    <tr>
+      <td>B-Lite · 양언어 생략</td>
+      <td>F1–F7 + macOS 26, 한국어만</td>
+      <td>~1.5–2일</td>
+      <td>없음</td>
+      <td>delta 1건</td>
+      <td>영어 사용자 fail-after-the-fact</td>
+    </tr>
+    <tr>
+      <td>D · 사이드카</td>
+      <td>Tier B + Gemma 4.5GB 사이드카</td>
+      <td>~4–5일</td>
+      <td>(사이드카 형태에 따라)</td>
+      <td>distribution 모델 변경</td>
+      <td>비기술 사용자 마찰 2배 — <strong>비권장</strong></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.1 D-13 시나리오 분석</h3>
+
+<div class="kvgrid">
+  <dt>오늘</dt>
+  <dd>2026-05-06</dd>
+  <dt>마감</dt>
+  <dd>2026-05-19 08:59 KST (Kaggle/Google DeepMind Gemma 4 Hackathon)</dd>
+  <dt>가용 일수</dt>
+  <dd>13일</dd>
+  <dt>병행 작업</dt>
+  <dd>다른 팀원: Kaggle writeup, YouTube 데모 영상, DMG 노터라이즈</dd>
+</div>
+
+<p><strong>Tier B (2–2.5일)</strong>는 13일 예산 안에서 안전. 단 첫 1일 안에 (a) 핵카톤 평가자 환경 macOS 26 호환 확인, (b) <code>SPEC.md.iter6</code> delta 작성을 마쳐야 그 뒤 작업이 안전하게 진행된다.</p>
+
+<h3>4.2 Tier B 권장 작업 순서 (v2 — 2.5일)</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>작업</th><th>예상</th><th>위험</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>0a</td>
+      <td><strong>핵카톤 평가자 환경 macOS 26 호환 확인</strong> (Kaggle/DeepMind 페이지 + 규정)</td>
+      <td>0.5h</td>
+      <td class="cell-error">blocker 가능</td>
+    </tr>
+    <tr>
+      <td>0b</td>
+      <td><code>SPEC.md.iter6-macos26-floor.md</code> delta 문서 작성</td>
+      <td>1h</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>0c</td>
+      <td>Info.plist + project.yml + Package.swift floor 14 → 26 변경, <code>make xcodeproj</code> + <code>make ci-local</code></td>
+      <td>1h</td>
+      <td>회귀 가능</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>T1.1 — TTS 음성 회복 힌트 (양언어 카피)</td>
+      <td>0.5h</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>T1.3 — BootstrapStage published + StatusOverlay 단계별 라벨</td>
+      <td>2h</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>F4/F5 — 권한 요청을 bootstrap에서 분리, 첫 Spacebar 직전 + 통합 explainer sheet</td>
+      <td>2h</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>F6 — Pre-flight 화면 (10개 검사, ko + en, 행별 액션)</td>
+      <td>5h</td>
+      <td>새 SwiftUI 화면 가장 큰 작업</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>F2 — <code>AssetInventory</code> in-app 다운로드 통합 + Progress 바인딩</td>
+      <td>3h</td>
+      <td>새 API 첫 사용 — 디버깅 시간 가산</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>F1 — TTS deeplink + return-polling</td>
+      <td>1.5h</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>F3 — 다운로드 단계별 라벨 (다운로드/검증/워밍업)</td>
+      <td>2h</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>빌드 + 양언어 UI 테스트 + 회귀 (65 테스트)</td>
+      <td>2h</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>총 20.5h ≈ 2.5일. <strong>10–11일 여유</strong>로 데모 영상 / 문서 작업 시간 충분.</p>
+
+</section>
+
+<section id="deviations">
+<h2>5. 핸드오프 + v1에서 보정한 사항 (v2)</h2>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>항목</th><th>v2 권장</th><th>이유</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>floor: macOS 14+</td>
+      <td><strong>macOS 26 Tahoe</strong>로 상승</td>
+      <td>사용자 결정. F2가 deeplink → in-app <code>AssetInventory</code> 자동 다운로드로 전환되어 가장 큰 UX 개선 가능. 단 SpecDD delta 1건 + 평가자 환경 호환 확인 필요.</td>
+    </tr>
+    <tr>
+      <td>언어 scope: 한국어만</td>
+      <td><strong>한국어 + 영어 동시 사전 다운로드</strong></td>
+      <td>사용자 결정. <code>EngineCoordinator</code>가 <code>Language.auto</code>를 지원하고 TTS/STT 모두 양 언어 path가 이미 코드에 존재 — UX surface만 양언어 친화적으로 보강.</td>
+    </tr>
+    <tr>
+      <td>T1.2 새 <code>Phase.preflightChecking</code> case</td>
+      <td>ViewModel-only published 속성</td>
+      <td>Phase enum은 안정 surface — case 추가 = SpecDD delta. floor delta가 이미 추가되었으므로 추가 surface 변경은 회피 권장.</td>
+    </tr>
+    <tr>
+      <td>T2.1 가중치 사이드카 (4.5GB DMG 또는 별도 installer)</td>
+      <td><strong>채택 안함</strong> — OS-mediated MLX 캐시 유지 + UI 강화</td>
+      <td>현재 구현이 이미 invariant-preserving (앱 자체 URLSession 아님). 사이드카는 노터라이즈 + 사용자 trust prompt 추가로 마찰 증가.</td>
+    </tr>
+    <tr>
+      <td>F2 deeplink primary</td>
+      <td><strong>F2 <code>AssetInventory</code> primary, deeplink fallback</strong></td>
+      <td>macOS 26 floor 채택의 직접 결과. <code>SpeechAnalyzer</code> 본체 교체는 회피하되 자산 설치 path만 신 API.</td>
+    </tr>
+    <tr>
+      <td>T3.1 warmup-skip (Tier 3 deferred)</td>
+      <td>현 deferred 유지</td>
+      <td>사용자가 "충분히 빠른데?"라고 명시. 본 리서치도 별도 권장사항 없음.</td>
+    </tr>
+    <tr>
+      <td>System Settings deeplink 신뢰성 우려 (핸드오프 open question §10.3)</td>
+      <td>해소됨 — macOS 26에서도 prefPane anchor 유효, fallback 패턴 제공</td>
+      <td>§3.1 deeplink 매트릭스 참조.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</section>
+
+<section id="implementation">
+<h2>6. 구현 스니펫 (적용 가능)</h2>
+
+<h3>6.1 floor 변경 — 즉시 적용 패치 (작업 0c)</h3>
+
+<pre><span class="lang-label">diff</span><button class="copy-btn">copy</button><code><span class="cmt">--- a/apps/macos/HeWasSocrates/HeWasSocrates/Resources/Info.plist</span>
+<span class="cmt">+++ b/apps/macos/HeWasSocrates/HeWasSocrates/Resources/Info.plist</span>
+<span class="cmt">@@ -44,7 +44,7 @@</span>
+ 	&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;
+-	&lt;string&gt;14.0&lt;/string&gt;
++	&lt;string&gt;26.0&lt;/string&gt;</code></pre>
+
+<p>또한 <span class="fileref">apps/macos/HeWasSocrates/project.yml</span>의 <code>deploymentTarget.macOS</code>와 <span class="fileref">packages/SocraticEngine/Package.swift</span>의 <code>platforms: [.macOS(.v14)]</code>도 <code>.v26</code>(또는 정확한 SwiftPM 표기)으로 업데이트. 이후:</p>
+
+<pre><span class="lang-label">bash</span><button class="copy-btn">copy</button><code>make xcodeproj   <span class="cmt"># project.yml 변경 반영</span>
+make engine-test <span class="cmt"># 65 swift-testing 회귀</span>
+make ci-local    <span class="cmt"># 전체 CI 게이트</span></code></pre>
+
+<h3>6.2 Pre-flight 검사 모듈 (양언어)</h3>
+
+<p>새 파일 <span class="fileref">apps/macos/HeWasSocrates/HeWasSocrates/Preflight.swift</span> 생성 — 엔진 layer가 아닌 앱 layer에 위치:</p>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="kw">import</span> <span class="tp">Foundation</span>
+<span class="kw">import</span> <span class="tp">AVFoundation</span>
+<span class="kw">import</span> <span class="tp">Speech</span>
+
+<span class="kw">struct</span> <span class="tp">PreflightCheck</span>: <span class="tp">Identifiable</span> {
+    <span class="kw">enum</span> <span class="tp">Kind</span>: <span class="tp">String</span>, <span class="tp">CaseIterable</span> {
+        <span class="kw">case</span> macOSVersion, appleSilicon, diskSpace
+        <span class="kw">case</span> koreanVoice, englishVoice          <span class="cmt">// F1 양언어</span>
+        <span class="kw">case</span> koreanSTT, englishSTT              <span class="cmt">// F2 양언어</span>
+        <span class="kw">case</span> gemmaWeights
+    }
+    <span class="kw">let</span> id = <span class="tp">UUID</span>()
+    <span class="kw">let</span> kind: <span class="tp">Kind</span>
+    <span class="kw">let</span> passed: <span class="tp">Bool</span>
+    <span class="kw">let</span> userMessage: <span class="tp">String</span>?
+    <span class="kw">let</span> recoveryDeeplink: <span class="tp">URL</span>?
+    <span class="kw">let</span> inAppInstaller: (() <span class="kw">async throws</span> -> <span class="tp">Void</span>)?  <span class="cmt">// F2 AssetInventory</span>
+}
+
+<span class="kw">enum</span> <span class="tp">PreflightRunner</span> {
+    <span class="kw">static func</span> <span class="fn">runAll</span>() <span class="kw">async</span> -> [<span class="tp">PreflightCheck</span>] {
+        <span class="kw">async let</span> os    = <span class="fn">checkMacOSVersion</span>()
+        <span class="kw">async let</span> arm   = <span class="fn">checkAppleSilicon</span>()
+        <span class="kw">async let</span> disk  = <span class="fn">checkDiskSpace</span>(minBytes: 8 * 1024 * 1024 * 1024)
+        <span class="kw">async let</span> voiceKo = <span class="fn">checkVoice</span>(language: <span class="str">"ko-KR"</span>, kind: .koreanVoice)
+        <span class="kw">async let</span> voiceEn = <span class="fn">checkVoice</span>(language: <span class="str">"en-US"</span>, kind: .englishVoice)
+        <span class="kw">async let</span> sttKo = <span class="fn">checkSTT</span>(locale: <span class="str">"ko_KR"</span>, kind: .koreanSTT)
+        <span class="kw">async let</span> sttEn = <span class="fn">checkSTT</span>(locale: <span class="str">"en_US"</span>, kind: .englishSTT)
+        <span class="kw">async let</span> gemma = <span class="fn">checkGemmaWeights</span>()
+        <span class="kw">return</span> [<span class="kw">await</span> os, <span class="kw">await</span> arm, <span class="kw">await</span> disk,
+                <span class="kw">await</span> voiceKo, <span class="kw">await</span> voiceEn,
+                <span class="kw">await</span> sttKo, <span class="kw">await</span> sttEn,
+                <span class="kw">await</span> gemma]
+    }
+
+    <span class="cmt">/// F1 — 양 언어 동일 패턴, 단일 deeplink로 양 언어 커버</span>
+    <span class="kw">private static func</span> <span class="fn">checkVoice</span>(language: <span class="tp">String</span>, kind: <span class="tp">PreflightCheck</span>.<span class="tp">Kind</span>) <span class="kw">async</span> -> <span class="tp">PreflightCheck</span> {
+        <span class="kw">let</span> voices = <span class="tp">AVSpeechSynthesisVoice</span>.<span class="fn">speechVoices</span>()
+            .<span class="fn">filter</span> { $0.language == language }
+        <span class="kw">let</span> hasUsable = voices.<span class="fn">contains</span> { $0.quality == .enhanced || $0.quality == .premium }
+        <span class="kw">let</span> displayName = language == <span class="str">"ko-KR"</span> ? <span class="str">"한국어 음성 (Yuna 권장)"</span> : <span class="str">"영어 음성 (Samantha 권장)"</span>
+        <span class="kw">return</span> <span class="tp">PreflightCheck</span>(
+            kind: kind, passed: hasUsable,
+            userMessage: hasUsable ? <span class="kw">nil</span> : <span class="str">"\(displayName) — 고품질 다운로드 필요"</span>,
+            recoveryDeeplink: <span class="tp">URL</span>(string:
+                <span class="str">"x-apple.systempreferences:com.apple.preference.universalaccess?SpokenContent"</span>),
+            inAppInstaller: <span class="kw">nil</span>  <span class="cmt">// TTS는 in-app 자동 설치 API 없음</span>
+        )
+    }
+
+    <span class="cmt">/// F2 — macOS 26 SpeechAnalyzer + AssetInventory in-app 다운로드</span>
+    <span class="kw">private static func</span> <span class="fn">checkSTT</span>(locale: <span class="tp">String</span>, kind: <span class="tp">PreflightCheck</span>.<span class="tp">Kind</span>) <span class="kw">async</span> -> <span class="tp">PreflightCheck</span> {
+        <span class="kw">let</span> loc = <span class="tp">Locale</span>(identifier: locale)
+        <span class="kw">let</span> available = <span class="kw">await</span> <span class="tp">SpeechTranscriber</span>.<span class="fn">isAvailable</span>(for: loc)
+        <span class="kw">let</span> displayName = locale == <span class="str">"ko_KR"</span> ? <span class="str">"한국어 음성 인식"</span> : <span class="str">"영어 음성 인식"</span>
+        <span class="kw">return</span> <span class="tp">PreflightCheck</span>(
+            kind: kind, passed: available,
+            userMessage: available ? <span class="kw">nil</span> : <span class="str">"\(displayName) — 자료 다운로드 필요 (~70 MB)"</span>,
+            recoveryDeeplink: <span class="tp">URL</span>(string:
+                <span class="str">"x-apple.systempreferences:com.apple.preference.speech?Dictation"</span>),
+            inAppInstaller: {
+                <span class="kw">let</span> transcriber = <span class="tp">SpeechTranscriber</span>(
+                    locale: loc, transcriptionOptions: [],
+                    reportingOptions: [.volatileResults], attributeOptions: []
+                )
+                <span class="kw">if let</span> req = <span class="kw">try await</span> <span class="tp">AssetInventory</span>.<span class="fn">assetInstallationRequest</span>(supporting: [transcriber]) {
+                    <span class="kw">try await</span> req.<span class="fn">downloadAndInstall</span>()
+                }
+            }
+        )
+    }
+
+    <span class="cmt">/// 더 효율적: 두 locale을 한 요청에 묶어 단일 다운로드 세션</span>
+    <span class="kw">static func</span> <span class="fn">installSTTAssetsBilingual</span>() <span class="kw">async throws</span> -> <span class="tp">Progress</span>? {
+        <span class="kw">let</span> ko = <span class="tp">SpeechTranscriber</span>(
+            locale: <span class="tp">Locale</span>(identifier: <span class="str">"ko_KR"</span>),
+            transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: []
+        )
+        <span class="kw">let</span> en = <span class="tp">SpeechTranscriber</span>(
+            locale: <span class="tp">Locale</span>(identifier: <span class="str">"en_US"</span>),
+            transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: []
+        )
+        <span class="kw">guard let</span> req = <span class="kw">try await</span> <span class="tp">AssetInventory</span>.<span class="fn">assetInstallationRequest</span>(supporting: [ko, en]) <span class="kw">else</span> {
+            <span class="kw">return nil</span>  <span class="cmt">// 자산이 이미 모두 설치된 상태</span>
+        }
+        <span class="cmt">// req.progress를 SwiftUI ProgressView(value:)에 바인딩 가능</span>
+        <span class="kw">try await</span> req.<span class="fn">downloadAndInstall</span>()
+        <span class="kw">return</span> req.progress
+    }
+
+    <span class="kw">private static func</span> <span class="fn">checkDiskSpace</span>(minBytes: <span class="tp">Int64</span>) <span class="kw">async</span> -> <span class="tp">PreflightCheck</span> {
+        <span class="kw">let</span> url = <span class="tp">URL</span>(fileURLWithPath: <span class="tp">NSHomeDirectory</span>())
+        <span class="kw">let</span> values = <span class="kw">try</span>? url.<span class="fn">resourceValues</span>(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+        <span class="kw">let</span> available = values?.volumeAvailableCapacityForImportantUsage ?? 0
+        <span class="kw">let</span> ok = available >= minBytes
+        <span class="kw">let</span> gbAvail = <span class="tp">Double</span>(available) / 1024 / 1024 / 1024
+        <span class="kw">return</span> <span class="tp">PreflightCheck</span>(
+            kind: .diskSpace, passed: ok,
+            userMessage: ok ? <span class="kw">nil</span>
+                : <span class="tp">String</span>(format: <span class="str">"디스크 여유 부족 — 약 %.1f GB만 남아 있어. 최소 8 GB가 필요해."</span>, gbAvail),
+            recoveryDeeplink: <span class="kw">nil</span>, inAppInstaller: <span class="kw">nil</span>
+        )
+    }
+
+    <span class="cmt">// macOSVersion (≥26.0), appleSilicon, gemmaWeights 체크는 동일 패턴으로 추가</span>
+}</code></pre>
+
+<h3>6.3 SocraticAppViewModel 확장</h3>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// ContentView.swift SocraticAppViewModel 안에 추가</span>
+
+<span class="kw">enum</span> <span class="tp">PreflightStatus</span>: <span class="tp">Equatable</span> {
+    <span class="kw">case</span> idle, running, allReady
+    <span class="kw">case</span> blocked(missing: [<span class="tp">PreflightCheck</span>])
+}
+
+<span class="kw">enum</span> <span class="tp">BootstrapStage</span>: <span class="tp">String</span> {
+    <span class="kw">case</span> downloadingWeights = <span class="str">"Gemma 4 모델 다운로드 중"</span>
+    <span class="kw">case</span> verifying          = <span class="str">"모델 검증 중"</span>
+    <span class="kw">case</span> loadingIntoMemory  = <span class="str">"모델 메모리에 올리는 중"</span>
+    <span class="kw">case</span> warmingUp          = <span class="str">"흉상 깨우는 중"</span>
+}
+
+@<span class="tp">Published</span> <span class="kw">var</span> preflight: <span class="tp">PreflightStatus</span> = .idle
+@<span class="tp">Published</span> <span class="kw">var</span> bootstrapStage: <span class="tp">BootstrapStage</span> = .loadingIntoMemory
+@<span class="tp">Published</span> <span class="kw">var</span> bootstrapDetail: <span class="tp">String</span> = <span class="str">""</span>
+@<span class="tp">Published</span> <span class="kw">var</span> permissionsRequested: <span class="tp">Bool</span> = <span class="kw">false</span>
+
+<span class="kw">func</span> <span class="fn">runPreflightAndBootstrap</span>() <span class="kw">async</span> {
+    preflight = .running
+    <span class="kw">let</span> checks = <span class="kw">await</span> <span class="tp">PreflightRunner</span>.<span class="fn">runAll</span>()
+    <span class="kw">let</span> failing = checks.<span class="fn">filter</span> { !$0.passed }
+    <span class="kw">if</span> !failing.isEmpty {
+        preflight = .blocked(missing: failing)
+        <span class="kw">return</span>  <span class="cmt">// UI에서 사용자가 해결 후 retry 버튼으로 재진입</span>
+    }
+    preflight = .allReady
+    <span class="kw">await</span> <span class="fn">bootstrap</span>()
+}
+
+<span class="cmt">// 첫 Spacebar 직전에 호출 — beginListening() 안에서 분기</span>
+<span class="kw">func</span> <span class="fn">requestPermissionsIfNeededThenListen</span>() <span class="kw">async</span> {
+    <span class="kw">if</span> !permissionsRequested {
+        <span class="cmt">// SwiftUI sheet로 explainer 보여준 뒤 호출되도록 분리</span>
+        <span class="kw">_</span> = <span class="kw">await</span> coordinator.audio.<span class="fn">requestPermissions</span>()
+        permissionsRequested = <span class="kw">true</span>
+    }
+    <span class="fn">beginListening</span>()
+}</code></pre>
+
+<h3>6.4 사용자가 시스템 설정 갔다가 돌아왔을 때 자동 재검사</h3>
+
+<pre><span class="lang-label">swift</span><button class="copy-btn">copy</button><code><span class="cmt">// AppDelegate에 추가 — 또는 ViewModel init에서 NotificationCenter 등록</span>
+
+<span class="kw">override init</span>() {
+    <span class="kw">super</span>.<span class="fn">init</span>()
+    <span class="tp">NSWorkspace</span>.shared.notificationCenter.<span class="fn">addObserver</span>(
+        forName: <span class="tp">NSWorkspace</span>.didActivateApplicationNotification,
+        object: <span class="kw">nil</span>, queue: .main
+    ) { [weak self] notification <span class="kw">in</span>
+        <span class="kw">guard</span> <span class="kw">let</span> app = notification.userInfo?[<span class="tp">NSWorkspace</span>.applicationUserInfoKey] <span class="kw">as</span>? <span class="tp">NSRunningApplication</span>,
+              app.bundleIdentifier == <span class="tp">Bundle</span>.main.bundleIdentifier
+        <span class="kw">else</span> { <span class="kw">return</span> }
+        <span class="cmt">// 사용자가 우리 앱으로 복귀 — preflight가 blocked 상태면 재검사</span>
+        <span class="tp">Task</span> { @<span class="tp">MainActor</span> <span class="kw">in</span>
+            <span class="kw">if case</span> .blocked = self?.preflight {
+                <span class="kw">await</span> self?.<span class="fn">runPreflightAndBootstrap</span>()
+            }
+        }
+    }
+}</code></pre>
+
+<h3>6.5 T1.1 즉시 적용 패치 — 양언어 (5분, Tier A 안전망)</h3>
+
+<pre><span class="lang-label">diff</span><button class="copy-btn">copy</button><code><span class="cmt">--- a/apps/macos/HeWasSocrates/HeWasSocrates/ContentView.swift</span>
+<span class="cmt">+++ b/apps/macos/HeWasSocrates/HeWasSocrates/ContentView.swift</span>
+<span class="cmt">@@ -312,6 +312,9 @@ enum FailedMessage {</span>
+         case PhaseFailureKey.sttOnDeviceUnsupported:
+-            return "시스템 설정 → Siri 및 Spotlight → 사용 가능한 언어에서 한국어를 켜라."
++            return "시스템 설정 → 키보드 → 받아쓰기 → 언어에서\n한국어와 영어를 모두 추가하라."
++        case PhaseFailureKey.ttsVoiceMissing:
++            return "시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성에서\n한국어(Yuna)와 영어(Samantha) 모두 고품질로 다운로드하라."
+         case PhaseFailureKey.audioInterrupted:
+             return "다른 오디오 앱을 닫고 Spacebar로 다시 시도하라."</code></pre>
+
+<h3>6.6 Info.plist 카피 평어체 보정</h3>
+
+<pre><span class="lang-label">diff</span><button class="copy-btn">copy</button><code><span class="cmt">--- a/apps/macos/HeWasSocrates/HeWasSocrates/Resources/Info.plist</span>
+<span class="cmt">+++ b/apps/macos/HeWasSocrates/HeWasSocrates/Resources/Info.plist</span>
+<span class="cmt">@@ -63,7 +63,7 @@</span>
+ 	&lt;key&gt;NSMicrophoneUsageDescription&lt;/key&gt;
+-	&lt;string&gt;마이크는 당신의 질문을 듣기 위해서만 사용됩니다. 음성은 기기를 절대 떠나지 않습니다.
++	&lt;string&gt;마이크는 당신의 질문을 듣기 위해서만 필요해. 음성은 기기를 절대 떠나지 않아.
+ (Microphone is used only to hear your question. Audio never leaves this device.)&lt;/string&gt;
+
+ 	&lt;key&gt;NSSpeechRecognitionUsageDescription&lt;/key&gt;
+-	&lt;string&gt;음성 인식은 기기 안에서만 처리됩니다. 0 byte의 데이터도 외부로 전송되지 않습니다.
++	&lt;string&gt;음성 인식은 기기 안에서만 처리돼. 0 byte의 데이터도 외부로 전송되지 않아.
+ (Speech recognition runs on-device only. Zero bytes leave this device.)&lt;/string&gt;</code></pre>
+
+<div class="callout callout-tip">
+  <div class="icon">💡</div>
+  <div class="body">
+    <p>평어체 보정은 system prompt와의 톤 일관성을 위함. CLAUDE.md absolute invariant #3 ("Korean tone is locked to 단정한 평어체") 적용. <strong>사용자 명시적 승인 후 진행 권장</strong> — 카피 변경은 가시적 surface.</p>
+  </div>
+</div>
+
+</section>
+
+<section id="references">
+<h2>참고 자료</h2>
+
+<h3>Apple 공식</h3>
+<ul>
+  <li><a href="https://developer.apple.com/design/human-interface-guidelines">Apple Developer — Human Interface Guidelines</a> (Privacy, Progress Indicators, Onboarding 섹션)</li>
+  <li><a href="https://developer.apple.com/documentation/avfaudio/avspeechsynthesisvoice">AVSpeechSynthesisVoice</a> · <a href="https://developer.apple.com/documentation/avfaudio/avspeechsynthesisvoicequality">AVSpeechSynthesisVoiceQuality</a> · <a href="https://developer.apple.com/documentation/avfaudio/avspeechsynthesizer">AVSpeechSynthesizer</a></li>
+  <li><a href="https://developer.apple.com/documentation/speech/sfspeechrecognizer">SFSpeechRecognizer</a> · <a href="https://developer.apple.com/documentation/speech/sfspeechrecognizer/supportsondevicerecognition">supportsOnDeviceRecognition</a></li>
+  <li><a href="https://developer.apple.com/documentation/speech/speechanalyzer">SpeechAnalyzer (macOS 26)</a> · <a href="https://developer.apple.com/documentation/speech/speechtranscriber">SpeechTranscriber</a> · <a href="https://developer.apple.com/documentation/speech/assetinventory">AssetInventory</a></li>
+  <li><a href="https://developer.apple.com/videos/play/wwdc2025/277/">WWDC25 Session 277 — Bring advanced speech-to-text to your app</a> · <a href="https://developer.apple.com/documentation/speech/transcribing-speech-to-text">Sample: Transcribing speech to text</a></li>
+  <li><a href="https://developer.apple.com/documentation/foundation/url_loading_system/pausing_and_resuming_downloads">Pausing and resuming downloads</a> · <a href="https://developer.apple.com/documentation/foundation/urlsessiondownloadtask">URLSessionDownloadTask</a></li>
+  <li><a href="https://developer.apple.com/documentation/backgroundassets">Background Assets</a> · <a href="https://developer.apple.com/videos/play/wwdc2025/325/">WWDC25 Session 325 (Apple-Hosted)</a></li>
+  <li><a href="https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/On_Demand_Resources_Guide/">ODR Archive Guide (macOS 미지원 명시)</a></li>
+  <li><a href="https://developer.apple.com/documentation/xcode/configuring-the-macos-app-sandbox">Configuring the macOS App Sandbox</a> · <a href="https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/EnablingAppSandbox.html">Entitlement Key Reference</a></li>
+</ul>
+
+<h3>Apple Developer Forums (관련 답변 thread)</h3>
+<ul>
+  <li><a href="https://developer.apple.com/forums/thread/65606">#65606 — NSWorkspace open URL from sandboxed app</a></li>
+  <li><a href="https://developer.apple.com/forums/thread/703770">#703770 — SFSpeechRecognizer kLSRErrorDomain 102 (asset missing)</a></li>
+  <li><a href="https://developer.apple.com/forums/thread/758460">#758460 — AVSpeechSynthesisVoice install detection (불가능 명시)</a></li>
+  <li><a href="https://developer.apple.com/forums/thread/761193">#761193 — SystemPreferences URL Scheme</a></li>
+  <li><a href="https://developer.apple.com/forums/thread/788581">#788581 — SpeechAnalyzer / AssetInventory</a></li>
+</ul>
+
+<h3>Community Canonical Reference</h3>
+<ul>
+  <li><a href="https://gist.github.com/rmcdongit/f66ff91e0dad78d4d6346a75ded4b751">rmcdongit gist — Apple System Preferences URL Schemes</a> (2024-11-18 Sequoia 15.2 검증)</li>
+  <li><a href="https://macmost.com/mac-settings-links">macmost.com — Mac System Settings Links</a></li>
+  <li><a href="https://github.com/jaywcjlove/SystemSettings-URLs-macOS">jaywcjlove/SystemSettings-URLs-macOS</a></li>
+</ul>
+
+<h3>Prior Art (실 앱)</h3>
+<ul>
+  <li><a href="https://ollama.com/blog/new-app">Ollama — New macOS App</a> · <a href="https://github.com/ollama/ollama/issues/8484">issue #8484 (progress regression)</a></li>
+  <li><a href="https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/1031">LM Studio bug #1031 (timeout)</a> · <a href="https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/1222">#1222 (checksum)</a></li>
+  <li><a href="https://macwhisper.helpscoutdocs.com/article/29-switching-to-a-whisperkit-model">MacWhisper — Switching WhisperKit model</a></li>
+  <li><a href="https://useyourloaf.com/blog/synthesized-speech-from-text/">useyourloaf — Synthesized Speech From Text</a></li>
+  <li><a href="https://bendodson.com/weblog/2024/04/03/using-your-personal-voice-in-an-ios-app/">Bendodson — Personal Voice in iOS app</a></li>
+</ul>
+
+<h3>본 프로젝트 참조</h3>
+<ul>
+  <li><span class="fileref">CLAUDE.md</span> — absolute invariants</li>
+  <li><span class="fileref">claudedocs/2026-05-06-session-handoff-firstlaunch-ux.md</span> — 핸드오프 doc (본 보고서가 보정 대상)</li>
+  <li><span class="fileref">runs/2026-05-05-spec/spec/SPEC.md</span> + iter delta 문서 — 안정 surface lock</li>
+</ul>
+
+</section>
+
+<footer class="report-footer">
+  <p>He Was Socrates · Korean Socratic on-device · Two-Weeks-Team · 본 보고서는 마감(2026-05-19) 전 사용자 의사결정 자료로 생성됨.</p>
+  <p>모든 주장은 Apple 공식 자료 또는 커뮤니티 canonical reference로 검증되었으며, 검증 불가 항목은 명시되어 있다.</p>
+</footer>
+
+</main>
+</div>
+
+<button class="scroll-top-btn" id="scrollTopBtn" aria-label="맨 위로">↑</button>
+
+<script>
+// Active TOC tracking
+const sections = document.querySelectorAll('section[id], div.friction-card[id]');
+const tocLinks = document.querySelectorAll('aside.toc a');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      tocLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// Copy buttons
+document.querySelectorAll('pre .copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const code = btn.parentElement.querySelector('code').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'copied';
+      setTimeout(() => btn.textContent = orig, 1200);
+    });
+  });
+});
+
+// Scroll-to-top
+const topBtn = document.getElementById('scrollTopBtn');
+window.addEventListener('scroll', () => {
+  topBtn.classList.toggle('visible', window.scrollY > 600);
+});
+topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
+
+</body>
+</html>
