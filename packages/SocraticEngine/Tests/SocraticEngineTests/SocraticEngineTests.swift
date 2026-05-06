@@ -793,3 +793,49 @@ struct PerformanceCacheTests {
         }
     }
 }
+
+@Suite("GenerateParametersBox KV-cache fields (PR-λ F19)")
+struct GenerateParametersBoxKVQuantTests {
+    @Test func defaultBoxOmitsKVQuant() {
+        // PR-λ F19: ship default with `kvBits = nil` until upstream Gemma 4
+        // in mlx-swift-lm 3.31.3 grows the missing `if let quantizedCache =
+        // ...` branch. This test pins the default so a future PR that
+        // accidentally enables KV quantization gets a red CI before the
+        // fatal-error reproduces in production. Citation: bench evidence
+        // captured in claudedocs/bench/2026-05-06-latency-bench-kvquant.log.
+        let box = GenerateParametersBox(temperature: 0.0, topP: 1.0, maxTokens: 192)
+        #expect(box.kvBits == nil)
+        #expect(box.kvGroupSize == 64)
+        #expect(box.quantizedKVStart == 0)
+    }
+
+    @Test func explicitKVQuantSettingsRoundTrip() {
+        // The fields must accept caller overrides so the engine is
+        // forward-ready: when upstream fixes Gemma 4's quantized cache path,
+        // a single line at the call site (set kvBits: 4) flips the feature
+        // on without a schema change.
+        let box = GenerateParametersBox(
+            temperature: 0.0,
+            topP: 1.0,
+            maxTokens: 64,
+            kvBits: 4,
+            kvGroupSize: 32,
+            quantizedKVStart: 16
+        )
+        #expect(box.kvBits == 4)
+        #expect(box.kvGroupSize == 32)
+        #expect(box.quantizedKVStart == 16)
+    }
+
+    @Test func gemmaServiceShipsWithQuantDisabled() async {
+        // PR-λ F19: contract pin — `GemmaService.generateParameters.kvBits`
+        // is `nil` by default. If a future PR sets it to non-nil to "speed
+        // things up", the production app would fatal-error on first
+        // inference (Gemma4.swift in mlx-swift-lm 3.31.3 does not handle
+        // QuantizedKVCache on every attention path). This test fails
+        // immediately so the regression is caught before merge.
+        let svc = GemmaService(mode: .stub)
+        let kvBits = await svc.generateParameters.kvBits
+        #expect(kvBits == nil, "Gemma 4 in mlx-swift-lm 3.31.3 cannot ship with kvBits != nil — see claudedocs/bench/2026-05-06-latency-bench-kvquant.log for the QuantizedKVCache.update() trap")
+    }
+}

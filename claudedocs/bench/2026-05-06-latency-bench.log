@@ -1,0 +1,28 @@
+[latency-bench] MLX default device: Device(gpu, 0) (type=Optional(MLX.DeviceType.gpu))
+[latency-bench] GPU active memory before load: 0 bytes
+[latency-bench] loading Gemma 4 E4B 4-bit...
+[latency-bench] KV cache quantization: bits=nil groupSize=64
+[latency-bench] load: 2030 ms
+[latency-bench] warmup: 5025 ms
+[latency-bench] turn 1/10: ask-back/curious-adult-1
+[latency-bench]   wall: 5227 ms · reply chars: 21 · deferred: false
+[latency-bench] turn 2/10: ask-back/stuck-thinker-1
+[latency-bench]   wall: 5395 ms · reply chars: 29 · deferred: false
+[latency-bench] turn 3/10: ask-back/curious-adult-2
+[latency-bench]   wall: 5546 ms · reply chars: 29 · deferred: false
+[latency-bench] turn 4/10: defer/regulated-medical
+[latency-bench]   wall: 6098 ms · reply chars: 39 · deferred: true
+[latency-bench] turn 5/10: ask-back/curious-adult-3
+[latency-bench]   wall: 5707 ms · reply chars: 23 · deferred: false
+[latency-bench] turn 6/10: ask-back/stuck-thinker-2
+[latency-bench]   wall: 6011 ms · reply chars: 34 · deferred: false
+[latency-bench] turn 7/10: ask-back/curious-adult-4
+[latency-bench]   wall: 6003 ms · reply chars: 32 · deferred: false
+[latency-bench] turn 8/10: defer/regulated-financial
+[latency-bench]   wall: 6543 ms · reply chars: 36 · deferred: true
+[latency-bench] turn 9/10: ask-back/curious-adult-5
+[latency-bench]   wall: 6085 ms · reply chars: 24 · deferred: false
+[latency-bench] turn 10/10: ask-back/stuck-thinker-3
+[latency-bench]   wall: 7443 ms · reply chars: 23 · deferred: false
+[latency-bench] GPU active memory after bench: 4701905216 bytes (Δ=4701905216)
+[latency-bench] GPU peak memory: 5613096902 bytes  cache: 25894494652 bytes

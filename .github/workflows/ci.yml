@@ -26,10 +26,13 @@ env:
 
 jobs:
   # -------------------------------------------------------------------------
-  # 1) Build the Python venv + asset pipeline + Swift Package + 41 tests.
+  # 1) Build the Python venv + asset pipeline + Swift Package + the full
+  #    swift-testing suite (62 tests at the time of writing, but the count
+  #    drifts as PRs land — the job runs `make engine-test` which executes
+  #    the entire suite, so the number in this comment is informational only).
   # -------------------------------------------------------------------------
   engine-build-and-test:
-    name: Engine build & 41 swift-testing scenarios
+    name: Engine build & swift-testing suite
     runs-on: macos-15
     timeout-minutes: 15
     steps:

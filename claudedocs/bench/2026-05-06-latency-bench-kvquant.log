@@ -1,0 +1,6 @@
+[latency-bench] MLX default device: Device(gpu, 0) (type=Optional(MLX.DeviceType.gpu))
+[latency-bench] GPU active memory before load: 0 bytes
+[latency-bench] loading Gemma 4 E4B 4-bit...
+[latency-bench] KV cache quantization: bits=4 groupSize=64
+[latency-bench] load: 2187 ms
+MLXLMCommon/KVCache.swift:894: Fatal error: `update` was called on `QuantizedKVCache`. Use `updateQuantized` instead.
