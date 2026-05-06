@@ -28,7 +28,8 @@ struct ContentView: View {
                 StatusOverlay(
                     phase: vm.phase,
                     partialTranscript: vm.partialTranscript,
-                    loadProgress: vm.loadProgress
+                    loadProgress: vm.loadProgress,
+                    bootstrapStage: vm.bootstrapStage
                 )
                 .padding(.bottom, 24)
 
@@ -89,6 +90,32 @@ final class SocraticAppViewModel: ObservableObject {
     @Published var caption: String = ""
     @Published var loadProgress: Double = 0
 
+    /// Phase-aware bootstrap label per Apple HIG:
+    /// > "Include a label above an activity indicator … avoid vague terms like
+    /// > loading or authenticating because they don't usually add any value …
+    /// > only use progress bars for tasks that are quantifiable."
+    /// (developer.apple.com/design/human-interface-guidelines)
+    ///
+    /// Drives StatusOverlay's `.bootstrapping` rendering. Set by
+    /// `loadProgressPoll` from `GemmaService.LoadState` plus a manual
+    /// `.warmingUp` transition once `.ready` is observed but the
+    /// coordinator is still inside `gemma.warmup()`.
+    @Published var bootstrapStage: BootstrapStage = .loadingIntoMemory
+
+    public enum BootstrapStage: String, Equatable, Sendable {
+        case downloadingWeights
+        case loadingIntoMemory
+        case warmingUp
+
+        public var displayLabel: String {
+            switch self {
+            case .downloadingWeights: return "Gemma 4 모델 다운로드 중"
+            case .loadingIntoMemory: return "모델 메모리에 올리는 중"
+            case .warmingUp: return "흉상 깨우는 중"
+            }
+        }
+    }
+
     init(gemmaMode: GemmaService.RuntimeMode = SocraticAppViewModel.defaultGemmaMode()) {
         self.coordinator = EngineCoordinator(gemmaMode: gemmaMode)
         wire()
@@ -146,8 +173,19 @@ final class SocraticAppViewModel: ObservableObject {
                 switch state {
                 case .loading(let p):
                     self.loadProgress = p
+                    // Below ~95% → user is still observing transfer-driven
+                    // motion (HF chunks / cache reads). At 95–100% the bar
+                    // pauses while MLX runs final tokenizer + weight wiring,
+                    // which feels frozen unless we relabel it.
+                    self.bootstrapStage = p < 0.95 ? .downloadingWeights : .loadingIntoMemory
                 case .ready:
                     self.loadProgress = 1.0
+                    // Model is in memory but coordinator.bootstrap() is now
+                    // running gemma.warmup() (~5 s the first launch, near-
+                    // instant on subsequent ones thanks to the disk-mediated
+                    // KV cache from PR-Λ). Surface that as a distinct stage
+                    // so the user doesn't watch a frozen 100 % bar.
+                    self.bootstrapStage = .warmingUp
                     return
                 case .failed:
                     return
@@ -178,26 +216,44 @@ final class SocraticAppViewModel: ObservableObject {
 // MARK: - Status overlay
 
 /// Renders a single line below the bust matching the current `Phase`. Plus
-/// a determinate progress bar while Gemma weights are downloading.
+/// a phase-aware bootstrap label (PR-T1.3 / iter-6) and either a determinate
+/// progress bar (download / load-into-memory) or an indeterminate spinner
+/// (warmup — model in memory, no quantifiable progress source).
 struct StatusOverlay: View {
     let phase: EngineCoordinator.Phase
     let partialTranscript: String
     let loadProgress: Double
+    let bootstrapStage: SocraticAppViewModel.BootstrapStage
 
     var body: some View {
         Group {
             switch phase {
             case .bootstrapping:
-                VStack(spacing: 6) {
-                    Text(loadingLabel)
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundColor(Color(white: 0.55))
-                    ProgressView(value: loadProgress)
-                        .progressViewStyle(.linear)
-                        .frame(width: 360)
-                        .tint(Color(white: 0.85))
+                VStack(spacing: 8) {
+                    Text(bootstrapStage.displayLabel)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(white: 0.7))
+                    if bootstrapStage == .warmingUp {
+                        // Apple HIG: "only use progress bars for tasks that are
+                        // quantifiable." Warmup has no progress source, so we
+                        // surface activity with an indeterminate spinner +
+                        // phase label rather than a misleading frozen 100% bar.
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .controlSize(.small)
+                    } else {
+                        VStack(spacing: 4) {
+                            ProgressView(value: loadProgress)
+                                .progressViewStyle(.linear)
+                                .frame(width: 360)
+                                .tint(Color(white: 0.85))
+                            Text("\(Int(loadProgress * 100))%")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(Color(white: 0.45))
+                        }
+                    }
                 }
-                .accessibilityLabel("Loading Gemma 4 model: \(Int(loadProgress * 100)) percent")
+                .accessibilityLabel("\(bootstrapStage.displayLabel) \(Int(loadProgress * 100)) percent")
 
             case .idle:
                 Text("Press Space — 누르고 말하라")
@@ -245,12 +301,6 @@ struct StatusOverlay: View {
         }
     }
 
-    private var loadingLabel: String {
-        if loadProgress > 0 {
-            return "Gemma 4 E4B 4-bit · \(Int(loadProgress * 100))%"
-        }
-        return "Gemma 4 E4B 4-bit · 준비 중"
-    }
 }
 
 // MARK: - Failure-key localization (PR-δ)
@@ -310,7 +360,9 @@ enum FailedMessage {
         case PhaseFailureKey.bootstrapTimeout:
             return "잠시 뒤 다시 시도하라. 그래도 멈추면 앱을 다시 실행하라."
         case PhaseFailureKey.sttOnDeviceUnsupported:
-            return "시스템 설정 → Siri 및 Spotlight → 사용 가능한 언어에서 한국어를 켜라."
+            return "시스템 설정 → 키보드 → 받아쓰기 → 언어에서\n한국어와 영어를 모두 추가하라."
+        case PhaseFailureKey.ttsVoiceMissing:
+            return "시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성에서\n한국어(Yuna)와 영어(Samantha) 모두 고품질로 다운로드하라."
         case PhaseFailureKey.audioInterrupted:
             return "다른 오디오 앱을 닫고 Spacebar로 다시 시도하라."
         case PhaseFailureKey.turnTimeout:
