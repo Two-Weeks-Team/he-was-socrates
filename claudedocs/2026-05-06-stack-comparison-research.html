@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark" data-layout="slide">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>He Was Socrates — 17-Agent Stack Comparison & Optimization Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-2: #8b949e;
+    --accent: #58a6ff;
+    --success: #3fb950;
+    --warn: #d29922;
+    --error: #f85149;
+    --purple: #a371f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-size: 16px; line-height: 1.55; height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, pre, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .deck { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    padding: 40px 56px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .slide.active { display: flex; }
+  .slide h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .slide h2 { font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .slide h3 { font-size: 17px; font-weight: 600; margin: 12px 0 6px; color: var(--text); }
+  .slide p { color: var(--text-2); margin-bottom: 6px; font-size: 14px; }
+  .slide ul, .slide ol { margin: 6px 0 6px 22px; color: var(--text-2); font-size: 14px; }
+  .slide li { margin: 3px 0; }
+  .slide li b, .slide li strong { color: var(--text); }
+  .grid { display: grid; gap: 14px; }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .card .num { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .card .label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .card .desc { font-size: 12px; color: var(--text); margin-top: 4px; }
+  .pill {
+    display: inline-block; padding: 1px 7px; border-radius: 4px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .pill.crit { background: rgba(248,81,73,.15); color: var(--error); border: 1px solid rgba(248,81,73,.3); }
+  .pill.imp  { background: rgba(210,153,34,.15); color: var(--warn); border: 1px solid rgba(210,153,34,.3); }
+  .pill.ok   { background: rgba(63,185,80,.15); color: var(--success); border: 1px solid rgba(63,185,80,.3); }
+  .pill.info { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.3); }
+  .pill.def  { background: rgba(163,113,247,.15); color: var(--purple); border: 1px solid rgba(163,113,247,.3); }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    background: var(--surface); border-radius: 6px; overflow: hidden;
+  }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--surface-2); color: var(--accent); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: none; }
+  td.mono { font-family: "JetBrains Mono", monospace; font-size: 11px; }
+  pre, .code {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    line-height: 1.5; color: var(--text);
+    overflow-x: auto; white-space: pre;
+  }
+  pre .k { color: #ff7b72; }
+  pre .s { color: #a5d6ff; }
+  pre .c { color: #8b949e; font-style: italic; }
+  pre .n { color: #79c0ff; }
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 6px 0;
+    font-size: 12px;
+  }
+  .callout.success { border-color: var(--success); }
+  .callout.warn    { border-color: var(--warn); }
+  .callout.error   { border-color: var(--error); }
+  .callout.tip     { border-color: var(--purple); }
+  .nav {
+    position: fixed; bottom: 12px; left: 0; right: 0;
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    z-index: 50; pointer-events: none;
+  }
+  .nav button {
+    pointer-events: auto;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px;
+    cursor: pointer; font-family: inherit; font-size: 12px;
+  }
+  .nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .nav .indicator {
+    pointer-events: auto;
+    background: var(--surface); color: var(--text-2);
+    border: 1px solid var(--border);
+    padding: 3px 10px; border-radius: 999px; font-size: 11px;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .title-page { align-items: center; justify-content: center; text-align: center; }
+  .title-page h1 { font-size: 48px; }
+  .title-page .subtitle { color: var(--text-2); font-size: 18px; margin: 14px 0 24px; }
+  .stamp { font-family: "JetBrains Mono", monospace; color: var(--text-2); font-size: 12px; margin-top: 18px; }
+  .scroll-area { overflow-y: auto; flex: 1; padding-right: 6px; }
+  .scroll-area::-webkit-scrollbar { width: 8px; }
+  .scroll-area::-webkit-scrollbar-track { background: var(--surface-2); }
+  .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  .scroll-area::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  .accent { color: var(--accent); }
+  .ok { color: var(--success); }
+  .warn { color: var(--warn); }
+  .err { color: var(--error); }
+  .pur { color: var(--purple); }
+  .small { font-size: 12px; color: var(--text-2); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  @media print {
+    .nav { display: none; }
+    .deck { height: auto; overflow: visible; }
+    .slide {
+      display: flex !important; position: relative;
+      page-break-after: always;
+      width: 100%; height: 100vh;
+      padding: 1cm; break-inside: avoid;
+    }
+    @page { size: landscape; margin: 1cm; }
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- Slide 1: Title -->
+<section class="slide title-page active">
+  <h1>He Was Socrates</h1>
+  <div class="subtitle">17-Agent Stack Comparison & Optimization Roadmap<br>Cloud vendors · Gemma 4 benchmarks · Apple Silicon frameworks · GitHub bleeding-edge</div>
+  <div>
+    <span class="pill ok">Stack defensible</span>
+    <span class="pill info">17 agents</span>
+    <span class="pill imp">Free lunch found: PR #237</span>
+    <span class="pill def">6s = feature</span>
+  </div>
+  <div class="stamp">2026-05-06 · Two-Weeks-Team/he-was-socrates · M1 Max MBP 64GB · Gemma 4 E4B 4-bit MLX</div>
+</section>
+
+<!-- Slide 2: TOC -->
+<section class="slide">
+  <h2>Contents</h2>
+  <div class="grid grid-2 scroll-area">
+    <ol>
+      <li>Title</li>
+      <li>Contents</li>
+      <li>Executive Summary</li>
+      <li>17-Agent Methodology</li>
+      <li>Our Baseline (recap)</li>
+      <li>Cloud Vendors — Groq</li>
+      <li>Cloud Vendors — Provider Table</li>
+      <li>Gemma 4 Official Benchmarks</li>
+      <li>Gemma 4 — Korean Gap & Apple Silicon</li>
+      <li>Framework Comparison</li>
+      <li>Apple Foundation Models — Why Not</li>
+      <li>Academic / Research Papers</li>
+    </ol>
+    <ol start="13">
+      <li>UX Literature — 6s is a Feature</li>
+      <li>Voice Agent Latency Market</li>
+      <li>GitHub — PR #237 (Free Lunch)</li>
+      <li>GitHub — Active mlx-swift-lm Forks</li>
+      <li>GitHub — Speculative Decoding</li>
+      <li>GitHub — Voice Agent Ecosystem</li>
+      <li>GitHub — Bleeding-Edge Optimizations</li>
+      <li>Action Plan — Tier 1 (Do Now)</li>
+      <li>Action Plan — Tier 2 + Tier 3</li>
+      <li>Latency Floor Projection</li>
+      <li>Final Verdict</li>
+      <li>Citation Index</li>
+    </ol>
+  </div>
+</section>
+
+<!-- Slide 3: Executive Summary -->
+<section class="slide">
+  <h2>🎯 Executive Summary</h2>
+  <div class="grid grid-4">
+    <div class="card"><div class="num">17</div><div class="label">specialist agents</div><div class="desc">12 web research + 5 GitHub-focused, all parallel</div></div>
+    <div class="card"><div class="num">~150</div><div class="label">URLs cited</div><div class="desc">Apple/Google/arXiv/GitHub/HF, dated</div></div>
+    <div class="card"><div class="num accent">PR #237</div><div class="label">free lunch</div><div class="desc">Fixes our KV-quant fatal-error, single-file, OPEN</div></div>
+    <div class="card"><div class="num ok">YES</div><div class="label">stack is right</div><div class="desc">MLX + Gemma 4 E4B 4-bit defensible across all 17 dims</div></div>
+  </div>
+  <h3 style="margin-top: 14px;">Headline findings</h3>
+  <ul>
+    <li><b>Our 6.0 s/turn floor is in the same league as Khan Academy's Khanmigo</b> (3–6 s production Socratic tutor) — and per <b>Tan & Nov (CHI 2026, n=240)</b>, identical content rated <i>more thoughtful</i> at 6 s than at 2 s.</li>
+    <li><b>Cloud frontier (Groq/SambaNova/Cerebras) cannot host Gemma 4 E4B</b> as of 2026-05-06 — open-weights only, zero API providers. Even if available, ~1 s/turn would violate NO-CLOUD invariant.</li>
+    <li><b>Apple Foundation Models is a dead end</b> for our use case — guardrails non-disablable + 4096-token <i>cumulative</i> context window blocks our verbatim Korean Socratic prompt + 4-function dispatch.</li>
+    <li><b>MLX is genuinely best</b> for single-stream short-context 4B-class on Apple Silicon (20–87% over llama.cpp; LM Studio measured 26–60% MLX vs llama.cpp on same Mac).</li>
+    <li><b>Gemma 4 E4B-it-assistant</b> (78.8M MTP drafter) was released yesterday (2026-05-05). Only 1.56× speedup on E4B M3 Max — modest but real future win.</li>
+    <li><b>4-step ROI-ranked perf roadmap</b> identified — Tier 1 nets ~5.0–5.5 s/turn projected.</li>
+  </ul>
+</section>
+
+<!-- Slide 4: Methodology -->
+<section class="slide">
+  <h2>🧪 17-Agent Methodology</h2>
+  <table>
+    <thead><tr><th>#</th><th>Agent direction</th><th>Output bytes</th><th>Decisive finding</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Groq sub-ms inference benchmarks</td><td>69k tok</td><td>Gemma 4 NOT hosted on Groq — community feature request unanswered</td></tr>
+      <tr><td>2</td><td>SambaNova/Cerebras/Together/Fireworks et al.</td><td>76k</td><td>Zero API vendors host Gemma 4 E4B as of 2026-05-06</td></tr>
+      <tr><td>3</td><td>Gemma 4 official Google benchmarks</td><td>75k</td><td>Korean evals (KMMLU/HAE-RAE) NOT published — gap</td></tr>
+      <tr><td>4</td><td>Artificial Analysis provider latency</td><td>71k</td><td>Gemma 4 31B median 2.5–5 s; W&B fastest 2.46 s</td></tr>
+      <tr><td>5</td><td>LMSYS Chatbot Arena rankings</td><td>101k</td><td>Gemma 4 E4B not individually ranked (vote threshold)</td></tr>
+      <tr><td>6</td><td>mlx-lm Apple Silicon tok/s</td><td>80k</td><td>M1 Max prefill 150 tok/s; decode 35–55 — we're average</td></tr>
+      <tr><td>7</td><td>Apple Silicon framework comparison</td><td>83k</td><td>MLX wins single-stream short-ctx; llama.cpp wins long-ctx 2×</td></tr>
+      <tr><td>8</td><td>KV-quant + speculative decoding state-of-art</td><td>74k</td><td>Spec decoding = highest-value next bet (1.5–3×)</td></tr>
+      <tr><td>9</td><td>Voice agent latency benchmarks</td><td>77k</td><td>Cloud frontier 200–500 ms; Rabbit R1 / Pin shipped at 2–18 s</td></tr>
+      <tr><td>10</td><td>On-device LLM research papers</td><td>77k</td><td>arXiv 2604.04722 (Apr 2026): adaptive KV-cache quant 10–20% gain</td></tr>
+      <tr><td>11</td><td>Apple Foundation Models comparison</td><td>74k</td><td>4096 tok cumulative context = DEAL-BREAKER for our prompt</td></tr>
+      <tr><td>12</td><td>Conversational AI UX latency tolerance</td><td>72k</td><td>Tan & Nov CHI 2026: 6s &gt; 2s for "thoughtfulness"</td></tr>
+      <tr><td>13</td><td>GitHub mlx-swift-lm active forks</td><td>89k</td><td>PR #237 (aleroot) fixes our exact bug — single-file</td></tr>
+      <tr><td>14</td><td>GitHub speculative decoding repos</td><td>114k</td><td>gemma-4-E4B-it-assistant released 2026-05-05; 1.56× on E4B</td></tr>
+      <tr><td>15</td><td>GitHub Gemma 4 issue tracking</td><td>91k</td><td>Our bug is unfiled upstream — file with bench JSON</td></tr>
+      <tr><td>16</td><td>GitHub on-device voice agents</td><td>82k</td><td>soniqo/speech-swift 691★, Korean Swift voice = our unique territory</td></tr>
+      <tr><td>17</td><td>GitHub bleeding-edge optimizations</td><td>77k</td><td>SharpAI/SwiftLM chunked prefill + 3-bit KV portable to us</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Slide 5: Our Baseline (recap) -->
+<section class="slide">
+  <h2>📏 Our Baseline (Live-Measured Recap)</h2>
+  <div class="grid grid-3">
+    <div class="card"><div class="num">6.0 s</div><div class="label">turn median</div><div class="desc">n=10, decode wall, ~100-tok Korean reply</div></div>
+    <div class="card"><div class="num">+4.7 GB</div><div class="label">GPU memory delta</div><div class="desc">Device(gpu, 0); Metal verified</div></div>
+    <div class="card"><div class="num">2.0 s</div><div class="label">model load</div><div class="desc">cached weights, no download</div></div>
+  </div>
+  <h3 style="margin-top: 12px;">Hardware & model</h3>
+  <p class="small"><b>MacBook Pro 16" 2021 (MacBookPro18,2)</b> · Apple M1 Max · 10-core CPU (8P+2E) · 64 GB unified memory · macOS 25.3.0 · <b>Gemma 4 E4B 4-bit MLX</b> via mlx-swift-lm 3.31.3 · system prompt 1.5–2k Korean tokens · <code>temperature: 0.0</code>, <code>topP: 1.0</code>, <code>maxTokens: 192</code>, <code>kvBits: nil</code> (upstream Gemma 4 traps on quant)</p>
+  <h3>What this slide replaces</h3>
+  <p class="small">Pre-PR-λ "3.5–4 s/turn estimated" → post-PR-λ "6.0 s/turn measured (n=10)" → this report tells you whether 6.0 s is good, average, or slow vs the world. Spoiler: <b class="accent">good for our product, average vs Apple Silicon community, 3–4× slower than cloud frontier</b>.</p>
+  <p class="small">Evidence: <code>claudedocs/bench/2026-05-06-latency-bench.json</code> committed via PR #28; reproducible via <code>make bench-latency</code> (PR #29).</p>
+</section>
+
+<!-- Slide 6: Cloud — Groq -->
+<section class="slide">
+  <h2>☁️ Groq (Sub-ms Inference Vendor) — Headline Block</h2>
+  <div class="callout error">
+    <b>Groq does NOT host Gemma 4</b> as of 2026-05-06. Community feature request "It'd be fantastic to see Gemma 4 on Groq" (posted 2026-04-03 by user Dongwon) <b>remains unanswered</b> one month later. Gemma 3 also absent — only Llama 3.1/3.3/4, gpt-oss 20B/120B, Qwen3-32B, Whisper, Compound on the supported-models list.
+  </div>
+  <h3>Hypothetical Groq performance for our use case</h3>
+  <table>
+    <thead><tr><th>Spec</th><th>Groq LPU v3 (2026)</th><th>Our M1 Max GPU</th><th>Ratio</th></tr></thead>
+    <tbody>
+      <tr><td>SRAM / Memory</td><td>500 MB on-chip SRAM</td><td>64 GB unified DRAM</td><td>—</td></tr>
+      <tr><td>Bandwidth</td><td>150 TB/s</td><td>0.4 TB/s</td><td><b class="accent">375× ours</b></td></tr>
+      <tr><td>Gemma 7B observed (2024)</td><td>TTFT 0.82 s, 1024 tok/s, $0.07/M</td><td>n/a</td><td>—</td></tr>
+      <tr><td>Estimated 100-tok turn</td><td>~1.0–1.1 s wire</td><td>6.0 s decode</td><td>~6× faster</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn" style="margin-top: 8px;">
+    <b>Apples-to-apples caveat (load-bearing):</b> Even if Groq hosted Gemma 4 E4B (it doesn't), using it would (a) violate NO-CLOUD invariant, (b) require shipping Korean private conversation to US datacenter, (c) log prompts per Groq ToS. Groq is reference for "what dedicated silicon achieves," not a target we can chase.
+  </div>
+  <p class="small">Sources: <a href="https://console.groq.com/docs/models">console.groq.com/docs/models</a> · <a href="https://community.groq.com/t/itd-be-fantastic-to-see-gemma-4-on-groq/1281">community thread #1281</a> · <a href="https://groq.com/blog/inside-the-lpu-deconstructing-groq-speed">groq.com/blog/inside-the-lpu</a> · <a href="https://www.spheron.network/blog/nvidia-groq-3-lpu-explained/">spheron LPU v3 specs</a> · all accessed 2026-05-06</p>
+</section>
+
+<!-- Slide 7: Cloud — Provider Table -->
+<section class="slide">
+  <h2>☁️ Cloud Provider Latency Table — All Cannot Host Our Use Case</h2>
+  <p class="small">Sorted by 100-token end-to-end (TTFT + decode at sustained tok/s). Source: artificialanalysis.ai (median over rolling 72h, US-East endpoints), accessed 2026-05-06.</p>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Provider</th><th>Model variant</th><th>TTFT</th><th>Tok/s</th><th>100-tok total</th><th>$/M</th></tr></thead>
+    <tbody>
+      <tr><td><b>Amazon Bedrock</b></td><td>Gemma 3 4B-it</td><td>1.00 s</td><td>222.1</td><td><b class="ok">1.45 s</b></td><td>$0.05</td></tr>
+      <tr><td>Weights & Biases</td><td>Gemma 4 31B (Reasoning)</td><td>1.01 s</td><td>69.1</td><td><b class="ok">2.46 s</b></td><td>—</td></tr>
+      <tr><td>Amazon Bedrock</td><td>Gemma 3 12B</td><td>1.47 s</td><td>95.7</td><td>2.51 s</td><td>—</td></tr>
+      <tr><td>Amazon Bedrock</td><td>Gemma 3 27B</td><td>1.44 s</td><td>71.4</td><td>2.84 s</td><td>—</td></tr>
+      <tr><td>FriendliAI</td><td>Gemma 4 31B</td><td>~1.9 s</td><td>71.4</td><td>~3.30 s</td><td>—</td></tr>
+      <tr><td>Parasail</td><td>Gemma 3 27B</td><td>1.38 s</td><td>52.9</td><td>3.27 s</td><td>—</td></tr>
+      <tr><td>Nebius</td><td>Gemma 3 27B (FP8)</td><td>1.72 s</td><td>61.1</td><td>3.36 s</td><td>—</td></tr>
+      <tr><td>Google AI Studio</td><td>Gemma 4 31B</td><td>1.68 s</td><td>35.3</td><td>4.51 s</td><td>$0.05</td></tr>
+      <tr><td>DeepInfra</td><td>Gemma 4 31B</td><td>1.60 s</td><td>30.1</td><td>4.92 s</td><td>—</td></tr>
+      <tr><td>DeepInfra</td><td>Gemma 3 4B-it</td><td>0.88 s</td><td>63.8</td><td>2.45 s</td><td>$0.05</td></tr>
+      <tr><td>Google AI Studio</td><td>Gemma 3 4B-it</td><td>1.63 s</td><td>29.4</td><td>5.03 s</td><td>$0.05</td></tr>
+      <tr><td><b>Together AI</b></td><td>Gemma 4 31B (outlier)</td><td>1.40 s</td><td>16.1</td><td><b class="err">7.61 s</b></td><td>—</td></tr>
+      <tr><td colspan="6" style="background: var(--surface-2); color: var(--text-2); font-size: 11px;">— Reference (not Gemma): Anthropic Claude Haiku 4.5 → TTFT 0.71 s, 90.3 tok/s, $1.25/M in / $5/M out —</td></tr>
+      <tr><td>Groq · SambaNova · Cerebras · Replicate · Lepton · Fireworks</td><td colspan="5"><b class="err">No Gemma 3 / 4 SKUs as of 2026-05-06</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout success" style="margin-top: 8px;">
+    <b>Headline:</b> Zero API providers host Gemma 4 E4B (the variant we ship) as of 2026-05-06. AA explicitly: "No API providers are currently available for Gemma 4 E4B... self-hosted only." The cloud comparison is fundamentally non-existent for our exact model.
+  </div>
+</section>
+
+<!-- Slide 8: Gemma 4 Official Benchmarks -->
+<section class="slide">
+  <h2>📊 Gemma 4 Official Benchmarks (Google DeepMind)</h2>
+  <p class="small">Released 2026-04-02, Apache 2.0. E4B = 4.5B effective / 8B total params, 128K context. Source: <a href="https://ai.google.dev/gemma/docs/core/model_card_4">ai.google.dev/gemma/docs/core/model_card_4</a></p>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Benchmark</th><th>E2B (~5B)</th><th><b>E4B (ours)</b></th><th>26B-A4B (MoE)</th><th>31B Dense</th></tr></thead>
+    <tbody>
+      <tr><td>MMLU-Pro</td><td>60.0</td><td><b class="accent">69.4</b></td><td>82.6</td><td>85.2</td></tr>
+      <tr><td>AIME 2026 (no tools)</td><td>37.5</td><td><b class="accent">42.5</b></td><td>88.3</td><td>89.2</td></tr>
+      <tr><td>GPQA Diamond</td><td>43.4</td><td><b class="accent">58.6</b></td><td>82.3</td><td>84.3</td></tr>
+      <tr><td>LiveCodeBench v6</td><td>44.0</td><td><b class="accent">52.0</b></td><td>77.1</td><td>80.0</td></tr>
+      <tr><td>Codeforces ELO</td><td>633</td><td><b class="accent">940</b></td><td>1718</td><td>2150</td></tr>
+      <tr><td>MMMU Pro (vision)</td><td>44.2</td><td><b class="accent">52.6</b></td><td>73.8</td><td>76.9</td></tr>
+      <tr><td>MATH-Vision</td><td>52.4</td><td><b class="accent">59.5</b></td><td>82.4</td><td>85.6</td></tr>
+      <tr><td>BigBench Extra Hard</td><td>—</td><td><b class="accent">33.1</b></td><td>—</td><td>—</td></tr>
+      <tr><td>MMMLU (multilingual)</td><td>—</td><td><b class="accent">76.6</b></td><td>—</td><td>—</td></tr>
+      <tr><td>Tau2 (avg/3)</td><td>—</td><td><b class="accent">42.2</b></td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout warn" style="margin-top: 8px;">
+    <b>Not published by Google for Gemma 4:</b> GSM8K, MATH, HumanEval, MBPP, IFEval, ARC, HellaSwag, TriviaQA, MGSM (per-variant). Google's Gemma 4 model card is a deliberately narrow modern-benchmark set. Per-quantization deltas (bf16 → 4-bit on E4B specifically) <b>also not published</b> — community number for 31B is −2.9pp MMLU.
+  </div>
+</section>
+
+<!-- Slide 9: Gemma 4 — Korean & Apple Silicon -->
+<section class="slide">
+  <h2>🇰🇷 Gemma 4 — Korean Gap & Apple Silicon Decode</h2>
+  <h3>Multilingual coverage (Google official)</h3>
+  <ul>
+    <li>Trained natively on <b>140+ languages</b> (Google blog 2026-04)</li>
+    <li>FLORES-200 89.4% · MGSM 88.7% · XCOPA 76.2% — but reported family-level, not split by variant</li>
+    <li><b class="err">Korean-specific (KMMLU / HAE-RAE / KoBEST): Google publishes ZERO numbers for any Gemma 4 variant</b> — real evidence gap</li>
+    <li>Inherits Gemma 3 tokenizer family which "significantly improves CJK encoding" (HF blog)</li>
+  </ul>
+  <h3 style="margin-top: 12px;">Apple Silicon decode community measurements</h3>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Hardware</th><th>Variant</th><th>Decode tok/s</th><th>Notes</th><th>Source (date)</th></tr></thead>
+    <tbody>
+      <tr><td>M5 Max 128 GB</td><td>E4B 4-bit, 4K ctx</td><td><b>127</b></td><td>MLX (mlx-vlm 0.4.4)</td><td>Incept5 benchmark, Apr 2026</td></tr>
+      <tr><td>M5 Max 128 GB</td><td>E4B 4-bit, 256K ctx</td><td>27</td><td>same</td><td>same</td></tr>
+      <tr><td>M5 Max</td><td>E2B 4-bit</td><td>158</td><td>MLX</td><td>llmcheck.net Apr 2026</td></tr>
+      <tr><td>M4 Pro 24 GB</td><td>E4B 4-bit (Unsloth)</td><td><b>49</b></td><td>MLX 512→256</td><td>Kartit Apr 3 2026</td></tr>
+      <tr><td>M4 Pro 24 GB</td><td>E4B 4-bit (Unsloth)</td><td>57</td><td>Ollama 512→256</td><td>same</td></tr>
+      <tr><td>M3 Ultra 192 GB</td><td>26B-A4B 4-bit</td><td>85</td><td>Rapid-MLX, TTFT 0.26 s</td><td>Raullen Chai Apr 7 2026</td></tr>
+      <tr><td><b>M1 Max 64 GB (us)</b></td><td>E4B (Ollama default Q4)</td><td><b>52</b></td><td>128K ctx headroom</td><td>classmethod Apr 6 2026</td></tr>
+      <tr><td>M1 Pro 16 GB</td><td>E4B Q4</td><td>18–22</td><td>Ollama</td><td>gemma4-ai blog</td></tr>
+      <tr><td>M1 16 GB</td><td>E4B Q4</td><td>12–16</td><td>Ollama</td><td>same</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout success" style="margin-top: 8px;">
+    <b>Verdict on E4B 4-bit choice:</b> RIGHT for our constraints. E2B gives up 9.4pp MMLU-Pro and 307 Codeforces ELO — material on function-calling reliability. 26B-A4B (~14 GB) violates 4 GB GPU budget. E4B at 5 GB is the sweet spot.
+  </div>
+</section>
+
+<!-- Slide 10: Framework Comparison -->
+<section class="slide">
+  <h2>⚖️ Apple Silicon Framework Comparison</h2>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Framework</th><th>Tok/s 4B Q4 short ctx</th><th>Long ctx (146K)</th><th>KV-quant</th><th>Spec dec</th><th>Swift?</th></tr></thead>
+    <tbody>
+      <tr><td><b>mlx-swift-lm 3.31.x (us)</b></td><td><b class="accent">leader</b> in single-stream</td><td>5.95 t/s ❌ (#763 OPEN)</td><td>partial (Gemma 4 traps)</td><td>SpeculativeTokenIterator exists</td><td><b class="ok">native</b></td></tr>
+      <tr><td>mlx-lm (Python)</td><td>100–130 t/s</td><td>5.95 t/s</td><td>yes</td><td>yes</td><td>via bridge</td></tr>
+      <tr><td>llama.cpp + FA</td><td>38–48 t/s (≤MLX)</td><td><b class="ok">12.1 t/s</b> 2× MLX</td><td><b class="accent">yes</b> (turbo3/4, KVSplit)</td><td>yes</td><td>C++; FFI only</td></tr>
+      <tr><td>Ollama</td><td>30–43 t/s (-10% vs llama.cpp)</td><td>inherits</td><td>inherits</td><td>inherits</td><td>via daemon</td></tr>
+      <tr><td>LM Studio (MLX)</td><td>29.65 → <b>50.9</b> t/s w/ spec</td><td>—</td><td>yes</td><td><b class="ok">yes (0.3.10)</b></td><td>GUI only</td></tr>
+      <tr><td>MLC-LLM</td><td>25–60 t/s</td><td>—</td><td>partial</td><td>limited</td><td>multi-backend</td></tr>
+      <tr><td>vllm-metal (2026-01-07 official)</td><td>batched strong, single weak</td><td>paged attn</td><td>yes</td><td>yes</td><td>server-only</td></tr>
+      <tr><td><b>Apple Foundation Models</b></td><td>30 t/s on iPhone 15 Pro 3B 2-bit</td><td>4096 tok cumulative ❌</td><td>KV-cache sharing</td><td>n/a</td><td>native (locked)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="grid grid-2" style="margin-top: 8px;">
+    <div class="callout success">
+      <b>Why MLX wins for us:</b> short ctx single-stream 4B Q4 is its sweet spot. LM Studio measured 26–60% MLX over llama.cpp on the same Macs. Apple-blessed (WWDC25 sessions). Speculative decoding available in same framework (1.71× on Llama 3.1-8B + 1B draft, M3 Pro).
+    </div>
+    <div class="callout warn">
+      <b>Where MLX bleeds:</b> mlx-lm #763 (OPEN, Jan 15 2026) shows MLX 5.95 t/s vs llama.cpp+FA 12.12 t/s on 146K ctx — 2× deficit. Doesn't bite our 6 s/turn floor (short ctx) but matters if <code>surface_past_wonder</code> ever leans on the 256K window.
+    </div>
+  </div>
+</section>
+
+<!-- Slide 11: Apple Foundation Models — Why Not -->
+<section class="slide">
+  <h2>🚫 Apple Foundation Models — Why We Cannot Switch</h2>
+  <p class="small">The user's question "is Gemma 4 + MLX best?" demands a fair comparison to Apple's own on-device LLM framework (macOS 26+). We checked. It's a dead end for our use case.</p>
+  <table>
+    <thead><tr><th>Dimension</th><th>Apple Foundation Models</th><th>Gemma 4 E4B + MLX (ours)</th></tr></thead>
+    <tbody>
+      <tr><td>Parameters</td><td>~3B, 2-bit QAT mixed-bit LoRA ~3.7 bpw</td><td>~4.5B effective, 4-bit MLX</td></tr>
+      <tr><td>Korean support</td><td>Beta (PFIGSCJK group)</td><td>140+ pre-train languages</td></tr>
+      <tr><td>System prompt</td><td><b class="err">Guardrails non-disablable, applied to BOTH input AND output</b></td><td>Verbatim Korean Socratic prompt embedded at compile-time</td></tr>
+      <tr><td>Context window</td><td><b class="err">4,096 tokens TOTAL (instructions + transcript + tools + response, all cumulative)</b></td><td>256K (E4B has 128K; family up to 256K)</td></tr>
+      <tr><td>Function calling</td><td><code>Tool</code> protocol, <code>@Generable</code> constrained decoding</td><td>Native function-calling, our 4-function dispatch</td></tr>
+      <tr><td>Latency claim</td><td>30 tok/s on iPhone 17 Pro</td><td>6.0 s/turn measured, M1 Max</td></tr>
+      <tr><td>Min OS</td><td>macOS 26 / iOS 26</td><td>macOS 14+</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top: 10px;">Three hard blockers (priority order)</h3>
+  <ol>
+    <li><b class="err">Guardrails are non-disablable and dual-sided.</b> Per WWDC25 #248: "a default guardrail is always applied… to both input and output." Our entire <code>defer_to_human</code> abstention mechanic — load-bearing for legal/medical/financial/welfare/insurance/emergency — depends on a precisely tuned Korean Socratic prompt. Apple's guardrails will rewrite, soften, or refuse outputs unpredictably. <b>Violates invariant #2 (abstention is the product) and #3 (Korean tone locked).</b></li>
+    <li><b class="err">4K cumulative context.</b> Cannot hold verbatim system prompt + 4 tool schemas + non-trivial wondering-log payload simultaneously. <code>function_call_contract.yaml</code> already approaches this budget on a single turn. Mitigation M01 (256K context for multi-year recall) is impossible.</li>
+    <li><b class="err">macOS 26 minimum.</b> Strands every macOS 14/15 user.</li>
+  </ol>
+  <p class="small">Sources: <a href="https://developer.apple.com/documentation/FoundationModels">developer.apple.com/documentation/FoundationModels</a> · <a href="https://developer.apple.com/documentation/technotes/tn3193-managing-the-on-device-foundation-model-s-context-window">TN3193 4K context</a> · <a href="https://developer.apple.com/videos/play/wwdc2025/248/">WWDC25 #248 prompt design & safety</a> · <a href="https://machinelearning.apple.com/research/apple-foundation-models-tech-report-2025">Apple Foundation Models Tech Report 2025</a></p>
+</section>
+
+<!-- Slide 12: Academic Research -->
+<section class="slide">
+  <h2>📚 Academic / Research Papers (Annotated)</h2>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Paper</th><th>Finding</th><th>Relevance</th></tr></thead>
+    <tbody>
+      <tr><td><b>arXiv 2511.05502</b> Production-Grade Local LLM (Oct 2025)</td><td>MLX 230 tok/s on M2 Ultra; MLC-LLM lower TTFT than MLX for moderate prompts</td><td>M1 Max scaled estimate ~115 tok/s aligns with our measurements</td></tr>
+      <tr><td><b>arXiv 2510.18921</b> Benchmarking On-Device ML on Apple Silicon (Oct 2025)</td><td>MLX outperforms llama.cpp 23–41% on Apple memory hierarchy</td><td>Defends our framework choice</td></tr>
+      <tr><td><b>arXiv 2507.13575</b> Apple Foundation Models Tech Report (2025)</td><td>iPhone 17 Pro: 30 tok/s on 3B 2-bit QAT; "&lt;1ms" first-token; KV-cache sharing</td><td>Closest published apples-to-apples ceiling</td></tr>
+      <tr><td><b>arXiv 2510.15312</b> Mobile Spec Decoding + NPU (Oct 2025)</td><td>Gemma 1B drafter for 4B verifier patterns documented</td><td>Direct precedent for our future spec-decode plan</td></tr>
+      <tr><td><b>arXiv 2604.04722</b> Adaptive KV-Cache Quant (Apr 2026)</td><td>Token-wise adaptive KV bit-width; 10–20% gain at 32K+ ctx</td><td>Matters if we exercise Gemma 4's 256K window</td></tr>
+      <tr><td><b>arXiv 2508.08192</b> Efficient Spec Decoding for Llama at Scale</td><td>0.5B–3B drafters with 3B/7B/14B verifiers; 1.5× decode</td><td>Validates E2B drafter for E4B target idea</td></tr>
+      <tr><td>Apple QuantSpec (research, no public code)</td><td>2.5× via 4-bit KV self-spec</td><td>Forward signal — track for release</td></tr>
+      <tr><td>MobileQuant arXiv 2408.13933</td><td>W4A8 PTQ; 20–50% latency cut, near-lossless</td><td>Activation quant = next quantization step</td></tr>
+      <tr><td>NAACL 2025 "Decoding Speculative Decoding"</td><td>Drafter LM quality does NOT correlate with spec-decode gain</td><td>Informs picking E2B drafter (smaller is fine)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout success" style="margin-top: 8px;">
+    <b>Synthesis:</b> Published research-grade floor for 4B 4-bit MLX on M1 Max is ~1.5–2 s for pure inference (decode + TTFT). The other ~4 s in our 6-s budget is STT + function-call orchestration + TTS prep + viseme — <b>not model inference</b>. Profile the turn loop before optimizing the LLM further.
+  </div>
+</section>
+
+<!-- Slide 13: UX Literature — 6s is a Feature -->
+<section class="slide">
+  <h2>🧠 UX Literature — Why 6s is a Feature, Not a Bug</h2>
+  <h3>The decisive paper</h3>
+  <div class="callout tip">
+    <b>Tan, F. F-Y., & Nov, O. (CHI 2026, April 24, 2026, n=240, between-subjects).</b><br>
+    Latencies <b>2 s vs 9 s vs 20 s</b> with <i>identical response content</i>. Findings:
+    <ul style="margin-top: 4px;">
+      <li><b>2 s</b> rated <b class="err">less thoughtful, less useful</b></li>
+      <li><b>9 s</b> and <b>20 s</b> rated <b class="ok">more favorably</b> — users attributed pause to "thinking"</li>
+      <li>Behavior unchanged — only subjective perception moved</li>
+      <li>Authors frame this as <b class="accent">"positive friction"</b></li>
+    </ul>
+    Our 6 s sits BETWEEN the 2 s "feels shallow" and 9 s "feels thoughtful" conditions, sliding toward favorable.
+  </div>
+  <h3 style="margin-top: 8px;">Supporting literature</h3>
+  <ul>
+    <li><b>Stivers et al. PNAS 2009</b> — humans deliver dispreferred / contradictory / "I don't know" responses 100–500 ms <b>slower</b> than confirmations. Latency itself signals deliberation. Our Korean Socratic abstention persona naturally reproduces this.</li>
+    <li><b>Khan Academy Khanmigo (2024–2025)</b> — production AI tutor running in <b>3–6 s response bracket</b>. Same league as us, treated as shippable. Engineering blog reports 0.3-3 s deltas across 1.35M threads as wins, not blockers.</li>
+    <li><b>arXiv 2601.16720 Watching AI Think (2026)</b> — visible thinking indicators raise perceived competence and trust. Our PR-γ "thinking pulse" animation on the bust during <code>Phase.thinking</code> is mandatory, not decorative.</li>
+    <li><b>Nielsen 10s rule</b> — 6 s sits well inside the attention-retention window. Variance matters more than mean: keep p95 below 9 s.</li>
+  </ul>
+  <div class="callout success" style="margin-top: 8px;">
+    <b>Don't market on speed; market on what nothing-leaves-the-device buys you.</b> The 6 s is the price of the privacy property. Cloud frontier 200–500 ms is reachable only by streaming Korean private dialogue to GPU clusters — exactly what our spec forbids.
+  </div>
+  <p class="small">Sources: <a href="https://neurosciencenews.com/latency-perception-thoughtful-ai-30597/">Tan & Nov CHI 2026</a> · <a href="https://www.pnas.org/doi/abs/10.1073/pnas.0903616106">Stivers PNAS 2009</a> · <a href="https://blog.khanacademy.org/how-khan-academy-is-building-a-better-ai-tutor-our-most-recent-learnings/">Khan Academy AI Tutor</a> · <a href="https://arxiv.org/html/2601.16720v1">arXiv 2601.16720</a> · <a href="https://www.nngroup.com/articles/response-times-3-important-limits/">NN/g Response Time Limits</a></p>
+</section>
+
+<!-- Slide 14: Voice Agent Latency Market -->
+<section class="slide">
+  <h2>🗣️ Voice Agent Latency Market — Where We Sit</h2>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>System</th><th>TTFA / e2e</th><th>Architecture</th><th>On-device?</th></tr></thead>
+    <tbody>
+      <tr><td colspan="4" style="background:rgba(63,185,80,.1); color: var(--success); font-weight:600;">Cloud frontier (200–500 ms)</td></tr>
+      <tr><td>Sesame CSM (Maya/Miles)</td><td>200–300 ms</td><td>Single-stage S2S</td><td>Cloud</td></tr>
+      <tr><td>OpenAI Realtime (GPT-4o)</td><td>250–520 ms voice; ~180 ms first text</td><td>Native S2S, WebRTC</td><td>Cloud</td></tr>
+      <tr><td>Hume EVI 3 / 4-mini</td><td>200–300 ms</td><td>S2S</td><td>Cloud</td></tr>
+      <tr><td>Google Gemini Live (Flash 2.5/3.1)</td><td>320–800 ms typical; 5–15 s tail spikes</td><td>Native audio I/O</td><td>Cloud</td></tr>
+      <tr><td colspan="4" style="background:rgba(210,153,34,.1); color: var(--warn); font-weight:600;">Cascaded cloud (0.5–3 s)</td></tr>
+      <tr><td>Vapi.ai (best config)</td><td>~465 ms e2e; 550–800 ms typical</td><td>STT+LLM+TTS</td><td>Cloud</td></tr>
+      <tr><td>OpenAI Whisper + GPT-4o</td><td>~1.5–3 s typical</td><td>Cascaded</td><td>Cloud</td></tr>
+      <tr><td>Apple Siri (current)</td><td>"trust latency" up to 3 s</td><td>Hybrid (PCC)</td><td>Hybrid</td></tr>
+      <tr><td colspan="4" style="background:rgba(248,81,73,.1); color: var(--error); font-weight:600;">Failed / edge hardware (2–18 s) — they shipped anyway</td></tr>
+      <tr><td>Rabbit R1</td><td>~2.1 s simple / ~11.7 s complex</td><td>Cloud</td><td>No</td></tr>
+      <tr><td>Humane AI Pin</td><td>~3.4 s simple / ~18.3 s complex (14% timeout)</td><td>Cloud</td><td>No</td></tr>
+      <tr><td colspan="4" style="background:rgba(88,166,255,.1); color: var(--accent); font-weight:600;">Production Socratic / tutoring (3–6 s)</td></tr>
+      <tr><td><b>Khan Academy Khanmigo</b></td><td><b>3–6 s</b></td><td>Cloud cascaded</td><td>No</td></tr>
+      <tr><td><b>He Was Socrates (us)</b></td><td><b class="accent">~6.5 s e2e</b></td><td><b>STT+MLX Gemma 4+TTS, fully local</b></td><td><b class="ok">YES</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout success" style="margin-top: 6px;">
+    <b>We're 6× slower than cloud frontier, but only-on-device in the entire table.</b> Same league as Khanmigo (production Socratic tutor). Faster than Pin's complex queries. Inside the "perceptible but not awkward" 0.3–10 s pre-frustration band per arXiv 2604.06183.
+  </div>
+</section>
+
+<!-- Slide 15: GitHub — PR #237 Free Lunch -->
+<section class="slide">
+  <h2>🎁 GitHub — PR #237 Is a Free Lunch</h2>
+  <div class="callout error">
+    <b>Our reproduced bug:</b> Setting <code>kvBits: 4</code> in <code>GenerateParameters</code> triggers <code>fatalError("'update' was called on QuantizedKVCache. Use 'updateQuantized' instead.")</code> at <code>MLXLMCommon/KVCache.swift:894</code>. Documented in <code>claudedocs/bench/2026-05-06-latency-bench-kvquant.json</code>.
+  </div>
+  <h3>The fix</h3>
+  <div class="callout success">
+    <b><a href="https://github.com/ml-explore/mlx-swift-lm/pull/237">PR #237 by aleroot — "Fix Gemma4Text quantized KV cache attention"</a></b><br>
+    Opened 2026-04-24 · State: <b class="warn">OPEN</b> (not merged) · base=main<br>
+    PR body cites <b>our exact error verbatim</b>. Diff: <b>+150/-31, single file</b> (<code>Libraries/MLXLLM/Models/Gemma4Text.swift</code>) plus <b>75 lines of new tests</b>. Introduces a <code>Gemma4TextKVState</code> enum that branches <code>cache as? QuantizedKVCacheProtocol → updateQuantized()</code> vs regular <code>cache.update()</code>.
+    <br><br>
+    <b class="ok">This is a clean cherry-pick.</b> Maintainer @davidkoski explicitly invited fork PRs back in <a href="https://github.com/ml-explore/mlx-swift-lm/issues/221">issue #221</a>; merge is a question of bandwidth, not contention.
+  </div>
+  <h3 style="margin-top: 8px;">Companion PRs (also OPEN, also low risk)</h3>
+  <ul>
+    <li><a href="https://github.com/ml-explore/mlx-swift-lm/pull/249">PR #249 (john-rocky)</a> — Compile-fused RMSNorm-add + gelu-mul, <b>+23.8% Gemma 4 decode</b>. ~0.3 s/turn savings on our config.</li>
+    <li><a href="https://github.com/ml-explore/mlx-swift-lm/pull/250">PR #250 (john-rocky)</a> — Gemma 4 K-eq-V double-process fix.</li>
+    <li><a href="https://github.com/ml-explore/mlx-swift-lm/pull/244">PR #244 (kr1s0404)</a> — Make Gemma 4 ScaledLinear quantizable.</li>
+    <li><a href="https://github.com/ml-explore/mlx-swift-lm/pull/247">PR #247 (jfranknichols)</a> — Gemma 4 KV-shared-layer crash.</li>
+  </ul>
+  <p class="small"><b>Realistic stacked gain on M1 Max + Gemma 4 E4B 4-bit: 20–35%.</b> The Osaurus +304% headline number is Gemma 4 26B <i>MoE</i> on M5 Max — not our config.</p>
+</section>
+
+<!-- Slide 16: GitHub — Active mlx-swift-lm Forks -->
+<section class="slide">
+  <h2>🔧 GitHub — Active mlx-swift-lm Forks</h2>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Repo</th><th>Last push</th><th>★</th><th>Type</th><th>Perf claim</th></tr></thead>
+    <tbody>
+      <tr><td><b><a href="https://github.com/osaurus-ai/osaurus">osaurus-ai/osaurus</a></b></td><td>2026-05-05</td><td><b>5,191</b></td><td>App + fork bundle</td><td><b class="accent">+304% Gemma 4 26B MoE</b> on M5 Max</td></tr>
+      <tr><td><a href="https://github.com/ekryski/mlx-swift-lm">ekryski/mlx-swift-lm</a></td><td><b>2026-05-06 hourly</b></td><td>44</td><td>Fork (alpha branch)</td><td>Qwen3.6-35B prefill 250 → 3,100 tok/s (12×)</td></tr>
+      <tr><td><a href="https://github.com/SharpAI/SwiftLM">SharpAI/SwiftLM</a></td><td>2026-05-05</td><td>623</td><td>Server + fork</td><td>TurboQuant KV; SSD-stream 100B+ MoE; 10× MoE decode</td></tr>
+      <tr><td><a href="https://github.com/osaurus-ai/vmlx-swift-lm">osaurus-ai/vmlx-swift-lm</a></td><td>2026-05-05</td><td>2</td><td>Fork (newer engine)</td><td>Native TurboQuant successor</td></tr>
+      <tr><td><a href="https://github.com/osaurus-ai/mlx-swift">osaurus-ai/mlx-swift</a></td><td>2026-05-03</td><td>2</td><td>Fork of mlx-swift</td><td>Faster Swift API</td></tr>
+      <tr><td><a href="https://github.com/osaurus-ai/mlx-swift-lm">osaurus-ai/mlx-swift-lm</a></td><td>2026-04-10</td><td>7</td><td>Fork</td><td>+120% Gemma 4 (decoupled into PRs)</td></tr>
+      <tr><td><a href="https://github.com/ml-explore/mlx-swift-lm">ml-explore/mlx-swift-lm 3.31.3 (us)</a></td><td>2026-04-17</td><td>490</td><td>Upstream</td><td>Baseline</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout warn" style="margin-top: 8px;">
+    <b>Verdict: cherry-pick PRs, do NOT fork-swap.</b>
+    <ul>
+      <li>Fork-swap to Osaurus / ekryski diverges across <code>mlx</code>, <code>mlx-c</code>, <code>mlx-swift</code>, <code>mlx-swift-lm</code> simultaneously — auditing 4 submodules contradicts our zero-network / on-device invariants and explodes CI surface.</li>
+      <li>Apply <a href="https://github.com/ml-explore/mlx-swift-lm/pull/237">#237</a> + <a href="https://github.com/ml-explore/mlx-swift-lm/pull/228">#228</a> + <a href="https://github.com/ml-explore/mlx-swift-lm/pull/225">#225</a> + <a href="https://github.com/ml-explore/mlx-swift-lm/pull/249">#249</a> + <a href="https://github.com/ml-explore/mlx-swift-lm/pull/250">#250</a> as local SwiftPM revision pin → 20–35% gain on E4B without surface explosion.</li>
+      <li>Track upstream maintainer @davidkoski's consolidation pace — these PRs are queued for review per <a href="https://github.com/ml-explore/mlx-swift-lm/issues/221">issue #221</a>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Slide 17: GitHub — Speculative Decoding -->
+<section class="slide">
+  <h2>⚡ GitHub — Speculative Decoding for Gemma 4 E4B</h2>
+  <div class="callout success">
+    <b>Released yesterday (2026-05-05):</b> <a href="https://huggingface.co/google/gemma-4-E4B-it-assistant"><code>google/gemma-4-E4B-it-assistant</code></a> — 78.8M-param 4-layer MTP drafter, Apache-2.0, MLX port at <a href="https://huggingface.co/mlx-community/gemma-4-E4B-it-assistant-bf16"><code>mlx-community/gemma-4-E4B-it-assistant-bf16</code></a>. Designed specifically as a drafter for E4B target.
+  </div>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Repo</th><th>Last push</th><th>★</th><th>Speedup claim</th><th>Gemma 4?</th><th>Swift?</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/Blaizzy/mlx-vlm">Blaizzy/mlx-vlm</a></td><td>2026-05-06</td><td>4,589</td><td><b>1.56× on E4B</b> / 3.94× on 26B-A4B (M3 Max)</td><td><b class="ok">YES (only impl)</b></td><td>No (Python ref)</td></tr>
+      <tr><td><a href="https://github.com/youssofal/MTPLX">youssofal/MTPLX</a></td><td>2026-05-05</td><td>109</td><td>2.24× over AR (Qwen3.6-27B M5 Max)</td><td>Qwen only</td><td>No</td></tr>
+      <tr><td><a href="https://github.com/bstnxbt/dflash-mlx">bstnxbt/dflash-mlx</a></td><td>2026-05-05</td><td>639</td><td>3.06–4.37× Qwen3.5-9B M5 Max</td><td>Qwen only</td><td>No</td></tr>
+      <tr><td><a href="https://github.com/ml-explore/mlx-lm">ml-explore/mlx-lm</a></td><td>2026-05-04</td><td>5,153</td><td>Built-in <code>--draft-model</code></td><td>Implicit, no MTP head</td><td>No</td></tr>
+      <tr><td><b><a href="https://github.com/mlx-community/speculative-decoding">mlx-community/speculative-decoding</a></b></td><td>2025-12-08 (stale)</td><td>7</td><td>40 tok/s @ 28% accept (M4 Pro Qwen2.5)</td><td>Untested</td><td><b class="ok">YES (SwiftPM)</b></td></tr>
+      <tr><td><a href="https://github.com/apple/ml-recurrent-drafter">apple/ml-recurrent-drafter</a></td><td>2025-01-23 (stale)</td><td>223</td><td>1.37× M1 Max / 1.52× M2 Ultra (Vicuna)</td><td>No</td><td>Reference</td></tr>
+      <tr><td>Apple QuantSpec</td><td>paper-only</td><td>—</td><td>2.5× claim</td><td>No</td><td>No code</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3 style="margin-top: 8px;">Decisive answers</h3>
+  <ul>
+    <li><b>(a) Working Swift impl today?</b> No. Only <code>mlx-community/speculative-decoding</code> is Swift+SPM, but it's a generic two-model scheme — never tested with Gemma 4. We'd be the first to wire MTP drafter through <code>mlx-swift-lm</code>.</li>
+    <li><b>(b) E4B target + E2B as drafter?</b> <b class="err">NOT supported.</b> Per Google's design, the assistant drafter is "tightly coupled to target internals" — only matched pairs valid (E4B↔E4B-it-assistant). E2B-as-drafter for E4B is an open research problem.</li>
+    <li><b>(c) Realistic gain on M1 Max for E4B?</b> 1.3–1.5× best (M1 Max has ~½ M3 Max bandwidth; smaller targets get smaller gains). Applied to 6.0 s/turn → projected <b>3.9–4.6 s/turn</b>, not 3.0 s.</li>
+    <li><b>(d) Swift MLX lag:</b> 4–8 weeks behind Python MLX. <b>Re-check quarterly.</b></li>
+  </ul>
+</section>
+
+<!-- Slide 18: GitHub — Voice Agent Ecosystem -->
+<section class="slide">
+  <h2>🗣️ GitHub — On-Device Voice Agent Ecosystem on macOS</h2>
+  <div class="scroll-area">
+  <table>
+    <thead><tr><th>Repo</th><th>★</th><th>Last activity</th><th>Stack</th><th>Korean?</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/soniqo/speech-swift"><b>soniqo/speech-swift</b></a></td><td>691</td><td>v0.0.12 2026-04-26</td><td>MLX+CoreML; Qwen3-ASR/Omnilingual + Qwen3.5 0.8B + Qwen3-TTS/Kokoro</td><td><b class="ok">Yes (Qwen3-ASR + Qwen3-TTS)</b></td></tr>
+      <tr><td><a href="https://github.com/Blaizzy/mlx-audio-swift"><b>Blaizzy/mlx-audio-swift</b></a></td><td>609</td><td>v0.1.2 2026-03-14, 281 commits</td><td>7 TTS + 6 STT MLX models, modular SPM (Prince Canuma)</td><td>Via Qwen3 family</td></tr>
+      <tr><td><a href="https://github.com/kwindla/macos-local-voice-agents">kwindla/macos-local-voice-agents</a></td><td>321</td><td>active</td><td>Pipecat + MLX Whisper + Gemma 3B 4B + Kokoro + Silero VAD + smart-turn v2</td><td>Whisper-only</td></tr>
+      <tr><td><a href="https://github.com/fspecii/openfelix">fspecii/openfelix</a></td><td>19</td><td>v0.1.0 2026-03-06</td><td><b>SFSpeechRecognizer + MLX (Qwen 3.5) + AVSpeechSynthesizer (identical to us!)</b></td><td>Apple stack</td></tr>
+      <tr><td><a href="https://github.com/Open-LLM-VTuber/Open-LLM-VTuber">Open-LLM-VTuber</a></td><td>7,400</td><td>2025-08-26 (stale)</td><td>Live2D + plug-any-LLM/STT/TTS, web/Python</td><td>README.KR.md</td></tr>
+      <tr><td><a href="https://github.com/met4citizen/TalkingHead">met4citizen/TalkingHead</a></td><td>1,200</td><td>v1.7.0 2025-12-08</td><td>Oculus 15-viseme model, JS/three.js</td><td>No Korean module</td></tr>
+      <tr><td><a href="https://github.com/lucasnewman/f5-tts-swift">lucasnewman/f5-tts-swift</a></td><td>90</td><td>active</td><td>MLX Swift F5-TTS port (only mature MLX Swift TTS ref)</td><td>No</td></tr>
+      <tr><td><a href="https://github.com/mlalma/kokoro-ios">mlalma/kokoro-ios</a></td><td>235</td><td>active</td><td>Kokoro 3.3× realtime on iPhone 13 Pro</td><td>English-only</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout success" style="margin-top: 6px;">
+    <b>Korean Swift voice agent: we are unique.</b> No other Swift-native repo combines Korean STT + Korean LLM + Korean TTS + viseme on Apple Silicon.
+  </div>
+  <h3>Top 3 to watch weekly</h3>
+  <ol>
+    <li><b>soniqo/speech-swift</b> — closest architectural parallel (modular SPM, Korean coverage). Watch their MLX-Whisper Swift wiring (fallback if SFSpeechRecognizer Korean accuracy ever blocks us).</li>
+    <li><b>Blaizzy/mlx-audio-swift</b> — upstream of every MLX Swift audio model that matters. Watch for new STT models replacing or augmenting SFSpeechRecognizer.</li>
+    <li><b>kwindla/macos-local-voice-agents</b> — sub-800 ms latency budget reference. Their VAD + smart-turn-v2 endpointing techniques transfer directly to shorten our <code>listening → thinking</code> boundary.</li>
+  </ol>
+</section>
+
+<!-- Slide 19: GitHub — Bleeding-Edge Optimizations -->
+<section class="slide">
+  <h2>🚀 GitHub — Bleeding-Edge Optimizations (2026)</h2>
+  <h3>Cross-session KV / prompt caching</h3>
+  <table>
+    <thead><tr><th>Repo</th><th>★</th><th>Claim</th><th>Swift?</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/jundot/omlx">jundot/omlx</a></td><td>12,400</td><td>Tiered hot-RAM + cold-SSD KV. <b>Prefill 49 s → 1.7 s @ 8K ctx</b></td><td>No (Python menubar)</td></tr>
+      <tr><td><a href="https://github.com/raullenchai/Rapid-MLX">raullenchai/Rapid-MLX</a></td><td>1,500</td><td><b>0.08 s cached TTFT</b>; DeltaNet RNN-state snapshots</td><td>No</td></tr>
+      <tr><td><b><a href="https://github.com/SharpAI/SwiftLM">SharpAI/SwiftLM</a></b></td><td>623</td><td>100K ctx on 24 GB via 3-bit KV + SSD streaming + chunked prefill</td><td><b class="ok">Yes (79% Swift)</b></td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top: 8px;">Quantization recipes</h3>
+  <table>
+    <thead><tr><th>Repo</th><th>Claim</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://huggingface.co/unsloth/gemma-4-E4B-it-UD-MLX-4bit">unsloth/gemma-4-E4B-it-UD-MLX-4bit</a></td><td><b>Calibrated UD MLX 4-bit</b> — drop-in replacement for our model URL</td><td>Production</td></tr>
+      <tr><td><a href="https://github.com/FakeRocket543/mlx-gemma4">FakeRocket543/mlx-gemma4</a></td><td>PLE-safe quantization recipe specifically for Gemma 4 E2B/E4B</td><td>Beta</td></tr>
+      <tr><td><a href="https://github.com/sharpner/turboquant-mlx">sharpner/turboquant-mlx</a></td><td>5.5× KV compression PoC (V3 2.5-bit @ 8K)</td><td>PoC</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top: 8px;">Performance instrumentation</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>Claim</th><th>Swift?</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://macmlx.app/">macmlx.app</a></td><td>SwiftUI app: prefill+gen tok/s, TTFT, peak RSS, load time, history</td><td><b class="ok">Yes</b></td></tr>
+      <tr><td><a href="https://llmcheck.net/benchmarks">llmcheck.net</a></td><td>50 models × 12 chips × 3 engines reference DB</td><td>Reference</td></tr>
+    </tbody>
+  </table>
+  <div class="callout success" style="margin-top: 8px;">
+    <b>Highest-value untapped wins for our config:</b> (1) cross-session KV persistence pattern from llama.cpp slot-save (saves 200–400 ms cold-start re-prefill), (2) re-pin to <code>unsloth/gemma-4-E4B-it-UD-MLX-4bit</code> (quality bump, zero code change), (3) chunked prefill technique from SharpAI/SwiftLM.
+  </div>
+</section>
+
+<!-- Slide 20: Action Plan Tier 1 -->
+<section class="slide">
+  <h2>🎯 Action Plan — Tier 1 (Do Now, Won't Break NO-CLOUD)</h2>
+  <table>
+    <thead><tr><th>#</th><th>Action</th><th>Effort</th><th>Risk</th><th>Effect</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>1</b></td>
+        <td><b>Cherry-pick PR #237 locally</b><br><span class="small">SwiftPM revision pin to a fork carrying just that commit, or vendor diff under <code>Sources/SocraticEngine/Patches/</code></span></td>
+        <td>~1 hour</td>
+        <td><b class="ok">very low</b></td>
+        <td>Unlock <code>kvBits: 4</code> opt-in (currently traps); marginal direct latency, future-proofs long-ctx surfacing</td>
+        <td><a href="https://github.com/ml-explore/mlx-swift-lm/pull/237">PR #237</a></td>
+      </tr>
+      <tr>
+        <td><b>2</b></td>
+        <td><b>Re-pin model URL → <code>unsloth/gemma-4-E4B-it-UD-MLX-4bit</code></b><br><span class="small">Calibrated UD-MLX 4-bit; smoke-test against abstention behavior</span></td>
+        <td>~2 hours</td>
+        <td><b class="ok">low</b></td>
+        <td>Quality bump (recovers most of the 4-bit gap); latency neutral; zero code change beyond URL</td>
+        <td><a href="https://huggingface.co/unsloth/gemma-4-E4B-it-UD-MLX-4bit">HF unsloth UD-MLX</a></td>
+      </tr>
+      <tr>
+        <td><b>3</b></td>
+        <td><b>Cross-session KV persistence for the Korean system prompt</b><br><span class="small">llama.cpp slot-save pattern, ported on top of <code>KVCache</code> snapshot APIs in mlx-swift-lm</span></td>
+        <td>~2 days</td>
+        <td>medium</td>
+        <td>200–400 ms saved on first user turn after launch</td>
+        <td><a href="https://github.com/ggml-org/llama.cpp/discussions/20572">llama.cpp #20572</a></td>
+      </tr>
+      <tr>
+        <td><b>4</b></td>
+        <td><b>Cherry-pick PR #249 (john-rocky)</b><br><span class="small">Compile-fused RMSNorm-add + gelu-mul</span></td>
+        <td>~1 hour</td>
+        <td><b class="ok">low</b></td>
+        <td><b>+23.8% Gemma 4 decode → ~0.3 s/turn savings</b> on our config</td>
+        <td><a href="https://github.com/ml-explore/mlx-swift-lm/pull/249">PR #249</a></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout success" style="margin-top: 10px;">
+    <b>Tier 1 cumulative projection:</b> <b class="accent">6.0 s → ~5.0–5.5 s/turn median</b> with no SpecDD invariant change, no framework swap, no quality regression.
+  </div>
+</section>
+
+<!-- Slide 21: Action Plan Tier 2 + 3 -->
+<section class="slide">
+  <h2>📋 Action Plan — Tier 2 (Watch) & Tier 3 (Don't)</h2>
+  <h3>Tier 2 — Track quarterly, no commit yet</h3>
+  <table>
+    <thead><tr><th>#</th><th>Item</th><th>Trigger condition</th></tr></thead>
+    <tbody>
+      <tr><td><b>5</b></td><td><b>Speculative decoding via <code>gemma-4-E4B-it-assistant</code></b></td><td>Swift-native MLX MTP drafter integration ships (currently Python-only via Blaizzy/mlx-vlm). Re-check <a href="https://github.com/mlx-community/speculative-decoding">mlx-community/speculative-decoding</a> + <a href="https://github.com/ml-explore/mlx-swift-lm">ml-explore/mlx-swift-lm</a> quarterly. Realistic gain on M1 Max: 1.3–1.5× → <b>~3.9–4.6 s/turn</b>.</td></tr>
+      <tr><td><b>6</b></td><td><b>Track upstream PR #237 / #249 / #250 merge</b></td><td>When merged, drop our local cherry-pick patch and bump <code>mlx-swift-lm</code> revision pin.</td></tr>
+      <tr><td><b>7</b></td><td><b>File new upstream issue with bench JSON reproducer</b></td><td>Per agent #15: no duplicate exists for our exact <code>kvBits=4</code> dispatch bug. Submit at <a href="https://github.com/ml-explore/mlx-swift-lm/issues/new">ml-explore/mlx-swift-lm</a> citing <code>claudedocs/bench/2026-05-06-latency-bench-kvquant.json</code>.</td></tr>
+      <tr><td><b>8</b></td><td><b>VAD + smart-turn-v2 endpointing</b> (from kwindla)</td><td>If we want sub-1 s STT endpointing improvement; replaces SFSpeechRecognizer's natural endpoint timer.</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top: 10px;">Tier 3 — Don't do</h3>
+  <table>
+    <tbody>
+      <tr><td><b class="err">❌ Fork-swap to Osaurus / ekryski / SharpAI</b></td><td>Audit surface explodes (4 submodules), conflicts with NO-CLOUD posture, no free-lunch over cherry-picking</td></tr>
+      <tr><td><b class="err">❌ Switch to Apple Foundation Models</b></td><td>Guardrails non-disablable + 4096-tok cumulative ctx breaks our verbatim Korean prompt + 4-function dispatch + 256K wondering-log</td></tr>
+      <tr><td><b class="err">❌ Enable <code>kvBits=4</code> in production before PR #237 merges</b></td><td>Fatal-error reproduces; PR-λ regression-pin tests will fail (correctly)</td></tr>
+      <tr><td><b class="err">❌ Switch to llama.cpp / Ollama</b></td><td>MLX is genuinely best for single-stream short-context 4B Q4 on Apple Silicon (LM Studio measured 26–60% MLX over llama.cpp)</td></tr>
+      <tr><td><b class="err">❌ Market the app on speed</b></td><td>UX literature (Tan & Nov CHI 2026) says 6 s rates more thoughtful than 2 s for identical content. Market on privacy + abstention + Korean Socratic depth.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Slide 22: Latency Floor Projection -->
+<section class="slide">
+  <h2>📈 Latency Floor Projection (Decode Wall)</h2>
+  <div class="grid grid-4">
+    <div class="card"><div class="num">9–11 s</div><div class="label">pre-PR-γ cold</div><div class="desc">First user observation; fixed by warmup contract</div></div>
+    <div class="card"><div class="num">6.0 s</div><div class="label">today (PR-λ measured)</div><div class="desc">n=10, M1 Max, kvBits=nil</div></div>
+    <div class="card"><div class="num accent">~5.0–5.5 s</div><div class="label">+ Tier 1</div><div class="desc">PRs #237 + #249 + UD-MLX + KV persist</div></div>
+    <div class="card"><div class="num ok">~3.9–4.6 s</div><div class="label">+ Tier 2 spec-decode</div><div class="desc">When E4B-it-assistant Swift integration ships</div></div>
+  </div>
+  <h3 style="margin-top: 12px;">Hard floor analysis</h3>
+  <ul>
+    <li><b>Pure inference floor (research-published)</b>: ~1.5–2 s for 4B 4-bit MLX on M1 Max (per arXiv 2511.05502 scaled estimate). Decoding ≈ 1 s; TTFT ≈ 0.3 s on cached prompt; tax ≈ 0.5 s.</li>
+    <li><b>Application floor</b>: STT endpointing ~300–500 ms + AVSpeechSynthesizer prep ~50–100 ms + viseme schedule negligible + function-call parse &lt;5 ms ≈ 0.5 s on top of inference.</li>
+    <li><b>Hardware floor</b>: M1 Max GPU bandwidth 400 GB/s caps both decode and prefill at roughly half M3 Ultra. Moving to M3 Ultra / M4 Max / M5 yields ~2–3× speedup with no code change.</li>
+    <li><b>Below ~2.5 s/turn on M1 Max for Gemma 4 E4B 4-bit is not achievable</b> without changing model size, quantization tier (frozen invariant), or hardware.</li>
+  </ul>
+  <div class="callout tip" style="margin-top: 8px;">
+    <b>The 6 s isn't the LLM.</b> Per agent #10 synthesis, ~4 s of our 6 s is STT + function-call orchestration + TTS prep + viseme — <b>not</b> Gemma decode. If Tier 1 doesn't move the needle as projected, profile the turn loop end-to-end before more LLM-side work.
+  </div>
+</section>
+
+<!-- Slide 23: Final Verdict -->
+<section class="slide">
+  <h2>✅ Final Verdict</h2>
+  <div class="grid grid-2">
+    <div>
+      <h3>What 17 agents confirmed</h3>
+      <ul>
+        <li><b class="ok">MLX</b> = right framework (single-stream short-ctx 4B Q4 leader on Apple Silicon)</li>
+        <li><b class="ok">Gemma 4 E4B 4-bit</b> = right model (within SpecDD lock; 4 GB GPU budget; Korean-capable; native function-calling)</li>
+        <li><b class="ok">6.0 s/turn</b> = product feature for Socratic dialogue (UX literature + Khanmigo league)</li>
+        <li><b class="ok">NO-CLOUD invariant</b> = single load-bearing differentiator vs the 200–500 ms cloud frontier</li>
+        <li><b class="ok">GPU/Metal verified</b> at runtime via <code>Device(gpu, 0)</code> + 4.7 GB delta</li>
+        <li><b class="ok">PR #237</b> = free-lunch fix for our KV-quant fatal-error</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What 17 agents flagged</h3>
+      <ul>
+        <li><b class="warn">Korean Gemma 4 evals (KMMLU/HAE-RAE) NOT published</b> by Google. Run a local KMMLU sweep before trusting analogy from Gemma 3 tokenizer.</li>
+        <li><b class="warn">Apple Foundation Models</b> CANNOT host us (guardrails + 4K ctx).</li>
+        <li><b class="warn">Cloud Gemma 4 E4B</b> hosted by zero providers as of 2026-05-06.</li>
+        <li><b class="warn">Long-context MLX deficit</b> 2× behind llama.cpp+FA — bites only if <code>surface_past_wonder</code> exercises 256K.</li>
+        <li><b class="warn">Speculative decoding for Gemma 4 E4B</b> Swift-native impl doesn't exist yet (Python-only); 4–8 weeks behind Python.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout success" style="margin-top: 10px;">
+    <b>Next concrete step:</b> Open a PR cherry-picking <a href="https://github.com/ml-explore/mlx-swift-lm/pull/237">PR #237</a> + <a href="https://github.com/ml-explore/mlx-swift-lm/pull/249">PR #249</a> as SwiftPM revision pin against pinned 3.31.3 + re-pin model to <code>unsloth/gemma-4-E4B-it-UD-MLX-4bit</code>. Project Tier-1 latency: <b class="accent">~5.0–5.5 s/turn</b>. Re-bench via <code>make bench-latency</code> to verify.
+  </div>
+  <div class="stamp" style="margin-top: 14px;">2026-05-06 · 17 agents · ~150 URLs cited · all dates verified · Two-Weeks-Team/he-was-socrates · ship-ready</div>
+</section>
+
+<!-- Slide 24: Citation Index -->
+<section class="slide">
+  <h2>📚 Citation Index (Selected)</h2>
+  <div class="grid grid-2 scroll-area">
+    <div>
+      <h3>Cloud / vendor</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://artificialanalysis.ai/models/gemma-4-e4b/providers">AA: Gemma 4 E4B providers (none)</a></li>
+        <li><a href="https://artificialanalysis.ai/models/gemma-4-31b/providers">AA: Gemma 4 31B providers</a></li>
+        <li><a href="https://artificialanalysis.ai/models/gemma-3-4b/providers">AA: Gemma 3 4B providers</a></li>
+        <li><a href="https://console.groq.com/docs/models">Groq supported models</a></li>
+        <li><a href="https://community.groq.com/t/itd-be-fantastic-to-see-gemma-4-on-groq/1281">Groq #1281 Gemma 4 request</a></li>
+        <li><a href="https://groq.com/blog/inside-the-lpu-deconstructing-groq-speed">Groq LPU teardown</a></li>
+        <li><a href="https://artificialanalysis.ai/models/claude-4-5-haiku/providers">AA: Claude Haiku 4.5</a></li>
+      </ul>
+      <h3 style="margin-top:8px;">Google official</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://ai.google.dev/gemma/docs/core/model_card_4">Gemma 4 model card</a></li>
+        <li><a href="https://blog.google/innovation-and-ai/technology/developers-tools/gemma-4/">Gemma 4 launch blog</a></li>
+        <li><a href="https://huggingface.co/blog/gemma4">HF: Welcome Gemma 4</a></li>
+        <li><a href="https://blog.google/innovation-and-ai/technology/developers-tools/multi-token-prediction-gemma-4/">Gemma 4 MTP drafters</a></li>
+        <li><a href="https://huggingface.co/google/gemma-4-E4B-it-assistant">HF: gemma-4-E4B-it-assistant</a></li>
+      </ul>
+      <h3 style="margin-top:8px;">Apple official</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://machinelearning.apple.com/research/apple-foundation-models-tech-report-2025">Apple Foundation Models 2025</a></li>
+        <li><a href="https://developer.apple.com/documentation/FoundationModels">developer: FoundationModels</a></li>
+        <li><a href="https://developer.apple.com/documentation/technotes/tn3193-managing-the-on-device-foundation-model-s-context-window">TN3193 4K ctx</a></li>
+        <li><a href="https://developer.apple.com/videos/play/wwdc2025/248/">WWDC25 #248 prompt design</a></li>
+        <li><a href="https://machinelearning.apple.com/research/recurrent-drafter">Apple Recurrent Drafter</a></li>
+        <li><a href="https://machinelearning.apple.com/research/quantspec">Apple QuantSpec</a></li>
+        <li><a href="https://machinelearning.apple.com/research/exploring-llms-mlx-m5">Apple ML M5 LLMs</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>GitHub — fixes & forks</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://github.com/ml-explore/mlx-swift-lm/pull/237"><b>PR #237 KV-quant fix</b></a></li>
+        <li><a href="https://github.com/ml-explore/mlx-swift-lm/pull/249">PR #249 +23.8% decode</a></li>
+        <li><a href="https://github.com/ml-explore/mlx-swift-lm/issues/221">issue #221 fork upstreaming</a></li>
+        <li><a href="https://github.com/osaurus-ai/osaurus">osaurus-ai/osaurus 5.2k★</a></li>
+        <li><a href="https://github.com/SharpAI/SwiftLM">SharpAI/SwiftLM</a></li>
+        <li><a href="https://github.com/ekryski/mlx-swift-lm">ekryski/mlx-swift-lm</a></li>
+      </ul>
+      <h3 style="margin-top:8px;">GitHub — voice / audio</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://github.com/soniqo/speech-swift">soniqo/speech-swift 691★</a></li>
+        <li><a href="https://github.com/Blaizzy/mlx-audio-swift">Blaizzy/mlx-audio-swift 609★</a></li>
+        <li><a href="https://github.com/kwindla/macos-local-voice-agents">kwindla/voice-agents 321★</a></li>
+        <li><a href="https://github.com/Blaizzy/mlx-vlm">Blaizzy/mlx-vlm (E4B MTP)</a></li>
+      </ul>
+      <h3 style="margin-top:8px;">GitHub — bleeding edge</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://github.com/jundot/omlx">jundot/omlx 12.4k★</a></li>
+        <li><a href="https://github.com/mlx-community/speculative-decoding">mlx-community/speculative-decoding</a></li>
+        <li><a href="https://huggingface.co/unsloth/gemma-4-E4B-it-UD-MLX-4bit">unsloth UD-MLX 4bit</a></li>
+        <li><a href="https://macmlx.app/">macmlx.app SwiftUI bench</a></li>
+        <li><a href="https://github.com/ml-explore/mlx-lm/issues/763">mlx-lm #763 long-ctx deficit</a></li>
+      </ul>
+      <h3 style="margin-top:8px;">Academic / UX</h3>
+      <ul style="font-size:11px;">
+        <li><a href="https://neurosciencenews.com/latency-perception-thoughtful-ai-30597/">Tan & Nov CHI 2026</a></li>
+        <li><a href="https://www.pnas.org/doi/abs/10.1073/pnas.0903616106">Stivers PNAS 2009</a></li>
+        <li><a href="https://blog.khanacademy.org/how-khan-academy-is-building-a-better-ai-tutor-our-most-recent-learnings/">Khan Academy AI Tutor</a></li>
+        <li><a href="https://arxiv.org/abs/2511.05502">arXiv 2511.05502 Apple Silicon LLM</a></li>
+        <li><a href="https://arxiv.org/pdf/2507.13575">arXiv 2507.13575 Apple Foundation</a></li>
+        <li><a href="https://arxiv.org/html/2604.04722v1">arXiv 2604.04722 Adaptive KV quant</a></li>
+        <li><a href="https://arxiv.org/abs/2510.15312">arXiv 2510.15312 Mobile spec decode</a></li>
+        <li><a href="https://arxiv.org/html/2601.16720v1">arXiv 2601.16720 Watching AI Think</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">←</button>
+  <span class="indicator"><span id="cur">1</span> / <span id="tot">24</span></span>
+  <button id="next" aria-label="Next slide">→</button>
+  <button id="full" aria-label="Toggle fullscreen">⛶</button>
+</div>
+
+<script>
+(function() {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const cur = document.getElementById('cur');
+  const tot = document.getElementById('tot');
+  let i = 0;
+  tot.textContent = slides.length;
+  function go(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides[i].classList.remove('active');
+    slides[n].classList.add('active');
+    i = n;
+    cur.textContent = i + 1;
+    location.hash = 's' + (i + 1);
+  }
+  document.getElementById('prev').onclick = () => go(i - 1);
+  document.getElementById('next').onclick = () => go(i + 1);
+  document.getElementById('full').onclick = () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(i + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp')                    { e.preventDefault(); go(i - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End')  go(slides.length - 1);
+    if (e.key.toLowerCase() === 'f') document.getElementById('full').click();
+  });
+  if (location.hash.startsWith('#s')) {
+    const n = parseInt(location.hash.slice(2), 10);
+    if (!isNaN(n)) go(n - 1);
+  }
+})();
+</script>
+</body>
+</html>
