@@ -94,6 +94,18 @@ private struct Sample: Codable {
     let wallMs: Double
     let replyChars: Int
     let deferred: Bool
+
+    // Measurement-only extension to verify whether the gap between bench
+    // wallMs (~6 s) and the expected decode-only latency for the parsed
+    // reply length is explained by the model emitting trailing tokens
+    // past the closing `}`. See claudedocs/bench/* for the running
+    // hypothesis log; the JSON keys below are additive so older readers
+    // that only consume the fields above are unaffected.
+    let firstChunkMs: Double  // TTFT — start to first non-empty chunk
+    let chunkCount: Int  // # of chunks streamed (≈ token count for token-level streaming)
+    let rawChars: Int  // total raw chars accumulated from the stream
+    let closingBraceAt: Int  // index of last `}` in raw stream (-1 if none)
+    let trailingChars: Int  // raw chars emitted AFTER the closing `}`
 }
 
 private struct DeviceProof: Codable {
@@ -104,6 +116,39 @@ private struct DeviceProof: Codable {
     let gpuPeakBytes: Int
     let gpuCacheBytes: Int
     let metalLibLoaded: Bool
+}
+
+/// Path-comparison probe: runs the same utterance twice on the same
+/// `GemmaService`, with `resetSession()` called between to delete the
+/// warmed system-prompt cache file. Shot 1 takes the fast path (load
+/// pre-warmed `[KVCache]` + `instructions: nil`); shot 2 takes the slow
+/// fallback (`instructions: SystemPrompt.composed` re-prefill).
+///
+/// `ttftRatio = slow / fast`. Expected ≥ 10 once disk-mediated KV reuse
+/// is enabled (PR-Λ): the slow path re-prefills ~1500 system tokens
+/// every turn, the fast path skips them. A ratio near 1 would indicate
+/// the fast path is broken (regression).
+///
+/// The earlier hypothesis-1 probe (back-to-back shots without a reset
+/// between) lost meaning under the disk-mediated reuse model — both
+/// shots become identical fast-path operations and ratio collapses to
+/// ~1.0 trivially. The new shot ordering preserves regression-detection
+/// value across PR-Λ.
+private struct ProbeShot: Codable {
+    let label: String
+    let wallMs: Double
+    let firstChunkMs: Double
+    let chunkCount: Int
+    let rawChars: Int
+}
+
+private struct ReuseProbe: Codable {
+    let utterance: String
+    let shots: [ProbeShot]
+    /// shot2.firstChunkMs (slow) / shot1.firstChunkMs (fast).
+    /// ≥ 10 → fast path enabled (slow path is ~20-25× costlier).
+    /// ≈ 1 → fast path broken or warmup never produced a cache.
+    let ttftRatio: Double
 }
 
 private struct Result: Codable {
@@ -117,6 +162,10 @@ private struct Result: Codable {
     let warmupMs: Double
     let turns: [Sample]
     let summary: Summary
+    /// Optional — present only when the bench's reuse probe ran (the
+    /// existing JSON fields above are unaffected if a downstream reader
+    /// pre-dates this addition).
+    let reuseProbe: ReuseProbe?
 
     struct Summary: Codable {
         let n: Int
@@ -232,36 +281,112 @@ struct LatencyBench {
         FileHandle.standardError.write(Data("[latency-bench] warmup: \(Int(warmupMs)) ms\n".utf8))
 
         // 3) N timed turns
+        //
+        // We call `gemma.generate(...)` directly instead of
+        // `orchestrator.runTurn(...)` so we can observe the raw stream
+        // (chunk count, TTFT, trailing-char tail past the closing `}`).
+        // The user-turn formatting and JSON parsing are reproduced here
+        // 1:1 with FunctionCallOrchestrator so the parsed-reply contract
+        // is unchanged. Generation behavior is NOT touched — no early
+        // break, no maxTokens override.
+        _ = orchestrator  // silence unused-variable diagnostic
         var samples: [Sample] = []
         for (i, t) in benchTurns.enumerated() {
             FileHandle.standardError.write(
                 Data("[latency-bench] turn \(i + 1)/\(benchTurns.count): \(t.label)\n".utf8)
             )
-            let input = FunctionCallOrchestrator.TurnInput(
+            let userTurn = SystemPrompt.userTurn(
                 utterance: t.utterance,
-                language: .ko
+                language: .ko,
+                recentHistory: ""
             )
             let turnStart = nowMs()
+            var firstChunkMs: Double = -1
+            var raw = ""
+            var chunkCount = 0
             do {
-                let out = try await orchestrator.runTurn(input)
-                let turnMs = nowMs() - turnStart
-                FileHandle.standardError.write(
-                    Data(
-                        "[latency-bench]   wall: \(Int(turnMs)) ms · reply chars: \(out.socraticReply.count) · deferred: \(out.deferred)\n"
-                            .utf8
-                    )
+                let stream = try await gemma.generate(
+                    systemPrompt: SystemPrompt.composed,
+                    userTurn: userTurn
                 )
-                samples.append(
-                    Sample(
-                        label: t.label,
-                        wallMs: turnMs,
-                        replyChars: out.socraticReply.count,
-                        deferred: out.deferred
-                    )
-                )
+                for await chunk in stream {
+                    if firstChunkMs < 0 && !chunk.isEmpty {
+                        firstChunkMs = nowMs() - turnStart
+                    }
+                    raw += chunk
+                    chunkCount += 1
+                }
             } catch {
                 FileHandle.standardError.write(Data("[latency-bench]   FAIL: \(error)\n".utf8))
+                continue
             }
+            let turnMs = nowMs() - turnStart
+
+            // Reproduce FunctionCallOrchestrator's parsed-reply contract
+            // so the existing `replyChars` + `deferred` JSON fields keep
+            // their meaning. Any other parser branch contributes the same
+            // empty-reply / non-deferred default the orchestrator uses for
+            // mode_classify-only or malformed responses (Phase 1 stub).
+            let parseResult = FunctionCallParser.parse(raw)
+            let deferred: Bool
+            let parsedReply: String
+            switch parseResult {
+            case .askBack(let q, _):
+                deferred = false
+                parsedReply = q
+            case .deferToHuman(_, _, let exp):
+                deferred = true
+                parsedReply = exp
+            case .surfacePastWonder(let connector, _):
+                deferred = false
+                parsedReply = connector
+            case .modeClassify, .malformed:
+                deferred = false
+                parsedReply = ""
+            }
+
+            // Trailing-char metric: how many raw chars the model emits
+            // AFTER the last closing `}`. If this is consistently large
+            // (> 100), the model is generating a long whitespace/newline
+            // tail until maxTokens fires — the hypothesis under test.
+            let lastBraceAt: Int
+            if let idx = raw.lastIndex(of: "}") {
+                lastBraceAt = raw.distance(from: raw.startIndex, to: idx)
+            } else {
+                lastBraceAt = -1
+            }
+            let trailingChars = lastBraceAt >= 0 ? raw.count - 1 - lastBraceAt : raw.count
+
+            FileHandle.standardError.write(
+                Data(
+                    "[latency-bench]   wall: \(Int(turnMs)) ms · ttft: \(Int(firstChunkMs)) ms · chunks: \(chunkCount) · raw: \(raw.count) chars · trail: \(trailingChars) · reply: \(parsedReply.count) · deferred: \(deferred)\n"
+                        .utf8
+                )
+            )
+            // Korean Socratic quality preview — truncated to 80 chars (≈ 1
+            // tweet line) so a reviewer can spot-check that warmup's "ready"
+            // contamination didn't push the model off-voice. stderr only,
+            // not in JSON, to keep the bench file shape stable for diffs.
+            let preview =
+                parsedReply.count > 80
+                ? String(parsedReply.prefix(80)) + "…"
+                : parsedReply
+            FileHandle.standardError.write(
+                Data("[latency-bench]   reply: \(preview)\n".utf8)
+            )
+            samples.append(
+                Sample(
+                    label: t.label,
+                    wallMs: turnMs,
+                    replyChars: parsedReply.count,
+                    deferred: deferred,
+                    firstChunkMs: firstChunkMs,
+                    chunkCount: chunkCount,
+                    rawChars: raw.count,
+                    closingBraceAt: lastBraceAt,
+                    trailingChars: trailingChars
+                )
+            )
         }
 
         let walls = samples.map { $0.wallMs }.sorted()
@@ -273,6 +398,94 @@ struct LatencyBench {
             meanMs: walls.isEmpty ? 0 : walls.reduce(0, +) / Double(walls.count),
             minMs: walls.first ?? 0,
             maxMs: walls.last ?? 0
+        )
+
+        // 4) Path-comparison probe — runs the same utterance twice with a
+        //    `resetSession()` between to delete the warmed cache file.
+        //    Shot 1 = fast path (warmup-built cache still present), Shot 2
+        //    = slow fallback path (cache deleted, ChatSession built with
+        //    full `instructions:` re-prefill on every call). The TTFT
+        //    ratio (slow/fast) is the headline regression metric for
+        //    PR-Λ: should land in the 10-25× range.
+        FileHandle.standardError.write(
+            Data(
+                "[latency-bench] probe: path comparison (fast vs slow fallback)\n".utf8
+            )
+        )
+        let probeUtterance = benchTurns[0].utterance
+        let probeUserTurn = SystemPrompt.userTurn(
+            utterance: probeUtterance,
+            language: .ko,
+            recentHistory: ""
+        )
+
+        @Sendable func runProbeShot(label: String) async -> ProbeShot {
+            let start = nowMs()
+            var ttft: Double = -1
+            var chunks = 0
+            var raw = ""
+            do {
+                let stream = try await gemma.generate(
+                    systemPrompt: SystemPrompt.composed,
+                    userTurn: probeUserTurn
+                )
+                for await chunk in stream {
+                    if ttft < 0 && !chunk.isEmpty { ttft = nowMs() - start }
+                    chunks += 1
+                    raw += chunk
+                }
+            } catch {
+                FileHandle.standardError.write(
+                    Data("[latency-bench]   probe \(label) FAIL: \(error)\n".utf8)
+                )
+            }
+            return ProbeShot(
+                label: label,
+                wallMs: nowMs() - start,
+                firstChunkMs: ttft,
+                chunkCount: chunks,
+                rawChars: raw.count
+            )
+        }
+
+        // Shot 1: fast path. The 10 timed turns above already exercised it,
+        // but we measure the same utterance fresh to keep the JSON entry
+        // self-contained.
+        let shot1 = await runProbeShot(label: "fast-path")
+        // Reset clears the warmed `systemCacheURL` and deletes the file on
+        // disk, forcing the next call into the legacy `instructions:`
+        // path.
+        await gemma.resetSession()
+        // Shot 2: slow fallback. Same utterance, no warmed cache.
+        let shot2 = await runProbeShot(label: "slow-fallback")
+        let ttftRatio: Double =
+            shot1.firstChunkMs > 0 ? shot2.firstChunkMs / shot1.firstChunkMs : 0
+        FileHandle.standardError.write(
+            Data(
+                "[latency-bench]   shot 1 fast-path:     wall=\(Int(shot1.wallMs)) ttft=\(Int(shot1.firstChunkMs)) chunks=\(shot1.chunkCount) raw=\(shot1.rawChars)\n"
+                    .utf8
+            )
+        )
+        FileHandle.standardError.write(
+            Data(
+                "[latency-bench]   shot 2 slow-fallback: wall=\(Int(shot2.wallMs)) ttft=\(Int(shot2.firstChunkMs)) chunks=\(shot2.chunkCount) raw=\(shot2.rawChars)\n"
+                    .utf8
+            )
+        )
+        let verdict =
+            ttftRatio >= 10
+            ? "FAST PATH ENABLED"
+            : (ttftRatio >= 3 ? "FAST PATH PARTIAL" : "FAST PATH DISABLED OR BROKEN")
+        FileHandle.standardError.write(
+            Data(
+                "[latency-bench]   ttft ratio (slow/fast): \(String(format: "%.2f", ttftRatio))  → \(verdict)\n"
+                    .utf8
+            )
+        )
+        let reuseProbe = ReuseProbe(
+            utterance: probeUtterance,
+            shots: [shot1, shot2],
+            ttftRatio: ttftRatio
         )
 
         #if canImport(MLX)
@@ -312,7 +525,8 @@ struct LatencyBench {
             loadMs: loadMs,
             warmupMs: warmupMs,
             turns: samples,
-            summary: summary
+            summary: summary,
+            reuseProbe: reuseProbe
         )
 
         let encoder = JSONEncoder()

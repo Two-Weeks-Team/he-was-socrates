@@ -1,88 +1,158 @@
 {
   "device" : {
-    "gpuActiveBytesAfter" : 4701905216,
+    "gpuActiveBytesAfter" : 4272513344,
     "gpuActiveBytesBefore" : 0,
-    "gpuCacheBytes" : 25894499772,
-    "gpuPeakBytes" : 5613096902,
+    "gpuCacheBytes" : 3585765252,
+    "gpuPeakBytes" : 5103461714,
     "metalLibLoaded" : true,
     "mlxDefaultDevice" : "Device(gpu, 0)",
     "mlxDefaultDeviceType" : "Optional(MLX.DeviceType.gpu)"
   },
-  "host" : "kimsejunui-macbookpro.local",
+  "host" : "mbp.local",
   "kvGroupSize" : 64,
-  "loadMs" : 2124.48095703125,
+  "loadMs" : 2175.849853515625,
   "modelTag" : "mlx-community/gemma-4-e4b-it-4bit",
-  "summary" : {
-    "maxMs" : 6944.304931640625,
-    "meanMs" : 6005.795385742187,
-    "medianMs" : 6053.1527099609375,
-    "minMs" : 5302.749267578125,
-    "n" : 10,
-    "p10Ms" : 5434.206616210937,
-    "p90Ms" : 6640.963623046875
+  "reuseProbe" : {
+    "shots" : [
+      {
+        "chunkCount" : 34,
+        "firstChunkMs" : 268.149169921875,
+        "label" : "fast-path",
+        "rawChars" : 89,
+        "wallMs" : 808.3271484375
+      },
+      {
+        "chunkCount" : 34,
+        "firstChunkMs" : 4424.5009765625,
+        "label" : "slow-fallback",
+        "rawChars" : 89,
+        "wallMs" : 4973.7529296875
+      }
+    ],
+    "ttftRatio" : 16.50014795067825,
+    "utterance" : "왜 사람들은 자신과 다른 의견을 가진 사람을 미워하게 될까?"
   },
-  "timestamp" : "2026-05-06T00:58:46Z",
+  "summary" : {
+    "maxMs" : 1201.001953125,
+    "meanMs" : 906.0789306640625,
+    "medianMs" : 812.58349609375,
+    "minMs" : 757.0380859375,
+    "n" : 10,
+    "p10Ms" : 757.5427978515625,
+    "p90Ms" : 1192.199267578125
+  },
+  "timestamp" : "2026-05-06T02:43:47Z",
   "turns" : [
     {
+      "chunkCount" : 34,
+      "closingBraceAt" : 88,
       "deferred" : false,
+      "firstChunkMs" : 266.645751953125,
       "label" : "ask-back/curious-adult-1",
+      "rawChars" : 89,
       "replyChars" : 21,
-      "wallMs" : 5302.749267578125
+      "trailingChars" : 0,
+      "wallMs" : 805.659912109375
     },
     {
+      "chunkCount" : 39,
+      "closingBraceAt" : 99,
       "deferred" : false,
+      "firstChunkMs" : 191.93603515625,
       "label" : "ask-back/stuck-thinker-1",
-      "replyChars" : 29,
-      "wallMs" : 5448.81298828125
-    },
-    {
-      "deferred" : false,
-      "label" : "ask-back/curious-adult-2",
-      "replyChars" : 29,
-      "wallMs" : 5535.138916015625
-    },
-    {
-      "deferred" : true,
-      "label" : "defer/regulated-medical",
-      "replyChars" : 39,
-      "wallMs" : 6106.317138671875
-    },
-    {
-      "deferred" : false,
-      "label" : "ask-back/curious-adult-3",
-      "replyChars" : 23,
-      "wallMs" : 5856.668212890625
-    },
-    {
-      "deferred" : false,
-      "label" : "ask-back/stuck-thinker-2",
-      "replyChars" : 34,
-      "wallMs" : 6006.168701171875
-    },
-    {
-      "deferred" : false,
-      "label" : "ask-back/curious-adult-4",
+      "rawChars" : 100,
       "replyChars" : 32,
-      "wallMs" : 6100.13671875
+      "trailingChars" : 0,
+      "wallMs" : 819.507080078125
     },
     {
+      "chunkCount" : 39,
+      "closingBraceAt" : 95,
+      "deferred" : false,
+      "firstChunkMs" : 190.79931640625,
+      "label" : "ask-back/curious-adult-2",
+      "rawChars" : 96,
+      "replyChars" : 28,
+      "trailingChars" : 0,
+      "wallMs" : 819.9091796875
+    },
+    {
+      "chunkCount" : 63,
+      "closingBraceAt" : 175,
       "deferred" : true,
-      "label" : "defer/regulated-financial",
-      "replyChars" : 36,
-      "wallMs" : 6607.259033203125
+      "firstChunkMs" : 191.23291015625,
+      "label" : "defer/regulated-medical",
+      "rawChars" : 176,
+      "replyChars" : 41,
+      "trailingChars" : 0,
+      "wallMs" : 1201.001953125
     },
     {
+      "chunkCount" : 36,
+      "closingBraceAt" : 91,
       "deferred" : false,
-      "label" : "ask-back/curious-adult-5",
+      "firstChunkMs" : 191.334228515625,
+      "label" : "ask-back/curious-adult-3",
+      "rawChars" : 92,
       "replyChars" : 24,
-      "wallMs" : 6150.39794921875
+      "trailingChars" : 0,
+      "wallMs" : 767.110107421875
     },
     {
+      "chunkCount" : 36,
+      "closingBraceAt" : 95,
       "deferred" : false,
+      "firstChunkMs" : 183.18701171875,
+      "label" : "ask-back/stuck-thinker-2",
+      "rawChars" : 96,
+      "replyChars" : 28,
+      "trailingChars" : 0,
+      "wallMs" : 757.598876953125
+    },
+    {
+      "chunkCount" : 58,
+      "closingBraceAt" : 132,
+      "deferred" : false,
+      "firstChunkMs" : 266.64501953125,
+      "label" : "ask-back/curious-adult-4",
+      "rawChars" : 133,
+      "replyChars" : 65,
+      "trailingChars" : 0,
+      "wallMs" : 1191.22119140625
+    },
+    {
+      "chunkCount" : 61,
+      "closingBraceAt" : 170,
+      "deferred" : true,
+      "firstChunkMs" : 204.339111328125,
+      "label" : "defer/regulated-financial",
+      "rawChars" : 171,
+      "replyChars" : 35,
+      "trailingChars" : 0,
+      "wallMs" : 1182.260986328125
+    },
+    {
+      "chunkCount" : 34,
+      "closingBraceAt" : 87,
+      "deferred" : false,
+      "firstChunkMs" : 204.708984375,
+      "label" : "ask-back/curious-adult-5",
+      "rawChars" : 88,
+      "replyChars" : 20,
+      "trailingChars" : 0,
+      "wallMs" : 757.0380859375
+    },
+    {
+      "chunkCount" : 34,
+      "closingBraceAt" : 86,
+      "deferred" : false,
+      "firstChunkMs" : 196.93994140625,
       "label" : "ask-back/stuck-thinker-3",
-      "replyChars" : 23,
-      "wallMs" : 6944.304931640625
+      "rawChars" : 87,
+      "replyChars" : 19,
+      "trailingChars" : 0,
+      "wallMs" : 759.48193359375
     }
   ],
-  "warmupMs" : 5062.547119140625
+  "warmupMs" : 4571.169921875
 }
