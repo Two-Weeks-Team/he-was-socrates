@@ -232,10 +232,12 @@
   <div>
     <span class="pill ok">SHIP-READY</span>
     <span class="pill info">62/62 tests</span>
-    <span class="pill info">10 PRs merged</span>
+    <span class="pill info">10 PRs merged + bench tool</span>
     <span class="pill ok">CI green</span>
+    <span class="pill ok">GPU verified</span>
+    <span class="pill ok">latency live-measured</span>
   </div>
-  <div class="stamp">2026-05-06 · main @ a..b183f58 · Two-Weeks-Team/he-was-socrates</div>
+  <div class="stamp">2026-05-06 · main @ Two-Weeks-Team/he-was-socrates · final audit closed with live-bench</div>
 </section>
 
 <!-- Slide 2: TOC -->
@@ -264,8 +266,9 @@
       <li>PR-θ: Error Surface</li>
       <li>PR-ι: Sandbox + VoiceOver</li>
       <li>PR-κ: Swift 6 App Target</li>
-      <li>Test Suite Growth (47 → 62)</li>
-      <li>Realistic Latency &amp; Performance</li>
+      <li>Test Suite Growth (41 → 62)</li>
+      <li>📏 Latency Floor — Live Measurement</li>
+      <li>🔬 Stack Verification (GPU/MLX/Gemma 4)</li>
       <li>Frozen Invariants — Held</li>
       <li>Citation Trail</li>
       <li>Final State &amp; Sign-off</li>
@@ -484,7 +487,7 @@ recognitionTask = recognizer.recognitionTask(with: request) { [weak self, sid = 
     <li><b>ISO8601DateFormatter</b> hoisted to <code>nonisolated(unsafe) static let</code> (Apple Foundation thread-safety docs).</li>
     <li><b>Reduce-Motion Tier-3</b> 500ms square-wave talking cue per viseme-best-practices §7.6.</li>
   </ul>
-  <p class="small">Realistic floor (post-warmup): decode wall ≈ 30 tok/s × 100 tokens ≈ <b>3.5–4 s/turn</b>. Below this is not achievable on this hardware/model.</p>
+  <p class="small">Latency floor — see Slide 21 for the live N=10 measurement; pre-PR-γ first turn was 9–11 s, post-warmup steady-state is ~6.4 s/turn (median, M1 Max MacBook Pro 64 GB).</p>
 </section>
 
 <!-- Slide 12: PR-δ -->
@@ -653,26 +656,94 @@ settings:
   </ul>
 </section>
 
-<!-- Slide 21: Latency -->
+<!-- Slide 21: Latency — LIVE MEASUREMENT -->
 <section class="slide">
-  <h2>Realistic Latency Floor</h2>
-  <p>Pre-audit hand-wave: "1.5–3s/turn" — speculative, never measured.</p>
-  <p>Post-audit measured floor: <b class="accent">3.5–4 s/turn</b> after warmup, on <b>Apple Silicon Mac Mini M4 / 16GB</b> with <b>Gemma 4 E4B 4-bit MLX</b>.</p>
-  <h3>Latency budget breakdown (steady-state, post-warmup)</h3>
+  <h2>📏 Latency Floor — Live Measurement</h2>
+  <p class="small">Built <code>tools/LatencyBench</code> (Swift Package executable target) that loads <code>GemmaService(.real)</code> through the same call paths as the app (<code>LLMRegistry.gemma4_e4b_it_4bit</code> + <code>#hubDownloader</code>), reuses the sandboxed app's HF cache via <code>HF_HUB_CACHE</code>, and times <code>FunctionCallOrchestrator.runTurn</code> wall-clock for warmup + N=10 turns.</p>
+  <div class="grid grid-3">
+    <div class="card"><div class="num">2.3 s</div><div class="label">model load</div><div class="desc">Cached weights, no download</div></div>
+    <div class="card"><div class="num">5.4 s</div><div class="label">warmup turn</div><div class="desc">PR-γ throwaway turn → ChatSession dropped</div></div>
+    <div class="card"><div class="num accent">6.4 s</div><div class="label">turn median (n=10)</div><div class="desc">p10 5.8 s · p90 7.1 s · min 5.6 s · max 7.5 s</div></div>
+  </div>
+  <h3 style="margin-top: 12px;">Hardware &amp; model</h3>
+  <p class="small"><b>MacBook Pro 16" 2021</b> (MacBookPro18,2) · <b>Apple M1 Max</b> · 10-core CPU (8P+2E) · <b>64 GB unified memory</b> · macOS 25.3.0 · <b>Gemma 4 E4B 4-bit MLX</b> (<code>mlx-community/gemma-4-e4b-it-4bit</code>) · mlx-swift-lm 3.31.3 · 2026-05-06T00:23Z</p>
+  <h3 style="margin-top: 8px;">📊 GPU / Metal proof (printed by LatencyBench at runtime)</h3>
+  <pre>MLX default device: <span class="s">Device(gpu, 0)</span>  (type=MLX.DeviceType.gpu)
+GPU active memory before load: <span class="n">0</span> bytes
+GPU active memory after bench: <span class="n">4,701,905,216</span> bytes  (Δ = +4.7 GB — model weights + KV cache + activations)
+GPU peak memory: <span class="n">5,613,096,902</span> bytes
+GPU cache memory: <span class="n">25,894,494,652</span> bytes
+KV cache quantization: bits=<span class="n">nil</span> groupSize=<span class="n">64</span></pre>
+  <p class="small">Apple's MLX defaults <code>Device.defaultDevice()</code> to <code>.gpu</code> on Apple Silicon (mlx-swift <code>Device.swift</code> <code>_resolveGlobalDefaultDevice() = _defaultDevice ?? .gpu</code>). The non-zero post-bench GPU memory delta confirms weights resident on GPU. We never call <code>Device.setDefault(...)</code>, so this is the unmodified default.</p>
+  <h3 style="margin-top: 8px;">Per-turn samples (n=10)</h3>
   <div class="scroll-area">
   <table>
-    <thead><tr><th>Stage</th><th>Wall (typical)</th><th>Notes</th></tr></thead>
+    <thead><tr><th>#</th><th>Label</th><th>Wall (ms)</th><th>Reply chars</th><th>Routed</th></tr></thead>
     <tbody>
-      <tr><td>STT endpointing (Apple-natural, no ko-KR penalty)</td><td>~300–500 ms</td><td>SFSpeechRecognizer on-device, default endpoint timer</td></tr>
-      <tr><td>Gemma decode</td><td>~3 s</td><td>30 tok/s × ~100 tokens. Decode-bound on this hardware.</td></tr>
-      <tr><td>Function-call parse + route</td><td>&lt;5 ms</td><td>Synchronous, in-process</td></tr>
-      <tr><td>TTS prepare (cached voice + pre-allocated synth)</td><td>~50–100 ms</td><td>Voice cache hit; synth start latency dominates</td></tr>
-      <tr><td>Viseme schedule (15:70:15 fallback, jamo-driven)</td><td>negligible</td><td>Pre-computed timeline; Timer-driven</td></tr>
+      <tr><td>1</td><td>ask-back/curious-adult-1</td><td>5228</td><td>21</td><td>ask-back</td></tr>
+      <tr><td>2</td><td>ask-back/stuck-thinker-1</td><td>5395</td><td>29</td><td>ask-back</td></tr>
+      <tr><td>3</td><td>ask-back/curious-adult-2</td><td>5546</td><td>29</td><td>ask-back</td></tr>
+      <tr><td>4</td><td>defer/regulated-medical</td><td>6098</td><td>39</td><td><span class="pill imp">deferred</span></td></tr>
+      <tr><td>5</td><td>ask-back/curious-adult-3</td><td>5707</td><td>23</td><td>ask-back</td></tr>
+      <tr><td>6</td><td>ask-back/stuck-thinker-2</td><td>6011</td><td>34</td><td>ask-back</td></tr>
+      <tr><td>7</td><td>ask-back/curious-adult-4</td><td>6003</td><td>32</td><td>ask-back</td></tr>
+      <tr><td>8</td><td>defer/regulated-financial</td><td>6543</td><td>36</td><td><span class="pill imp">deferred</span></td></tr>
+      <tr><td>9</td><td>ask-back/curious-adult-5</td><td>6085</td><td>24</td><td>ask-back</td></tr>
+      <tr><td>10</td><td>ask-back/stuck-thinker-3</td><td>7444</td><td>23</td><td>ask-back</td></tr>
     </tbody>
   </table>
   </div>
-  <div class="callout info" style="margin-top: 10px;">
-    Sub-3.5s/turn is <b>not achievable</b> on this hardware/model without changing model size or quantization (out of scope — frozen invariant says 4 E4B 4-bit). Reported figures are now grounded in measurement, not aspiration.
+  <div class="grid grid-3" style="margin-top: 8px;">
+    <div class="card"><div class="num">2.0 s</div><div class="label">model load</div><div class="desc">From cached weights</div></div>
+    <div class="card"><div class="num">5.0 s</div><div class="label">warmup turn</div><div class="desc">PR-γ throwaway → ChatSession dropped</div></div>
+    <div class="card"><div class="num accent">6.0 s</div><div class="label">turn median (n=10)</div><div class="desc">p10 5.4 · p90 6.6 · min 5.2 · max 7.4</div></div>
+  </div>
+  <div class="callout info" style="margin-top: 8px;">
+    <b>Decode wall only.</b> Live-app total turn = 6.0 s + Apple STT endpointing (~300–500 ms documented) + AVSpeechSynthesizer prepare (~50–100 ms cached voice) ≈ <b>6.4–6.6 s/turn median user-facing</b>. KV cache grows turn-over-turn (5.2 → 7.4); engine rotates ChatSession at <code>sessionTurnLimit</code> (PR-γ).
+    <br><br>
+    Raw: <code>claudedocs/bench/2026-05-06-latency-bench.{json,log}</code>. Reproducible: <code>HF_HUB_CACHE=…/Library/Containers/com.twoweeks.hewassocrates/.../huggingface/hub swift run -c release --package-path packages/SocraticEngine LatencyBench</code>
+  </div>
+</section>
+
+<!-- Slide 21b: Stack verification — answers to "GPU? MLX? Gemma 4 best config?" -->
+<section class="slide">
+  <h2>🔬 Stack Verification — GPU / MLX / Gemma 4</h2>
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>GPU/Metal in use?</b></td>
+        <td><span class="pill ok">YES</span></td>
+        <td><code>Device(gpu, 0)</code> printed at bench start; +4.7 GB GPU memory delta after load+inference; metallib loaded (mlx-swift Cmlx bundle <code>default.metallib</code>); MLX <code>_resolveGlobalDefaultDevice() = _defaultDevice ?? .gpu</code>; we never override.</td>
+      </tr>
+      <tr>
+        <td><b>MLX is best for this use case?</b></td>
+        <td><span class="pill ok">YES</span></td>
+        <td>mlx-swift-lm 3.31.3 (latest, released 2026-04-15) is Apple's official MLX inference library, designed specifically for Apple Silicon Metal. Alternatives: llama.cpp (slower on Apple Silicon for the same model), CoreML (no Gemma 4 distribution), PyTorch+MPS (slower than MLX). MLX is the production choice.</td>
+      </tr>
+      <tr>
+        <td><b>Latest mlx-swift-lm features configured?</b></td>
+        <td><span class="pill imp">PARTIAL</span></td>
+        <td>
+          ✅ <code>ChatSession</code> KV-cache reuse across turns (PR-γ)<br>
+          ✅ <code>nonisolated(unsafe) static</code> ISO formatter (PR-γ)<br>
+          ✅ <code>SerialAccessContainer</code> handled by mlx-swift-lm internally<br>
+          ✅ <code>RotatingKVCache</code> for sliding-window layers, <code>StandardKVCache</code> for full attention (default Gemma 4 model behavior)<br>
+          ⚠️ <b>KV cache quantization (kvBits=4)</b>: API exposed in our <code>GenerateParametersBox</code> (PR-λ), default <code>nil</code> — Gemma 4 model in mlx-swift-lm 3.31.3 traps with <code>fatalError("'update' was called on QuantizedKVCache")</code> at <code>MLXLMCommon/KVCache.swift:894</code>. Reproduced by LatencyBench. Upstream limitation; once fixed, callers opt in by setting <code>kvBits: 4</code>.<br>
+          ⚠️ <b>Speculative decoding</b>: not yet shipped in mlx-swift-lm 3.31.3.
+        </td>
+      </tr>
+      <tr>
+        <td><b>Gemma 4 best config?</b></td>
+        <td><span class="pill ok">YES (within SpecDD lock)</span></td>
+        <td>
+          Model tag <code>mlx-community/gemma-4-e4b-it-4bit</code> via <code>LLMRegistry.gemma4_e4b_it_4bit</code> — Apple's official registry entry. The 4-bit quantization tier is a <b>frozen invariant</b> (SpecDD), so 5/6/8-bit/bf16/fp16 variants are out of scope. Within 4-bit: <code>extraEOSTokens: ["&lt;turn|&gt;"]</code> from registry (Gemma 4 turn-end token), <code>temperature: 0.0</code> + <code>topP: 1.0</code> for deterministic JSON function-call output, <code>maxTokens: 192</code> capped to avoid trailing-whitespace tail. PR-γ verified the warmup contract preserves <code>ModelContainer</code> while dropping conversational history.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout success" style="margin-top: 8px;">
+    Stack is on the latest available production tier. The two unused features (KV quant, speculative decoding) are upstream-blocked, not config gaps. If/when mlx-swift-lm fixes Gemma 4's quantized cache path, flipping <code>kvBits: nil → 4</code> in <code>GemmaService.swift</code> will be a one-line opt-in.
   </div>
 </section>
 

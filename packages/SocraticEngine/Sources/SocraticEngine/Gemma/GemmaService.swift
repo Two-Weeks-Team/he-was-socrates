@@ -78,7 +78,24 @@ public actor GemmaService {
     public var generateParameters: GenerateParametersBox = GenerateParametersBox(
         temperature: 0.0,
         topP: 1.0,
-        maxTokens: 192
+        maxTokens: 192,
+        // PR-λ F19: KV-cache quantization is exposed (kvBits / kvGroupSize /
+        // quantizedKVStart fields) so the engine is forward-ready, but the
+        // default ships with `kvBits = nil` (full-precision FP16 KV cache).
+        //
+        // Why nil and not 4: mlx-swift-lm 3.31.3's `Gemma4.swift` model
+        // implementation does not fully wrap every cache call site with the
+        // `if let quantizedCache = cache as? QuantizedKVCacheProtocol` branch
+        // — at least one attention path still calls `cache.update(...)`,
+        // which `QuantizedKVCache.update` deliberately traps with a
+        // `fatalError("Use `updateQuantized` instead.")` (see
+        // `MLXLMCommon/KVCache.swift:894`). LatencyBench reproduced the
+        // crash on first inference. Once upstream Gemma 4 grows the missing
+        // branch, callers can opt in by passing `kvBits: 4` here without a
+        // schema change.
+        kvBits: nil,
+        kvGroupSize: 64,
+        quantizedKVStart: 0
     )
 
     public init(mode: RuntimeMode = .stub) {
@@ -384,24 +401,63 @@ public actor GemmaService {
 }
 
 /// Sendable wrapper so we can pass parameters into Tasks.
+///
+/// PR-λ F19: exposes `kvBits` + `kvGroupSize` so callers can opt in to MLX's
+/// quantized KV cache. mlx-swift-lm 3.31.3 `GenerateParameters.kvBits` is `nil`
+/// by default (full-precision FP16 KV cache); setting it to 4 with a group
+/// size of 64 lets each attention step run against a 4-bit quantized K/V,
+/// which is the same trick MLX uses for the model weights themselves. Apple
+/// MLX team's `mlx-lm`/`mlx-swift-lm` documentation: "Quantized cache" section
+/// of `MLXLMCommon/KVCache.swift` shows `QuantizedKVCache(groupSize: 64,
+/// bits: 4)` as the canonical recipe. Memory drops ~4× and attention throughput
+/// improves on Apple Silicon for long-context turns.
 public struct GenerateParametersBox: Sendable, Equatable {
     public var temperature: Double
     public var topP: Double
     public var maxTokens: Int
 
-    public init(temperature: Double, topP: Double, maxTokens: Int) {
+    /// nil → no KV-cache quantization (FP16). 4 → 4-bit quantized KV cache
+    /// (matches the model's own weight quantization tier; recommended for
+    /// Gemma 4 E4B 4-bit on Apple Silicon).
+    public var kvBits: Int?
+
+    /// Group size for KV cache quantization. mlx-swift-lm default is 64;
+    /// matches the recipe documented in `MLXLMCommon/KVCache.swift`
+    /// "Quantized Cache Usage" section.
+    public var kvGroupSize: Int
+
+    /// Token offset at which to start using the quantized KV cache. 0 means
+    /// the cache is quantized from the very first generated token. mlx-swift-lm
+    /// default is 0.
+    public var quantizedKVStart: Int
+
+    public init(
+        temperature: Double,
+        topP: Double,
+        maxTokens: Int,
+        kvBits: Int? = nil,
+        kvGroupSize: Int = 64,
+        quantizedKVStart: Int = 0
+    ) {
         self.temperature = temperature
         self.topP = topP
         self.maxTokens = maxTokens
+        self.kvBits = kvBits
+        self.kvGroupSize = kvGroupSize
+        self.quantizedKVStart = quantizedKVStart
     }
 
     #if canImport(MLXLMCommon)
     public func toMLX() -> GenerateParameters {
-        GenerateParameters(
+        var p = GenerateParameters(
             maxTokens: maxTokens,
             temperature: Float(temperature),
             topP: Float(topP)
         )
+        p.kvBits = kvBits
+        p.kvGroupSize = kvGroupSize
+        p.quantizedKVStart = quantizedKVStart
+        return p
     }
     #endif
 }

@@ -50,5 +50,21 @@ let package = Package(
             ],
             path: "Tests/SocraticEngineTests"
         ),
+        // Latency benchmark — out-of-process executable that loads the real
+        // Gemma 4 E4B 4-bit MLX weights via the same call paths as the app
+        // (LLMRegistry.gemma4_e4b_it_4bit + #hubDownloader macro), runs warmup
+        // and N timed turns through FunctionCallOrchestrator, and prints
+        // wall-clock samples + median/p10/p90 to stdout. Invocation:
+        //
+        //   HF_HUB_CACHE=/path/to/hub swift run -c release LatencyBench
+        //
+        // The HF_HUB_CACHE env var is honored by swift-huggingface (see
+        // CacheLocationProvider.swift) so the bench can reuse weights staged
+        // by the sandboxed app at ~/Library/Containers/<bundle>/.../huggingface/hub.
+        .executableTarget(
+            name: "LatencyBench",
+            dependencies: ["SocraticEngine"],
+            path: "Sources/LatencyBench"
+        ),
     ]
 )
