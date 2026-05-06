@@ -1,4 +1,7 @@
+import AVFoundation
+import AppKit
 import SocraticEngine
+import Speech
 import SwiftUI
 
 /// Root view of the He Was Socrates fullscreen experience.
@@ -21,6 +24,47 @@ struct ContentView: View {
             // background_ink_black per design-approved.json
             Color(red: 0.123, green: 0.115, blue: 0.184).ignoresSafeArea()
 
+            // Iter-6: pre-flight gate. When the eight-check pre-flight has
+            // any blocking failure (missing Korean voice, missing English
+            // voice, missing STT asset, etc.) the user sees a structured
+            // setup screen instead of the bust + a fail-after-the-fact
+            // error mid-turn. Once everything resolves the bust appears.
+            switch vm.preflightStatus {
+            case .blocked(let checks):
+                PreflightView(
+                    checks: checks,
+                    isInstalling: vm.assetInstallActive,
+                    installProgress: vm.assetInstallProgress,
+                    onAction: { check in
+                        Task { await vm.handlePreflightAction(check) }
+                    },
+                    onRecheck: { Task { await vm.recheckPreflight() } }
+                )
+            default:
+                bustContent
+            }
+        }
+        .background(
+            KeyEventHandlerView(
+                onKeyDown: { keyCode in handleKeyDown(keyCode) },
+                onKeyUp: { keyCode in handleKeyUp(keyCode) }
+            )
+        )
+        .accessibilityElement(children: .contain)
+        // PR-δ: phase-driven VoiceOver label. Updates only on phase
+        // transitions (handful per turn), not on viseme swaps (30 fps).
+        .accessibilityLabel("He Was Socrates · \(FailedMessage.voiceOverLabel(for: vm.phase))")
+        .task { await vm.bootstrap() }
+        .sheet(isPresented: $vm.permissionExplainerVisible) {
+            PermissionExplainerView(
+                onAllow: { Task { await vm.grantPermissionsAfterExplainer() } },
+                onDismiss: { vm.dismissPermissionExplainer() }
+            )
+        }
+    }
+
+    private var bustContent: some View {
+        ZStack {
             BustView(viseme: vm.currentViseme)
 
             VStack {
@@ -40,17 +84,6 @@ struct ContentView: View {
                     .accessibilityHidden(true)
             }
         }
-        .background(
-            KeyEventHandlerView(
-                onKeyDown: { keyCode in handleKeyDown(keyCode) },
-                onKeyUp: { keyCode in handleKeyUp(keyCode) }
-            )
-        )
-        .accessibilityElement(children: .contain)
-        // PR-δ: phase-driven VoiceOver label. Updates only on phase
-        // transitions (handful per turn), not on viseme swaps (30 fps).
-        .accessibilityLabel("He Was Socrates · \(FailedMessage.voiceOverLabel(for: vm.phase))")
-        .task { await vm.bootstrap() }
     }
 
     private func handleKeyDown(_ keyCode: UInt16) {
@@ -60,7 +93,7 @@ struct ContentView: View {
         case 49:  // Spacebar — push-to-talk press
             guard !spaceIsDown else { return }
             spaceIsDown = true
-            vm.beginListening()
+            vm.attemptBeginListening()
         default:
             break
         }
@@ -82,13 +115,51 @@ struct ContentView: View {
 final class SocraticAppViewModel: ObservableObject {
     private let coordinator: EngineCoordinator
     private var bootstrapStarted: Bool = false
+    private var modelLoadStarted: Bool = false
     private var loadProgressPoll: Task<Void, Never>?
+    /// Workspace activation observer for the F1/F2 deeplink return-polling
+    /// flow. `nonisolated(unsafe)` because Swift 6 strict-concurrency
+    /// declares the implicit `deinit` nonisolated, but the property is
+    /// MainActor-isolated by default — we need cross-isolation read access.
+    /// Safe in practice: the property is only written once (in `init`) and
+    /// read once (in `deinit`); `removeObserver` is thread-safe per Apple
+    /// NotificationCenter documentation.
+    nonisolated(unsafe) private var workspaceObserver: NSObjectProtocol?
+    private var permissionsRequested: Bool = false
 
     @Published var phase: EngineCoordinator.Phase = .bootstrapping
     @Published var currentViseme: VisemeID = .REST
     @Published var partialTranscript: String = ""
     @Published var caption: String = ""
     @Published var loadProgress: Double = 0
+
+    // MARK: - iter-6 first-launch UX
+
+    public enum PreflightStatus: Equatable {
+        case idle
+        case running
+        case allReady
+        case blocked(checks: [PreflightCheck])
+    }
+
+    /// Drives the top-level branch in `ContentView.body` — when `.blocked`,
+    /// the bust is hidden and `PreflightView` takes the full screen until
+    /// the user resolves missing items.
+    @Published var preflightStatus: PreflightStatus = .idle
+
+    /// Sheet visibility for the in-context permission explainer (F4 / F5).
+    /// Driven by `attemptBeginListening()` on the first Spacebar press
+    /// when one or both TCC permissions are still `.notDetermined`.
+    @Published var permissionExplainerVisible: Bool = false
+
+    /// AssetInventory bilingual STT-asset download progress (0..1). Bound
+    /// to a determinate `ProgressView(value:)` inside `PreflightView`.
+    @Published var assetInstallProgress: Double = 0
+
+    /// `true` while a `PreflightRunner.installSTTAssetsBilingual` task is
+    /// active. Disables the per-row install buttons + recheck button while
+    /// the download runs.
+    @Published var assetInstallActive: Bool = false
 
     /// Phase-aware bootstrap label per Apple HIG:
     /// > "Include a label above an activity indicator … avoid vague terms like
@@ -119,6 +190,40 @@ final class SocraticAppViewModel: ObservableObject {
     init(gemmaMode: GemmaService.RuntimeMode = SocraticAppViewModel.defaultGemmaMode()) {
         self.coordinator = EngineCoordinator(gemmaMode: gemmaMode)
         wire()
+        registerWorkspaceObserver()
+    }
+
+    deinit {
+        if let observer = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+    }
+
+    /// Iter-6 / F1: when the user comes back from System Settings (which
+    /// they'd reach via the per-row deeplink), automatically re-run the
+    /// pre-flight so newly-installed voices / STT assets are picked up
+    /// without an explicit "다시 점검" tap. Only fires when the current
+    /// state is `.blocked` — irrelevant once we're past pre-flight.
+    private func registerWorkspaceObserver() {
+        let bundleId = Bundle.main.bundleIdentifier
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard
+                let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
+                    as? NSRunningApplication,
+                let bundleId,
+                app.bundleIdentifier == bundleId
+            else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if case .blocked = self.preflightStatus, !self.assetInstallActive {
+                    await self.recheckPreflight()
+                }
+            }
+        }
     }
 
     /// Honors `HEWASSOCRATES_GEMMA_MODE=stub` for headless / smoke runs.
@@ -166,6 +271,45 @@ final class SocraticAppViewModel: ObservableObject {
             NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         )
 
+        // Iter-6 first-launch UX: pre-flight comes BEFORE model load. If
+        // any blocking item (Korean voice, English voice, STT asset, …) is
+        // missing, we stay in `.blocked` until the user resolves it via
+        // deeplink or in-app installer. Only when everything is ready do
+        // we proceed to the (expensive) Gemma load + warmup path.
+        await runPreflight()
+        if case .blocked = preflightStatus { return }
+        await proceedToModelLoad()
+    }
+
+    /// Re-run pre-flight (called when the user taps "다시 점검" or returns
+    /// from System Settings via the workspace activation observer). If
+    /// everything resolves, proceed to model load on the same call so the
+    /// user doesn't have to manually trigger another step.
+    func recheckPreflight() async {
+        guard !assetInstallActive else { return }
+        await runPreflight()
+        if case .allReady = preflightStatus, !modelLoadStarted {
+            await proceedToModelLoad()
+        }
+    }
+
+    private func runPreflight() async {
+        preflightStatus = .running
+        let checks = await PreflightRunner.runAll()
+        let blocking = checks.filter { $0.blocking && !$0.passed }
+        preflightStatus = blocking.isEmpty ? .allReady : .blocked(checks: checks)
+    }
+
+    /// Decoupled from `bootstrap()` so we can also call it from
+    /// `recheckPreflight()` once preflight clears mid-session. Guarded by
+    /// `modelLoadStarted` so it cannot run twice. Calls
+    /// `coordinator.bootstrap(skipPermissions: true)` because permissions
+    /// are now requested in-context at the first Spacebar press, not at
+    /// bootstrap (Apple HIG Privacy guidance).
+    private func proceedToModelLoad() async {
+        guard !modelLoadStarted else { return }
+        modelLoadStarted = true
+
         loadProgressPoll = Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
@@ -196,11 +340,122 @@ final class SocraticAppViewModel: ObservableObject {
             }
         }
 
-        await coordinator.bootstrap()
+        await coordinator.bootstrap(skipPermissions: true)
         loadProgressPoll?.cancel()
     }
 
+    // MARK: - Pre-flight per-row actions (F1 deeplink / F2 in-app install)
+
+    func handlePreflightAction(_ check: PreflightCheck) async {
+        if check.inAppInstallable {
+            await installSTTAssetsBilingual()
+        } else if let url = check.recoveryDeeplink {
+            // F1 / F4 / F5: open the relevant System Settings pane. The
+            // workspace activation observer (registerWorkspaceObserver)
+            // re-runs pre-flight when the user comes back, so they don't
+            // need to manually tap "다시 점검".
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// F2 — bilingual STT asset install via macOS 26 AssetInventory.
+    /// Both ko-KR and en-US assets are requested in a single
+    /// `assetInstallationRequest(supporting: [ko, en])` so the user sees
+    /// one Progress bar instead of two sequential downloads. After
+    /// completion we re-run pre-flight to verify, then proceed if ready.
+    private func installSTTAssetsBilingual() async {
+        guard !assetInstallActive else { return }
+        assetInstallActive = true
+        assetInstallProgress = 0
+        defer { assetInstallActive = false }
+
+        do {
+            try await PreflightRunner.installSTTAssetsBilingual { [weak self] fraction in
+                Task { @MainActor [weak self] in
+                    self?.assetInstallProgress = fraction
+                }
+            }
+        } catch {
+            // Surface as a phase failure so the user gets the same recovery
+            // surface as any other STT issue. The deeplink fallback in the
+            // pre-flight row remains visible if AssetInventory itself fails.
+            phase = .failed(PhaseFailureKey.sttOnDeviceUnsupported)
+        }
+
+        await recheckPreflight()
+    }
+
+    // MARK: - First-Spacebar permission flow (F4 / F5)
+
+    /// Called from `handleKeyDown` on the first Spacebar press. Per Apple
+    /// HIG Privacy: "context-related permission requests are less likely
+    /// to cause surprise" — we show our own SwiftUI explainer first when
+    /// either TCC permission is still `.notDetermined`, so the user
+    /// understands *why* they're about to see the system alert. Once both
+    /// are authorized, subsequent Spacebar presses go straight to listen.
+    func attemptBeginListening() {
+        if !permissionsRequested && needsPermissionPrompt() {
+            permissionExplainerVisible = true
+            return
+        }
+        beginListening()
+    }
+
+    private func needsPermissionPrompt() -> Bool {
+        let mic = AVCaptureDevice.authorizationStatus(for: .audio)
+        let speech = SFSpeechRecognizer.authorizationStatus()
+        // notDetermined means the system has never asked → we should show
+        // our explainer + then trigger TCC. denied/restricted are handled
+        // via the failure surface, not the explainer.
+        return mic == .notDetermined || speech == .notDetermined
+    }
+
+    /// Triggered when the user taps [허용] on the explainer sheet. Runs
+    /// the actual TCC requests (mic first, then speech) via the existing
+    /// `coordinator.audio.requestPermissions()` path, then dismisses the
+    /// sheet. Does NOT auto-start listening — the user typically released
+    /// Space when the sheet appeared, so they should press it again.
+    func grantPermissionsAfterExplainer() async {
+        let result = await coordinator.audio.requestPermissions()
+        permissionsRequested = true
+        permissionExplainerVisible = false
+        switch result {
+        case .granted:
+            // Stay idle — let the user press Space again to record. Auto-
+            // starting from this callback would race the user's Space
+            // key-up event and start a phantom recording.
+            break
+        case .denied(let reason):
+            let key =
+                reason == "microphone"
+                ? PhaseFailureKey.micDenied : PhaseFailureKey.speechRecognitionDenied
+            phase = .failed(key)
+        case .restricted:
+            phase = .failed(PhaseFailureKey.speechRecognitionRestricted)
+        case .notDetermined:
+            // Shouldn't happen — the system always reports a final state
+            // after `requestRecordPermission` / `requestAuthorization`.
+            break
+        }
+    }
+
+    func dismissPermissionExplainer() {
+        permissionExplainerVisible = false
+        // Don't set permissionsRequested — user can press Space to retry.
+    }
+
     func beginListening() {
+        // iter-6 fix: clear the previous turn's partial transcript before
+        // the new STT session emits its first result. Without this the
+        // StatusOverlay's `.listening` case (Text(partialTranscript))
+        // briefly flashes the previous user utterance during the ~500 ms
+        // gap between phase entry and the first SFSpeechRecognizer
+        // partial — surprising the user and making the bust feel like
+        // it didn't reset between turns. The engine layer's
+        // AudioInputManager already clears its own `lastPartialTranscript`
+        // at startListening; this mirrors it at the ViewModel layer
+        // where the SwiftUI binding actually lives.
+        partialTranscript = ""
         do {
             try coordinator.beginListening()
         } catch {
@@ -510,6 +765,190 @@ final class KeyHandlerNSView: NSView {
 
     override func keyUp(with event: NSEvent) {
         onKeyUp?(event.keyCode)
+    }
+}
+
+// MARK: - Pre-flight setup screen (iter-6)
+
+/// Setup screen shown before the bust appears on first launch (or any
+/// later launch where the user uninstalled a Korean voice / disabled
+/// Korean dictation / etc.).
+///
+/// Renders the eight pre-flight checks as a simple list with per-row
+/// action buttons:
+///   - In-app installable items (STT assets) → "다운로드" runs
+///     `AssetInventory.assetInstallationRequest(supporting: [ko, en])`
+///     and shows a Progress bar.
+///   - Deeplink items (TTS voice, denied permissions) → "시스템 설정" opens
+///     the relevant pane via `x-apple.systempreferences:` URL. The
+///     workspace activation observer auto-rechecks on return.
+///   - Hard-stop items (macOS < 26, Intel) → message only, no action.
+struct PreflightView: View {
+    let checks: [PreflightCheck]
+    let isInstalling: Bool
+    let installProgress: Double
+    let onAction: (PreflightCheck) -> Void
+    let onRecheck: () -> Void
+
+    var body: some View {
+        VStack(spacing: 28) {
+            Spacer()
+
+            VStack(spacing: 6) {
+                Text("준비 상태")
+                    .font(.custom("Times New Roman", size: 28))
+                    .foregroundColor(Color(white: 0.85))
+                Text("He Was Socrates를 시작하기 전에 확인해야 할 것")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(white: 0.55))
+            }
+
+            VStack(spacing: 6) {
+                ForEach(checks) { check in
+                    PreflightRowView(
+                        check: check,
+                        isInstalling: isInstalling,
+                        action: { onAction(check) }
+                    )
+                }
+            }
+            .frame(maxWidth: 640)
+
+            if isInstalling {
+                VStack(spacing: 6) {
+                    Text(
+                        "음성 인식 자료 다운로드 중 — \(Int(installProgress * 100))%"
+                    )
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(Color(white: 0.7))
+                    ProgressView(value: installProgress)
+                        .progressViewStyle(.linear)
+                        .frame(width: 360)
+                        .tint(Color(white: 0.85))
+                }
+                .padding(.top, 8)
+            } else {
+                Button("다시 점검") { onRecheck() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .tint(Color(white: 0.85))
+                    .foregroundColor(Color(red: 0.123, green: 0.115, blue: 0.184))
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct PreflightRowView: View {
+    let check: PreflightCheck
+    let isInstalling: Bool
+    let action: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(statusGlyph)
+                .font(.system(size: 14))
+                .foregroundColor(statusColor)
+                .frame(width: 18, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(check.kind.displayName)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color(white: 0.85))
+                if let msg = check.userMessage {
+                    Text(msg)
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(white: 0.55))
+                }
+            }
+
+            Spacer()
+
+            if !check.passed && actionLabel != nil {
+                Button(actionLabel ?? "") { action() }
+                    .controlSize(.small)
+                    .disabled(isInstalling)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(white: 0.16).opacity(0.5))
+        .cornerRadius(6)
+    }
+
+    private var statusGlyph: String {
+        check.passed ? "✓" : (check.blocking ? "✗" : "—")
+    }
+
+    private var statusColor: Color {
+        if check.passed { return Color(red: 0.4, green: 0.85, blue: 0.5) }
+        return check.blocking
+            ? Color(red: 0.95, green: 0.45, blue: 0.45) : Color(white: 0.55)
+    }
+
+    private var actionLabel: String? {
+        if check.inAppInstallable { return "다운로드" }
+        if check.recoveryDeeplink != nil { return "시스템 설정" }
+        return nil
+    }
+}
+
+// MARK: - Permission explainer sheet (F4 + F5)
+
+/// In-context permission explainer per Apple HIG Privacy:
+/// > "Context-related permission requests are less likely to cause surprise"
+///
+/// Shown the first time the user holds Spacebar while either TCC permission
+/// is `.notDetermined`. A unified explanation covers BOTH mic and speech
+/// recognition because the user's mental model is "the app wants to listen"
+/// — splitting into two prompts without context surprises them mid-turn.
+struct PermissionExplainerView: View {
+    let onAllow: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 6) {
+                Text("처음 한 번만 묻는다")
+                    .font(.custom("Times New Roman", size: 22))
+                Text("스페이스바를 누르면, 마이크와 음성 인식이 함께 동작해.")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(white: 0.55))
+            }
+            .padding(.top, 8)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label(
+                    "당신이 묻는 동안만 동작하고, 손을 떼면 멈춘다.",
+                    systemImage: "mic"
+                )
+                Label(
+                    "음성은 기기 안에서만 처리된다.",
+                    systemImage: "lock.shield"
+                )
+                Label(
+                    "0 byte의 데이터도 외부로 나가지 않는다.",
+                    systemImage: "wifi.slash"
+                )
+            }
+            .font(.system(size: 12))
+            .foregroundColor(Color(white: 0.7))
+
+            HStack(spacing: 12) {
+                Button("나중에") { onDismiss() }
+                    .controlSize(.large)
+                    .keyboardShortcut(.cancelAction)
+                Button("허용") { onAllow() }
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+            }
+            .padding(.top, 4)
+        }
+        .padding(28)
+        .frame(width: 420)
     }
 }
 
