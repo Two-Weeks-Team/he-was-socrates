@@ -2,27 +2,41 @@
 [latency-bench] GPU active memory before load: 0 bytes
 [latency-bench] loading Gemma 4 E4B 4-bit...
 [latency-bench] KV cache quantization: bits=nil groupSize=64
-[latency-bench] load: 2124 ms
-[latency-bench] warmup: 5062 ms
+[latency-bench] load: 2111 ms
+[latency-bench] warmup: 4875 ms
 [latency-bench] turn 1/10: ask-back/curious-adult-1
-[latency-bench]   wall: 5302 ms · reply chars: 21 · deferred: false
+[latency-bench]   wall: 818 ms · ttft: 276 ms · chunks: 34 · raw: 89 chars · trail: 0 · reply: 21 · deferred: false
+[latency-bench]   reply: 그 미움이라는 감정은 무엇을 뜻하는가?
 [latency-bench] turn 2/10: ask-back/stuck-thinker-1
-[latency-bench]   wall: 5448 ms · reply chars: 29 · deferred: false
+[latency-bench]   wall: 879 ms · ttft: 191 ms · chunks: 44 · raw: 111 chars · trail: 0 · reply: 43 · deferred: false
+[latency-bench]   reply: 그 결정이 무엇인지 말해보라. 그리고 왜 후회하지 않을지 모르겠다고 느끼는가?
 [latency-bench] turn 3/10: ask-back/curious-adult-2
-[latency-bench]   wall: 5535 ms · reply chars: 29 · deferred: false
+[latency-bench]   wall: 798 ms · ttft: 189 ms · chunks: 39 · raw: 96 chars · trail: 0 · reply: 28 · deferred: false
+[latency-bench]   reply: 자네가 말하는 '정의로운 사회'란 무엇을 뜻하는가?
 [latency-bench] turn 4/10: defer/regulated-medical
-[latency-bench]   wall: 6106 ms · reply chars: 39 · deferred: true
+[latency-bench]   wall: 1110 ms · ttft: 190 ms · chunks: 59 · raw: 163 chars · trail: 0 · reply: 32 · deferred: true
+[latency-bench]   reply: 가슴 통증은 의학적 조언이 필요하다. 나는 의사가 아니다.
 [latency-bench] turn 5/10: ask-back/curious-adult-3
-[latency-bench]   wall: 5856 ms · reply chars: 23 · deferred: false
+[latency-bench]   wall: 767 ms · ttft: 188 ms · chunks: 37 · raw: 91 chars · trail: 0 · reply: 23 · deferred: false
+[latency-bench]   reply: 자네가 말하는 '용기'란 무엇을 뜻하는가?
 [latency-bench] turn 6/10: ask-back/stuck-thinker-2
-[latency-bench]   wall: 6006 ms · reply chars: 34 · deferred: false
+[latency-bench]   wall: 705 ms · ttft: 181 ms · chunks: 33 · raw: 90 chars · trail: 0 · reply: 22 · deferred: false
+[latency-bench]   reply: 사과해야 한다는 생각의 근거는 무엇인가?
 [latency-bench] turn 7/10: ask-back/curious-adult-4
-[latency-bench]   wall: 6100 ms · reply chars: 32 · deferred: false
+[latency-bench]   wall: 1190 ms · ttft: 263 ms · chunks: 59 · raw: 133 chars · trail: 0 · reply: 65 · deferred: false
+[latency-bench]   reply: 행복을 추구하는 것이라면, 그 추구 행위 자체가 행복을 가져오는가, 아니면 그 추구의 끝에 도달해야만 행복이 오는가?
 [latency-bench] turn 8/10: defer/regulated-financial
-[latency-bench]   wall: 6607 ms · reply chars: 36 · deferred: true
+[latency-bench]   wall: 1126 ms · ttft: 205 ms · chunks: 59 · raw: 165 chars · trail: 0 · reply: 29 · deferred: true
+[latency-bench]   reply: 나는 재정적 조언을 줄 수 없다. 전문가와 상의하라.
 [latency-bench] turn 9/10: ask-back/curious-adult-5
-[latency-bench]   wall: 6150 ms · reply chars: 24 · deferred: false
+[latency-bench]   wall: 723 ms · ttft: 189 ms · chunks: 34 · raw: 88 chars · trail: 0 · reply: 20 · deferred: false
+[latency-bench]   reply: 자네가 말하는 '지식'이란 무엇인가?
 [latency-bench] turn 10/10: ask-back/stuck-thinker-3
-[latency-bench]   wall: 6944 ms · reply chars: 23 · deferred: false
-[latency-bench] GPU active memory after bench: 4701905216 bytes (Δ=4701905216)
-[latency-bench] GPU peak memory: 5613096902 bytes  cache: 25894499772 bytes
+[latency-bench]   wall: 722 ms · ttft: 188 ms · chunks: 34 · raw: 87 chars · trail: 0 · reply: 19 · deferred: false
+[latency-bench]   reply: 그 '두려움'이란 무엇을 뜻하는가?
+[latency-bench] probe: path comparison (fast vs slow fallback)
+[latency-bench]   shot 1 fast-path:     wall=798 ttft=264 chunks=34 raw=89
+[latency-bench]   shot 2 slow-fallback: wall=5113 ttft=4569 chunks=34 raw=89
+[latency-bench]   ttft ratio (slow/fast): 17.26  → FAST PATH ENABLED
+[latency-bench] GPU active memory after bench: 4272513344 bytes (Δ=4272513344)
+[latency-bench] GPU peak memory: 5103461978 bytes  cache: 3594839444 bytes

@@ -48,22 +48,26 @@ public actor GemmaService {
     #if canImport(MLXLLM)
     private var modelContainer: ModelContainer?
 
-    /// Reused across turns. The locked Korean Socratic system prompt is
-    /// ~5,000 chars / ~1,500-2,000 tokens; creating a new ChatSession every
-    /// turn would force a full re-prefill on each user utterance and was
-    /// the dominant component of the observed 9-11s/turn latency. Holding
-    /// the session lets mlx-swift-lm reuse its KV cache across turns: the
-    /// system prefill happens exactly once, and subsequent turns only pay
-    /// for the new user input + response decode.
-    private var chatSession: ChatSession?
-    private var sessionTurnCount: Int = 0
-
-    /// Cap accumulated turns per session to bound KV-cache memory growth on
-    /// long sessions (an hour of conversation can otherwise build a multi-
-    /// thousand-token KV state). 20 turns ≈ 4-5 minutes of natural Socratic
-    /// dialogue; well within attention budget for Gemma 4 E4B's 256K context
-    /// while keeping prefill on `streamResponse` fast.
-    private static let sessionTurnLimit = 20
+    /// Persisted KV-cache file containing the prefilled system prompt. Set
+    /// by `warmup()` after a successful one-shot ChatSession run; consumed
+    /// by `streamInto(...)` per turn via `loadPromptCache(url:)` to
+    /// re-seed a fresh ChatSession (`instructions: nil` + `cache: loaded`)
+    /// — the documented mlx-swift-lm 0.31.3 prefill-caching path
+    /// (ChatSession.swift:163-182, "build a KV cache from a long shared
+    /// context once, save it, and restore it across multiple sessions to
+    /// avoid re-prefilling the same tokens each time").
+    ///
+    /// Earlier revisions stored a `chatSession` reference and reused it
+    /// across turns under the assumption that mlx-swift-lm's ChatSession
+    /// cache reuse would amortize the system-prompt prefill. PR-λ verify-2
+    /// (claudedocs/bench/2026-05-06-*) measured TTFT_2/TTFT_1 = 0.98 for
+    /// a back-to-back same-utterance probe, confirming that the standard
+    /// `ChatSession(_, instructions:, ...)` path re-tokenizes and
+    /// re-prefills the instructions string on every `streamResponse(...)`
+    /// call (this is also stated as a warning in ChatSession.swift:168-
+    /// 171). Disk-mediated KV reuse is the only public API that achieves
+    /// the intended optimization in 0.31.3.
+    private var systemCacheURL: URL?
     #endif
 
     /// Generation parameters per Stage 5 day-1 tuning. Temperature 0.0 makes
@@ -162,25 +166,58 @@ public actor GemmaService {
     }
 
     #if canImport(MLXLLM)
-    /// Lazily build (or recycle) the per-session ChatSession. Recycles after
-    /// `sessionTurnLimit` turns so the KV cache stays bounded during long
-    /// conversations.
-    private func ensureChatSession(
+    /// Build the ChatSession used for one turn. Two paths:
+    ///
+    /// 1. **Fast path** — `systemCacheURL` is set (warmup persisted a KV
+    ///    cache containing the prefilled system prompt). Load it, build a
+    ///    ChatSession with `instructions: nil` + `cache: loaded`, so the
+    ///    standard `streamResponse(to:)` only prefills the *user* tokens
+    ///    on top of the pre-warmed system prefix.
+    /// 2. **Slow fallback** — no warm cache available (warmup failed or
+    ///    not run yet). Build a ChatSession with the system prompt as
+    ///    `instructions:` per the legacy path. Each call re-prefills the
+    ///    system tokens; correct but slow.
+    ///
+    /// The fast path is the documented mlx-swift-lm 0.31.3 prefill-caching
+    /// API (ChatSession.swift:163-188): "build a KV cache from a long
+    /// shared context once, save it via `saveCache(to:)`, and restore it
+    /// across multiple sessions to avoid re-prefilling the same tokens
+    /// each time".
+    private func makeSessionForTurn(
         container: ModelContainer,
         systemPrompt: String,
         params: GenerateParametersBox
     ) -> ChatSession {
-        if let existing = chatSession, sessionTurnCount < Self.sessionTurnLimit {
-            return existing
+        if let cacheURL = systemCacheURL {
+            do {
+                let (loaded, _) = try loadPromptCache(url: cacheURL)
+                guard !loaded.isEmpty else { throw GemmaServiceError.warmCacheEmpty }
+                return ChatSession(
+                    container,
+                    instructions: nil,
+                    cache: loaded,
+                    generateParameters: params.toMLX()
+                )
+            } catch {
+                // Persistent disk failure (corruption, file vanished,
+                // OS evicted under pressure, etc.). Clear the URL so
+                // subsequent turns skip the failing read entirely
+                // instead of paying the I/O cost on every turn for the
+                // rest of the session, and remove the file so a fresh
+                // `warmup()` call (or a future self-heal pass) rebuilds
+                // cleanly. This turn falls through to the slow fallback
+                // (gemini-code-assist PR-Λ review #32, line 201).
+                systemCacheURL = nil
+                try? FileManager.default.removeItem(at: cacheURL)
+            }
         }
-        let session = ChatSession(
+        // Slow fallback: legacy `instructions:` path with full system
+        // prefill on every call.
+        return ChatSession(
             container,
             instructions: systemPrompt,
             generateParameters: params.toMLX()
         )
-        chatSession = session
-        sessionTurnCount = 0
-        return session
     }
 
     /// Actor-isolated stream pump. The strict-concurrency rule against
@@ -198,12 +235,11 @@ public actor GemmaService {
             return
         }
         let params = generateParameters
-        let session = ensureChatSession(
+        let session = makeSessionForTurn(
             container: container,
             systemPrompt: systemPrompt,
             params: params
         )
-        sessionTurnCount += 1
         do {
             for try await chunk in session.streamResponse(to: userTurn) {
                 continuation.yield(chunk)
@@ -219,6 +255,10 @@ public actor GemmaService {
     }
     #endif
 
+    private enum GemmaServiceError: Error {
+        case warmCacheEmpty
+    }
+
     /// Drop any cached ChatSession so the next `generate(...)` rebuilds it
     /// with whatever system prompt is passed in. Use when the host wants a
     /// clean slate (e.g. on `EngineCoordinator.shutdown()`).
@@ -230,31 +270,35 @@ public actor GemmaService {
     // protocol that doesn't exist in the upstream library or shipping
     // a 4 GB weights file in the test target).
 
-    /// `true` once a ChatSession has been built (lazy-init via
-    /// `ensureChatSession`). Drops back to `false` after `resetSession()`
-    /// or `warmup()` (per PR-γ contamination fix).
+    /// `true` once `warmup()` has persisted a system-prompt KV cache to
+    /// disk. Per-turn `streamInto(...)` then takes the fast path (load
+    /// cache + `instructions: nil`); when false, falls back to the legacy
+    /// `instructions:` path with full system re-prefill per turn.
+    /// Drops back to `false` after `resetSession()`.
     internal var _test_chatSessionExists: Bool {
         #if canImport(MLXLLM)
-        return chatSession != nil
+        return systemCacheURL != nil
         #else
         return false
         #endif
     }
 
-    /// Per-session turn counter. Resets to 0 when a fresh ChatSession is
-    /// built (turn 21 boundary or after `resetSession()` / `warmup()`).
-    internal var _test_sessionTurnCount: Int {
-        #if canImport(MLXLLM)
-        return sessionTurnCount
-        #else
-        return 0
-        #endif
-    }
+    /// Pre-PR-Λ this counted "turns since ChatSession last built" to bound
+    /// KV-cache memory growth. With disk-mediated reuse the per-turn
+    /// session is rebuilt fresh from a saved cache snapshot, so growth is
+    /// bounded by construction. The seam stays for backward compatibility
+    /// with PR-ζ's regression bar; it always reports 0 now.
+    internal var _test_sessionTurnCount: Int { 0 }
 
     public func resetSession() {
         #if canImport(MLXLLM)
-        chatSession = nil
-        sessionTurnCount = 0
+        // Forget any persisted system-prompt cache. The next `warmup()`
+        // call rebuilds it; the next `streamInto(...)` without warmup
+        // falls back to the legacy slow path (still correct).
+        if let url = systemCacheURL {
+            try? FileManager.default.removeItem(at: url)
+        }
+        systemCacheURL = nil
         #endif
     }
 
@@ -269,50 +313,74 @@ public actor GemmaService {
             return
         case .real:
             #if canImport(MLXLLM)
-            guard modelContainer != nil else { return }
+            guard let container = modelContainer else { return }
+
+            // 1. Build a one-shot ChatSession with the locked Korean system
+            //    prompt as `instructions:` and run a single `streamResponse`
+            //    to populate the KV cache with the system prefill plus a
+            //    minimal "ready" exchange. The session's `GenerateParameters`
+            //    inherits the actor-default `maxTokens: 192` so the decode
+            //    reaches EOS naturally and the saved cache contains a
+            //    *complete* <system → user → assistant + EOS> exchange.
+            //
+            //    An earlier draft set `warmParams.maxTokens = 8` to keep
+            //    bootstrap fast, but capping warmup decode below the EOS
+            //    boundary leaves the persisted KV state mid-assistant
+            //    response without a turn boundary, conditioning every
+            //    subsequent turn as a continuation of the warmup rather
+            //    than a clean conversation (chatgpt-codex-connector PR-Λ
+            //    review #32 line 370, P1). The decode-to-EOS adds
+            //    ~500-800 ms to warmup, paid once at bootstrap.
+            let warmSession = ChatSession(
+                container,
+                instructions: SystemPrompt.composed,
+                generateParameters: generateParameters.toMLX()
+            )
             do {
-                let stream = try await generate(
-                    systemPrompt: SystemPrompt.composed,
-                    userTurn: "ready",
-                    maxTokens: 8
-                )
-                for await _ in stream {}
+                for try await _ in warmSession.streamResponse(to: "ready") {}
             } catch {
-                // intentional no-op; cold-start hit just shifts to turn 1.
+                // Cold-start failed — leave systemCacheURL nil so per-turn
+                // streamInto falls back to the legacy slow path. Correct
+                // but not optimized.
+                return
             }
 
-            // PR-γ: clear the warmup turn's user/assistant pair from the
-            // ChatSession history so the user's first real turn is not
-            // conditioned on a "ready"/throwaway exchange. The system
-            // instructions remain installed — `ChatSession.clear()`
-            // documented contract: "Clear the session history and cache,
-            // preserving system instructions" (mlx-swift-lm 0.31.3
-            // ChatSession.swift:492-497, Apple Inc. © 2025).
+            // 2. Persist the warmed KV cache to disk via the documented
+            //    mlx-swift-lm 0.31.3 `saveCache(to:)` API
+            //    (ChatSession.swift:531-540 → KVCache.swift `savePromptCache`).
+            //    The file is written into the app's sandbox cache
+            //    directory, which is writable without any extra
+            //    entitlement (App Sandbox grants write access to its own
+            //    `Library/Caches/`). The file persists for the lifetime
+            //    of the process; `resetSession()` deletes it when the
+            //    host wants a clean slate.
             //
-            // We considered `ChatSession.clear()` (mlx-swift-lm 0.31.3
-            // ChatSession.swift:492-497, "Clear the session history and
-            // cache, preserving system instructions"), but `ChatSession`
-            // is a non-Sendable `final class` and the `await
-            // session.clear()` edge trips Swift 6 strict-concurrency
-            // SendingRisksDataRace from inside our actor. The mlx-swift-lm
-            // class is owned exclusively by this actor and serializes
-            // internally via SerialAccessContainer, so the data race risk
-            // is theoretical only — but rather than silence it with
-            // `nonisolated(unsafe)` we drop the session entirely after
-            // warmup. The next `streamInto` rebuilds it.
-            //
-            // Cost analysis: rebuilding `ChatSession` is a struct alloc
-            // plus the first-call system-prefill (~600-800 ms on M2 Pro
-            // for our 1.5-2k token system prompt). The Metal kernel JIT,
-            // GPU pipeline state objects, and weight residency live in
-            // the underlying `ModelContainer` (unchanged), so the
-            // dominant warmup benefit survives. Net effect on user's
-            // first real turn: equivalent to "warmup ran, ChatSession
-            // built fresh" — clean conversation history, no contamination
-            // by the throwaway "ready" exchange (Perf engineer's V/Lead's
-            // V finding).
-            chatSession = nil
-            sessionTurnCount = 0
+            //    Side effect: the saved cache contains not just the
+            //    system prefill but also the tokenized "ready" exchange
+            //    (chat-template wrappers + ~5-token user prompt + 8 model
+            //    tokens). When loaded for a real user turn, the model
+            //    sees the warmup conversation as benign prior context.
+            //    Coherent because the system prompt's "단정한 평어체"
+            //    voice dominates and the warmup interjection is tiny
+            //    compared to the system prompt's ~1500 tokens.
+            do {
+                let cachesDir = try FileManager.default.url(
+                    for: .cachesDirectory,
+                    in: .userDomainMask,
+                    appropriateFor: nil,
+                    create: true
+                )
+                let url = cachesDir.appendingPathComponent(
+                    "hewassocrates-system-prompt-cache.safetensors"
+                )
+                try await warmSession.saveCache(to: url)
+                systemCacheURL = url
+            } catch {
+                // Disk write failed — leave systemCacheURL nil; fall back
+                // to legacy slow path on each turn (4500ms TTFT instead
+                // of the targeted ~200ms). The user-facing UX still works.
+                return
+            }
             #endif
         }
     }
