@@ -1,0 +1,11 @@
+{
+  "id": "P12",
+  "advocate": "The Privacy Hawk",
+  "framing": "He Was Socrates is not a privacy-friendly app — it is a privacy artifact whose Settings screen is the audit. The Privacy & Data panel itself is the proof: every row names where data lives, who manages it, and confirms zero egress.",
+  "target_persona": "Security-literate macOS power users (and Kaggle judges scoring constrained-environments) who open Settings → Privacy first, before they open the app, to verify NO-CLOUD claims with their own eyes.",
+  "primary_surface": "Native macOS Settings → Privacy & Data panel inside the app. Local-first by default: SQLite at ~/Library/Containers, MLX cache OS-managed, entitlements file SHA-256 receipt, inverted threat model showing arrows only inbound.",
+  "opus_4_7_capability": "Long context + function-calling self-introspection: at panel load, Opus 4.7 reads the entitlements plist, the wondering.db schema, and the system prompt, then renders the Privacy receipt (entitlements SHA-256 + git commit) without any code path that could exfiltrate.",
+  "mvp_scope": "Static Privacy & Data settings screen with 5 read-only data-residency rows + tone-lock excerpt + inverted threat-model SVG + Privacy receipt card (entitlements SHA-256, git commit, last verified date).",
+  "one_liner_pitch": "Open the Privacy panel and read the receipts: entitlements hash, SQLite path, MLX cache, no outbound arrows. The settings screen is the audit.",
+  "spec_alignment_notes": "target_persona narrowed to security-literate users + judges (idea.spec target_persona.primary judges + secondary general_dev intersection); primary_surface=local-first/E2EE/minimum-collection (persona bias verbatim) realized as in-app Settings panel rather than marketing — chose Settings UI because invariant #1 (zero bytes leave device) is best evidenced by data-residency rows, not prose; opus_4_7_capability framed as introspection over entitlements + schema (function-calling axis from differentiator #6); mvp_scope kept to single static screen for 4-day demo. Korean limited to subtitle preview + tone-lock excerpt (language_policy.korean_surfaces). All other spec fields followed verbatim."
+}

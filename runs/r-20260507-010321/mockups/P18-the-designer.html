@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>He Was Socrates — A Scroll</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --ink: oklch(8% 0.012 280);
+    --paper: oklch(96% 0.005 90);
+    --bone: oklch(82% 0.012 90);
+    --ash: oklch(48% 0.008 280);
+    --halftone: oklch(22% 0.014 280);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-snap-type:y mandatory;background:var(--ink)}
+  body{
+    font-family: "Times New Roman", Times, Georgia, serif;
+    background:var(--ink); color:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .meta-bar{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 28px;
+    font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--ash);
+    backdrop-filter:blur(6px);
+    background:linear-gradient(180deg, oklch(8% 0.012 280 / 0.85), transparent);
+    pointer-events:none;
+  }
+  .meta-bar span{pointer-events:auto}
+  .scroll-hint{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    font-family: ui-monospace, monospace; font-size:9px; letter-spacing:0.3em;
+    color:var(--ash); z-index:50;
+    text-transform:uppercase;
+    animation:slowfade 4s ease-in-out infinite;
+  }
+  @keyframes slowfade{
+    0%,100%{opacity:0.2}
+    50%{opacity:0.7}
+  }
+  @keyframes slowscale{
+    0%{transform:scale(1); opacity:0.45}
+    100%{transform:scale(1.18); opacity:0.85}
+  }
+  section{
+    min-height:100vh;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    padding:80px 6vw;
+  }
+  .label{
+    position:absolute; top:50px; left:6vw;
+    font-family: ui-monospace, monospace;
+    font-size:10px; letter-spacing:0.32em;
+    color:var(--ash); text-transform:uppercase;
+  }
+  .label .num{color:var(--bone); margin-right:14px}
+
+  /* SECTION 1 — HERO */
+  .hero{flex-direction:column; gap:40px}
+  .hero .stage{
+    position:sticky; top:0;
+    height:100vh; width:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .bust-svg{
+    width:min(54vw, 420px);
+    height:auto;
+    filter: contrast(1.05);
+  }
+  .hero h1{
+    font-size:clamp(80px, 17vw, 280px);
+    line-height:0.85;
+    font-weight:400;
+    font-style:italic;
+    letter-spacing:-0.04em;
+    color:var(--paper);
+    margin-top:-30px;
+    text-align:center;
+  }
+  .hero .ko{
+    font-family: "Apple SD Gothic Neo", "Noto Serif KR", system-ui, sans-serif;
+    font-size:clamp(14px, 1.6vw, 20px);
+    color:var(--bone);
+    letter-spacing:0.05em;
+    margin-top:24px;
+    opacity:0;
+    animation: fadeInKo 6s ease-out forwards;
+    animation-delay:0.6s;
+  }
+  @keyframes fadeInKo{
+    0%{opacity:0; transform:translateY(8px)}
+    100%{opacity:0.85; transform:translateY(0)}
+  }
+  .hero .meta{
+    margin-top:18px;
+    font-family: ui-monospace, monospace;
+    font-size:11px; letter-spacing:0.2em;
+    color:var(--ash); text-transform:uppercase;
+  }
+
+  /* SECTION 2 — THE QUESTION */
+  .question{
+    background:var(--ink);
+    flex-direction:column;
+  }
+  .question .quote{
+    font-family: "Apple SD Gothic Neo", "Noto Serif KR", system-ui, sans-serif;
+    font-size:clamp(38px, 7.5vw, 132px);
+    line-height:1.1;
+    font-weight:300;
+    color:var(--paper);
+    text-align:center;
+    max-width:1100px;
+    letter-spacing:-0.02em;
+  }
+  .question .quote em{
+    font-style:normal;
+    color:var(--bone);
+    border-bottom:1px solid var(--halftone);
+    padding-bottom:6px;
+  }
+  .question .gloss{
+    margin-top:60px;
+    font-style:italic; font-size:18px;
+    color:var(--ash);
+    max-width:560px; text-align:center;
+    line-height:1.6;
+  }
+  .question .spec{
+    margin-top:36px;
+    font-family: ui-monospace, monospace;
+    font-size:10px; letter-spacing:0.24em; color:var(--ash);
+    text-transform:uppercase;
+    border:1px solid var(--halftone);
+    padding:8px 16px; border-radius:2px;
+  }
+
+  /* SECTION 3 — THE SILENCE */
+  .silence{
+    background:#000;
+    flex-direction:column;
+  }
+  .silence .glyph{
+    font-size:clamp(160px, 28vw, 480px);
+    color:var(--paper);
+    font-weight:200;
+    line-height:1;
+    animation: slowscale 8s ease-in-out infinite alternate;
+  }
+  .silence .caption{
+    margin-top:60px;
+    font-family: ui-monospace, monospace;
+    font-size:11px; letter-spacing:0.34em;
+    color:var(--ash); text-transform:uppercase;
+  }
+  .silence .ko-prompt{
+    margin-top:14px;
+    font-family: "Apple SD Gothic Neo", "Noto Serif KR", system-ui, sans-serif;
+    font-size:14px; color:var(--bone); opacity:0.7;
+  }
+
+  /* SECTION 4 — THE WORKSHOP */
+  .workshop{
+    flex-direction:column;
+    background: linear-gradient(180deg, var(--ink) 0%, oklch(12% 0.014 280) 100%);
+  }
+  .workshop h2{
+    font-size:clamp(36px, 5vw, 72px);
+    font-weight:400; font-style:italic;
+    letter-spacing:-0.02em;
+    color:var(--paper);
+    margin-bottom:48px; text-align:center;
+  }
+  .workshop .frame{
+    width:min(78vw, 880px);
+    aspect-ratio: 16/10;
+    border:1px solid var(--halftone);
+    background: oklch(10% 0.014 280);
+    box-shadow: 0 30px 80px oklch(0% 0 0 / 0.6);
+    position:relative;
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .frame .titlebar{
+    height:28px; background:oklch(14% 0.014 280);
+    border-bottom:1px solid var(--halftone);
+    display:flex; align-items:center; padding:0 12px;
+    gap:6px;
+  }
+  .titlebar .dot{width:9px;height:9px;border-radius:50%;background:var(--halftone)}
+  .frame .canvas{
+    position:absolute; top:28px; left:0; right:0; bottom:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .frame svg{width:32%; height:auto}
+  .workshop .footnote{
+    margin-top:32px;
+    font-family: ui-monospace, monospace;
+    font-size:11px; letter-spacing:0.2em; color:var(--ash);
+    text-transform:uppercase; text-align:center;
+  }
+  .workshop .footnote em{color:var(--bone); font-style:normal}
+
+  /* SECTION 5 — THE COLOPHON */
+  .colophon{
+    background:var(--ink);
+    align-items:flex-start; justify-content:flex-start;
+    padding:120px 8vw 80px;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  .colophon h3{
+    font-size:14px;
+    font-family: ui-monospace, monospace;
+    letter-spacing:0.32em; text-transform:uppercase;
+    color:var(--bone);
+    margin-bottom:48px;
+    border-bottom:1px solid var(--halftone);
+    padding-bottom:16px; width:100%;
+  }
+  .colophon .grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap:48px; width:100%;
+    font-size:13px; line-height:1.7; color:var(--bone);
+  }
+  .colophon .grid h4{
+    font-size:10px; letter-spacing:0.28em; text-transform:uppercase;
+    color:var(--ash); font-weight:400;
+    margin-bottom:14px; font-family:ui-monospace, monospace;
+  }
+  .colophon .grid p, .colophon .grid li{
+    color:var(--bone); font-size:13px;
+  }
+  .colophon ul{list-style:none}
+  .colophon li{padding:4px 0; border-bottom:1px dotted var(--halftone)}
+  .colophon .ko-prompt-block{
+    margin-top:60px;
+    font-family: "Apple SD Gothic Neo", "Noto Serif KR", system-ui, sans-serif;
+    font-size:15px; line-height:1.9;
+    color:var(--bone);
+    border-left:2px solid var(--bone);
+    padding:8px 0 8px 22px;
+    max-width:680px; font-style:italic;
+  }
+  .colophon .end{
+    margin-top:80px; width:100%;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    font-family: ui-monospace, monospace;
+    font-size:10px; letter-spacing:0.24em; color:var(--ash);
+    text-transform:uppercase;
+    border-top:1px solid var(--halftone); padding-top:24px;
+  }
+  .end .right{text-align:right}
+  @media (prefers-reduced-motion: reduce){
+    .silence .glyph{animation:none; transform:scale(1.1); opacity:0.7}
+    .hero .ko{animation:none; opacity:0.85}
+    .scroll-hint{animation:none; opacity:0.4}
+  }
+</style>
+</head>
+<body>
+
+<div class="meta-bar">
+  <span>HE&nbsp;WAS&nbsp;SOCRATES</span>
+  <span>P18 · THE DESIGNER · A SCROLL IN FIVE MOMENTS</span>
+</div>
+<div class="scroll-hint">scroll ↓</div>
+
+<!-- ============ SECTION 1 — HERO ============ -->
+<section class="hero">
+  <span class="label"><span class="num">I.</span>The Bust</span>
+  <div class="stage">
+    <svg class="bust-svg" viewBox="0 0 320 380" xmlns="http://www.w3.org/2000/svg" aria-label="halftone bust">
+      <defs>
+        <pattern id="dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1.4" fill="oklch(82% 0.012 90)"/>
+        </pattern>
+        <radialGradient id="fade" cx="50%" cy="42%" r="60%">
+          <stop offset="0%" stop-color="white" stop-opacity="1"/>
+          <stop offset="70%" stop-color="white" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="white" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="bustmask">
+          <rect width="320" height="380" fill="black"/>
+          <ellipse cx="160" cy="150" rx="92" ry="118" fill="url(#fade)"/>
+          <path d="M 60 380 Q 60 260 160 248 Q 260 260 260 380 Z" fill="white" opacity="0.88"/>
+        </mask>
+      </defs>
+      <rect width="320" height="380" fill="url(#dots)" mask="url(#bustmask)"/>
+      <ellipse cx="138" cy="148" rx="3" ry="5" fill="oklch(8% 0.012 280)"/>
+      <ellipse cx="184" cy="148" rx="3" ry="5" fill="oklch(8% 0.012 280)"/>
+      <path d="M 142 198 Q 160 204 178 198" stroke="oklch(8% 0.012 280)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <h1>Socrates</h1>
+    <div class="ko">그는 답하지 않는다 — 그저, 다시 묻는다.</div>
+    <div class="meta">a 100% on-device interlocutor · macOS</div>
+  </div>
+</section>
+
+<!-- ============ SECTION 2 — THE QUESTION ============ -->
+<section class="question">
+  <span class="label"><span class="num">II.</span>The Question</span>
+  <div class="quote">
+    그가 답하지 않는 것이<br/>
+    <em>답</em>이다.
+  </div>
+  <div class="gloss">— that he refuses to answer<br/>is itself the answer.</div>
+  <div class="spec">spec · function: defer_to_human</div>
+</section>
+
+<!-- ============ SECTION 3 — THE SILENCE ============ -->
+<section class="silence">
+  <span class="label"><span class="num">III.</span>The Silence</span>
+  <div class="glyph">⊘</div>
+  <div class="caption">medical · legal · financial · welfare · emergency</div>
+  <div class="ko-prompt">— 그건 사람에게 물어야 한다.</div>
+</section>
+
+<!-- ============ SECTION 4 — THE WORKSHOP ============ -->
+<section class="workshop">
+  <span class="label"><span class="num">IV.</span>The Workshop</span>
+  <h2>and behind it,<br/><em>a small black room.</em></h2>
+  <div class="frame">
+    <div class="titlebar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div class="canvas">
+      <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dots2" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
+            <circle cx="2.5" cy="2.5" r="1.1" fill="oklch(78% 0.012 90)"/>
+          </pattern>
+          <radialGradient id="fade2" cx="50%" cy="40%" r="55%">
+            <stop offset="0%" stop-color="white" stop-opacity="1"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </radialGradient>
+          <mask id="m2">
+            <rect width="200" height="240" fill="black"/>
+            <ellipse cx="100" cy="100" rx="60" ry="76" fill="url(#fade2)"/>
+            <path d="M 36 240 Q 36 168 100 158 Q 164 168 164 240 Z" fill="white" opacity="0.9"/>
+          </mask>
+        </defs>
+        <rect width="200" height="240" fill="url(#dots2)" mask="url(#m2)"/>
+      </svg>
+    </div>
+  </div>
+  <div class="footnote">the actual product · briefly visible · <em>fullscreen, ink-black, push-to-talk</em></div>
+</section>
+
+<!-- ============ SECTION 5 — COLOPHON ============ -->
+<section class="colophon">
+  <span class="label"><span class="num">V.</span>Colophon</span>
+  <h3>Notes from the makers</h3>
+  <div class="grid">
+    <div>
+      <h4>The Tone</h4>
+      <p>The bust speaks in <em>단정한 평어체</em> — Korean assertive plain speech. Neither honorific nor friendly. Verbatim from <code>SystemPrompt.swift</code>, locked at compile time.</p>
+    </div>
+    <div>
+      <h4>The Mechanics</h4>
+      <p>Four functions: mode_classify · surface_past_wonder · ask_back · defer_to_human. Native Gemma 4 calling. No prompt-stitching.</p>
+    </div>
+    <div>
+      <h4>The Silence</h4>
+      <p>medical, legal, financial, emergency, welfare, insurance — all return ⊘. The abstention is the product.</p>
+    </div>
+    <div>
+      <h4>The Engine</h4>
+      <p>Gemma 4 E4B 4-bit MLX, 3.97 GB. PR-Λ disk-mediated KV cache: 4.6 s → 192 ms TTFT. n=10, M1 Max.</p>
+    </div>
+    <div>
+      <h4>The Network</h4>
+      <p>Zero bytes leave the device. App Sandbox without network.client. STT on-device. Airplane-mode compatible.</p>
+    </div>
+    <div>
+      <h4>The Aesthetic</h4>
+      <p>1-bit halftone. 16 viseme PNGs. SHA-256 stable manifest. No photoreal lip-sync. SadTalker is out of scope.</p>
+    </div>
+  </div>
+
+  <div class="ko-prompt-block">
+    “나는 너의 답을 대신 가질 수 없다.<br/>
+    너만이 너의 답에 닿을 수 있고, 나는 그저 같이 묻는다.<br/>
+    의료·법률·금융·응급·복지·보험은 사람에게 물어야 한다.”
+    <div style="font-family:ui-monospace,monospace;font-size:10px;letter-spacing:0.2em;color:var(--ash);margin-top:14px;text-transform:uppercase;font-style:normal;">— SystemPrompt.swift, excerpt</div>
+  </div>
+
+  <div class="end">
+    <div>
+      <div>Two-Weeks-Team / he-was-socrates</div>
+      <div>Apache-2.0 · CC-BY-4.0</div>
+    </div>
+    <div class="right">
+      <div>The Gemma 4 Good Hackathon</div>
+      <div>Kaggle × Google DeepMind · 2026-05-19 KST</div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

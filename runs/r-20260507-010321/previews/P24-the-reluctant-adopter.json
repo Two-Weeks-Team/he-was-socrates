@@ -1,0 +1,11 @@
+{
+  "id": "P24",
+  "advocate": "The Reluctant Adopter",
+  "framing": "Most LLM demos hide their weaknesses behind marketing. This page does the opposite — it lists the five reasons a skeptical Kaggle judge would dismiss He Was Socrates in 30 seconds, then answers each one with citation and evidence. The product itself is the rebuttal.",
+  "target_persona": "A skeptical Kaggle/DeepMind judge who has already seen 40 LLM demos this week and is tired of 'blazingly fast' / 'revolutionary' copy. Wants comparison data, honest scope statements, and verifiable file paths before reading further.",
+  "primary_surface": "'Why should I use this?' is the FIRST section — five dismissal questions answered with citations. Followed immediately by a head-to-head comparison table vs ChatGPT / Claude.ai / typical Gemma 4 demo with losses marked honestly (e.g., subject breadth — He Was Socrates is narrow by design).",
+  "opus_4_7_capability": "Long-context citation weaving — pulling exact entitlement keys, contract YAML fragments, and bench JSON values into a single comparison page without paraphrase drift. Every claim survives a file-path audit.",
+  "mvp_scope": "Single self-contained HTML page rendering: (1) 5 dismissal Q&A with file:line citations, (2) 6-row capability matrix vs 3 named competitors with explicit losses marked, (3) trust signals strip (entitlement excerpt, bench excerpt, defer_to_human Korean evidence). No JS interactions required for the 4-day demo.",
+  "one_liner_pitch": "Five reasons to dismiss He Was Socrates, answered honestly — and a comparison table that admits where ChatGPT wins.",
+  "spec_alignment_notes": "spec primary_surface enumerates 10 sections led by Hero — P24 deliberately replaces the conventional Hero with a 'Why should I use this?' rebuttal block per the persona contract. target_persona narrowed from spec's 4-tier list to the skeptical judge slice (most adversarial of the four). Comparison table differentiator chosen because spec §differentiators[7] frames every claim as 'vs peers' — this persona makes that subtext into the page's literal structure. Entitlement key verified verbatim from apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements line 15: com.apple.security.device.audio-input."
+}

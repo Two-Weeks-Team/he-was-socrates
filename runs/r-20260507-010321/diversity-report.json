@@ -1,0 +1,305 @@
+{
+  "run_id": "r-20260507-010321",
+  "advocates_total": 26,
+  "fields_analyzed": [
+    "target_persona",
+    "primary_surface"
+  ],
+  "jaccard_threshold": 0.7,
+  "structural_threshold": 0.8,
+  "duplicate_pairs_jaccard_ge_0_7": [],
+  "soft_pairs_jaccard_ge_0_5": [],
+  "structural_duplicate_pairs": [],
+  "advocates_flagged": [],
+  "diverse_count": 26,
+  "verdict": "pass",
+  "rewrite_requests": [],
+  "top_field_pairs_descending": [
+    {
+      "a": "P08-the-slack-native",
+      "b": "P21-the-indie-hacker",
+      "jaccard": 0.157
+    },
+    {
+      "a": "P18-the-designer",
+      "b": "P23-the-game-designer",
+      "jaccard": 0.149
+    },
+    {
+      "a": "P03-the-speed-obsessed",
+      "b": "P05-the-design-forward",
+      "jaccard": 0.148
+    },
+    {
+      "a": "P21-the-indie-hacker",
+      "b": "P23-the-game-designer",
+      "jaccard": 0.148
+    },
+    {
+      "a": "P03-the-speed-obsessed",
+      "b": "P25-the-ai-native",
+      "jaccard": 0.147
+    },
+    {
+      "a": "P08-the-slack-native",
+      "b": "P18-the-designer",
+      "jaccard": 0.146
+    },
+    {
+      "a": "P10-the-dreamer",
+      "b": "P18-the-designer",
+      "jaccard": 0.143
+    },
+    {
+      "a": "P01-the-contrarian",
+      "b": "P23-the-game-designer",
+      "jaccard": 0.141
+    },
+    {
+      "a": "P05-the-design-forward",
+      "b": "P26-the-anti-ai",
+      "jaccard": 0.141
+    },
+    {
+      "a": "P01-the-contrarian",
+      "b": "P08-the-slack-native",
+      "jaccard": 0.137
+    }
+  ],
+  "top_structural_pairs_descending": [
+    {
+      "a": "P04-the-cost-conscious",
+      "b": "P11-the-pragmatist",
+      "structural_overlap": 0.569
+    },
+    {
+      "a": "P11-the-pragmatist",
+      "b": "P23-the-game-designer",
+      "structural_overlap": 0.558
+    },
+    {
+      "a": "P16-the-solo-founder",
+      "b": "P23-the-game-designer",
+      "structural_overlap": 0.553
+    },
+    {
+      "a": "P03-the-speed-obsessed",
+      "b": "P24-the-reluctant-adopter",
+      "structural_overlap": 0.551
+    },
+    {
+      "a": "P10-the-dreamer",
+      "b": "P26-the-anti-ai",
+      "structural_overlap": 0.517
+    },
+    {
+      "a": "P03-the-speed-obsessed",
+      "b": "P26-the-anti-ai",
+      "structural_overlap": 0.514
+    },
+    {
+      "a": "P24-the-reluctant-adopter",
+      "b": "P26-the-anti-ai",
+      "structural_overlap": 0.514
+    },
+    {
+      "a": "P04-the-cost-conscious",
+      "b": "P23-the-game-designer",
+      "structural_overlap": 0.508
+    },
+    {
+      "a": "P11-the-pragmatist",
+      "b": "P16-the-solo-founder",
+      "structural_overlap": 0.508
+    },
+    {
+      "a": "P10-the-dreamer",
+      "b": "P24-the-reluctant-adopter",
+      "structural_overlap": 0.506
+    }
+  ],
+  "structural_signature_summary": {
+    "P01-the-contrarian": {
+      "section_count": 10,
+      "n_headings": 32,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P02-the-ops-veteran": {
+      "section_count": 12,
+      "n_headings": 70,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P03-the-speed-obsessed": {
+      "section_count": 9,
+      "n_headings": 55,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P04-the-cost-conscious": {
+      "section_count": 9,
+      "n_headings": 41,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P05-the-design-forward": {
+      "section_count": 9,
+      "n_headings": 21,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P06-the-spreadsheet-jockey": {
+      "section_count": 8,
+      "n_headings": 44,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P07-the-mobile-first": {
+      "section_count": 11,
+      "n_headings": 25,
+      "has_table": false,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P08-the-slack-native": {
+      "section_count": 0,
+      "n_headings": 3,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P09-the-cli-devotee": {
+      "section_count": 2,
+      "n_headings": 0,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P10-the-dreamer": {
+      "section_count": 10,
+      "n_headings": 53,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P11-the-pragmatist": {
+      "section_count": 12,
+      "n_headings": 35,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P12-the-privacy-hawk": {
+      "section_count": 9,
+      "n_headings": 42,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P13-the-data-nerd": {
+      "section_count": 11,
+      "n_headings": 65,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P14-the-educator": {
+      "section_count": 14,
+      "n_headings": 52,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P15-the-community-builder": {
+      "section_count": 15,
+      "n_headings": 32,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P16-the-solo-founder": {
+      "section_count": 12,
+      "n_headings": 37,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P17-the-enterprise-buyer": {
+      "section_count": 3,
+      "n_headings": 65,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P18-the-designer": {
+      "section_count": 10,
+      "n_headings": 22,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P19-the-embedded": {
+      "section_count": 11,
+      "n_headings": 63,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P20-the-oss-maintainer": {
+      "section_count": 11,
+      "n_headings": 64,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P21-the-indie-hacker": {
+      "section_count": 11,
+      "n_headings": 54,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P22-the-researcher": {
+      "section_count": 0,
+      "n_headings": 43,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P23-the-game-designer": {
+      "section_count": 12,
+      "n_headings": 32,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P24-the-reluctant-adopter": {
+      "section_count": 10,
+      "n_headings": 74,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P25-the-ai-native": {
+      "section_count": 8,
+      "n_headings": 49,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    },
+    "P26-the-anti-ai": {
+      "section_count": 9,
+      "n_headings": 45,
+      "has_table": true,
+      "has_svg": true,
+      "has_chart": true
+    }
+  }
+}

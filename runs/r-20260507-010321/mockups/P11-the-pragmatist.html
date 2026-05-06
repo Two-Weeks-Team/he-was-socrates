@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>He Was Socrates — Admin (the SaaS that isn't)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: oklch(0.18 0.01 280);
+    --panel: oklch(0.22 0.012 280);
+    --panel-2: oklch(0.26 0.014 280);
+    --ink: oklch(0.96 0 0);
+    --muted: oklch(0.66 0.01 280);
+    --dim: oklch(0.48 0.012 280);
+    --line: oklch(0.32 0.012 280);
+    --accent: oklch(0.78 0.05 90);
+    --ok: oklch(0.78 0.12 145);
+    --warn: oklch(0.78 0.12 60);
+    --strike: oklch(0.42 0.012 280);
+    --korean: oklch(0.86 0.02 90);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.45; }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* ----- Top header (chrome) ----- */
+  .topbar {
+    height: 52px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center;
+    padding: 0 18px;
+    position: sticky; top: 0; z-index: 5;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .brand-mark { width: 22px; height: 22px; }
+  .brand-name { letter-spacing: 0.2px; }
+  .crown {
+    margin-left: 14px; padding: 3px 9px;
+    border: 1px solid var(--line); border-radius: 4px;
+    font-size: 11px; color: var(--muted); font-family: ui-monospace, Menlo, monospace;
+  }
+  .crown b { color: var(--ink); font-weight: 600; }
+  .topbar .spacer { flex: 1; }
+  .top-actions { display: flex; gap: 8px; align-items: center; }
+  .top-actions .pill {
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    padding: 5px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: ui-monospace, Menlo, monospace;
+    cursor: not-allowed;
+    text-decoration: line-through;
+    text-decoration-color: var(--strike);
+  }
+  .top-actions .pill.live {
+    text-decoration: none;
+    color: var(--ok);
+    border-color: oklch(0.45 0.08 145);
+    cursor: default;
+  }
+  .top-actions .pill.live::before {
+    content: ""; display: inline-block; width: 6px; height: 6px;
+    background: var(--ok); border-radius: 50%; margin-right: 6px; vertical-align: 1px;
+  }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--panel-2); border: 1px solid var(--line);
+    display: grid; place-items: center; font-size: 11px; color: var(--muted);
+  }
+
+  /* ----- Layout ----- */
+  .shell { display: grid; grid-template-columns: 232px 1fr; min-height: calc(100vh - 52px); }
+
+  /* ----- Sidebar ----- */
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 14px 10px;
+    font-size: 13px;
+  }
+  .nav-group { margin-bottom: 14px; }
+  .nav-label {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 10px;
+    color: var(--dim);
+    padding: 6px 10px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+  .nav-item .glyph { width: 14px; text-align: center; font-family: ui-monospace, Menlo, monospace; color: var(--dim); }
+  .nav-item .label { flex: 1; }
+  .nav-item .note { font-size: 10px; color: var(--dim); font-style: italic; }
+
+  .nav-item.active {
+    background: var(--panel-2);
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 8px;
+    cursor: default;
+  }
+  .nav-item.active .glyph { color: var(--accent); }
+
+  .nav-item.disabled .label {
+    text-decoration: line-through;
+    text-decoration-color: var(--strike);
+    color: var(--strike);
+  }
+  .nav-item.disabled .glyph { color: oklch(0.48 0.08 25); }
+
+  .sidebar-footer {
+    margin-top: 18px; padding: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--dim);
+    font-family: ui-monospace, Menlo, monospace;
+    line-height: 1.6;
+  }
+  .sidebar-footer .row { display: flex; justify-content: space-between; }
+  .sidebar-footer .row b { color: var(--muted); font-weight: 500; }
+
+  /* ----- Main ----- */
+  .main { padding: 22px 26px 40px; max-width: 1100px; }
+  .crumbs { font-size: 11px; color: var(--dim); margin-bottom: 6px; font-family: ui-monospace, Menlo, monospace; }
+  .crumbs span { color: var(--muted); }
+  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .subtle { color: var(--muted); margin-bottom: 20px; font-size: 13px; }
+
+  /* Banner */
+  .banner {
+    border: 1px dashed var(--line);
+    background: linear-gradient(0deg, oklch(0.20 0.012 280), oklch(0.22 0.012 280));
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 22px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .banner b { color: var(--ink); font-weight: 600; }
+  .banner .tag {
+    flex-shrink: 0;
+    font-size: 10px; letter-spacing: 0.1em;
+    padding: 2px 6px; border-radius: 3px;
+    background: oklch(0.32 0.04 90); color: var(--accent);
+    font-family: ui-monospace, Menlo, monospace;
+  }
+
+  /* Stat grid */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .stat .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dim); }
+  .stat .v { font-family: ui-monospace, Menlo, monospace; font-size: 20px; margin-top: 4px; color: var(--ink); }
+  .stat .v.zero { color: var(--ok); }
+  .stat .v.dash { color: var(--strike); }
+  .stat .h { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Two-column main pane */
+  .grid {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .card-head .title { color: var(--ink); font-weight: 600; font-size: 13px; }
+  .card-head .meta { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--dim); }
+  .card-body { padding: 14px; }
+
+  /* "iframe" of bust UI */
+  .iframe-frame {
+    background: oklch(0.10 0.005 280);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0;
+    aspect-ratio: 4 / 3;
+    position: relative;
+    overflow: hidden;
+  }
+  .iframe-bar {
+    height: 22px; background: oklch(0.16 0.008 280);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 5px; padding: 0 8px;
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+    color: var(--dim);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--strike); }
+  .iframe-bar .url { margin-left: 8px; color: var(--muted); }
+  .iframe-stage {
+    position: absolute; top: 22px; left: 0; right: 0; bottom: 0;
+    display: grid; place-items: center;
+    background: oklch(0.08 0.005 280);
+  }
+  .bust-svg { width: 60%; max-width: 220px; height: auto; }
+  .bust-caption {
+    position: absolute; bottom: 14px; left: 0; right: 0;
+    text-align: center;
+    color: var(--korean);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+  .bust-caption .en { display:block; color: var(--dim); font-size: 10px; margin-top: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .iframe-label {
+    margin-top: 8px;
+    font-size: 11px; color: var(--muted);
+    text-align: center; font-style: italic;
+  }
+  .iframe-label b { color: var(--accent); font-style: normal; }
+
+  /* List of "endpoints" / refusals */
+  .deflist { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .deflist .row {
+    display: grid; grid-template-columns: 100px 1fr; gap: 8px;
+    padding: 6px 0; border-bottom: 1px dashed var(--line);
+  }
+  .deflist .row:last-child { border-bottom: 0; }
+  .deflist .k { color: var(--dim); }
+  .deflist .v { color: var(--ink); }
+  .deflist .v.strike { color: var(--strike); text-decoration: line-through; }
+
+  /* Korean callout (system prompt excerpt) */
+  pre.callout {
+    background: oklch(0.14 0.008 280);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--korean);
+    overflow-x: auto;
+    margin: 0;
+    white-space: pre-wrap;
+  }
+  pre.callout .c { color: var(--dim); }
+
+  /* Bottom row */
+  .bottom { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  table.kv { width: 100%; border-collapse: collapse; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  table.kv td { padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  table.kv td:first-child { color: var(--dim); width: 38%; }
+  table.kv td:last-child { color: var(--ink); }
+  table.kv tr:last-child td { border-bottom: 0; }
+
+  .footer-note {
+    margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--dim); font-family: ui-monospace, Menlo, monospace;
+    display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 22 22" aria-hidden="true">
+      <rect x="0" y="0" width="22" height="22" rx="4" fill="oklch(0.96 0 0)"/>
+      <circle cx="11" cy="9" r="4" fill="oklch(0.18 0.01 280)"/>
+      <rect x="5" y="14" width="12" height="5" rx="1" fill="oklch(0.18 0.01 280)"/>
+    </svg>
+    <span class="brand-name">He Was Socrates</span>
+  </div>
+  <div class="crown"><b>Local</b> · v0.1.0 · macOS 26</div>
+  <div class="spacer"></div>
+  <div class="top-actions">
+    <span class="pill">Upgrade plan</span>
+    <span class="pill">Invite team</span>
+    <span class="pill live">on-device</span>
+    <div class="avatar">U</div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="nav-group">
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item active">
+        <span class="glyph">●</span><span class="label">Bust</span>
+      </div>
+      <div class="nav-item">
+        <span class="glyph">○</span><span class="label">Wondering Log</span>
+        <span class="note">local</span>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Account</div>
+      <div class="nav-item disabled" title="No billing — local app">
+        <span class="glyph">⊘</span><span class="label">Billing</span>
+        <span class="note">no billing</span>
+      </div>
+      <div class="nav-item disabled" title="No team — single user">
+        <span class="glyph">⊘</span><span class="label">Team</span>
+        <span class="note">single user</span>
+      </div>
+      <div class="nav-item disabled" title="No integrations — sandboxed">
+        <span class="glyph">⊘</span><span class="label">Integrations</span>
+        <span class="note">sandboxed</span>
+      </div>
+      <div class="nav-item disabled" title="None needed — on-device">
+        <span class="glyph">⊘</span><span class="label">API keys</span>
+        <span class="note">on-device</span>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Platform</div>
+      <div class="nav-item disabled">
+        <span class="glyph">⊘</span><span class="label">Webhooks</span>
+        <span class="note">no egress</span>
+      </div>
+      <div class="nav-item disabled">
+        <span class="glyph">⊘</span><span class="label">Audit logs</span>
+        <span class="note">no cloud</span>
+      </div>
+      <div class="nav-item disabled">
+        <span class="glyph">⊘</span><span class="label">Usage / billing</span>
+        <span class="note">$0/mo</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="row"><b>build</b><span>v0.1.0</span></div>
+      <div class="row"><b>model</b><span>gemma-4-e4b-4bit</span></div>
+      <div class="row"><b>egress</b><span>0 bytes</span></div>
+      <div class="row"><b>support</b><span>this README</span></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="crumbs">Workspace <span>/</span> Bust <span>/</span> Overview</div>
+    <h1>Overview</h1>
+    <div class="subtle">Standard SaaS admin shell. Most surfaces deliberately empty.</div>
+
+    <div class="banner">
+      <span class="tag">PRAGMATIST</span>
+      <div>
+        This is a familiar SaaS dashboard layout because that is the layout judges have seen ten thousand times. <b>Every SaaS-only surface is greyed out</b> — billing, team, integrations, API keys, webhooks, audit logs — because <b>He Was Socrates is a macOS native app</b>, not a service. The empty admin shell is the proof. There is nothing to operate.
+      </div>
+    </div>
+
+    <!-- Stat row -->
+    <div class="stats">
+      <div class="stat">
+        <div class="k">TTFT (median)</div>
+        <div class="v">192 <span style="font-size:11px;color:var(--muted)">ms</span></div>
+        <div class="h">PR-Λ verify-2 · n=10 · M1 Max</div>
+      </div>
+      <div class="stat">
+        <div class="k">Network egress</div>
+        <div class="v zero">0 B</div>
+        <div class="h">no network.client entitlement</div>
+      </div>
+      <div class="stat">
+        <div class="k">Monthly cost</div>
+        <div class="v zero">$0</div>
+        <div class="h">no inference / hosting / DB</div>
+      </div>
+      <div class="stat">
+        <div class="k">Open incidents</div>
+        <div class="v dash">—</div>
+        <div class="h">there is no service</div>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid">
+      <!-- Left: bust iframe -->
+      <div class="card">
+        <div class="card-head">
+          <span class="title">Bust preview</span>
+          <span class="meta">localhost · macOS shell</span>
+        </div>
+        <div class="card-body">
+          <div class="iframe-frame">
+            <div class="iframe-bar">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="url">app://HeWasSocrates/bust</span>
+            </div>
+            <div class="iframe-stage">
+              <svg class="bust-svg" viewBox="0 0 200 200" aria-label="1-bit halftone bust">
+                <defs>
+                  <pattern id="dots" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="0.9" fill="oklch(0.96 0 0)" />
+                  </pattern>
+                  <pattern id="dots-dim" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
+                    <circle cx="2.5" cy="2.5" r="0.7" fill="oklch(0.62 0.01 280)" />
+                  </pattern>
+                  <clipPath id="bustClip">
+                    <ellipse cx="100" cy="80" rx="44" ry="52" />
+                    <rect x="62" y="120" width="76" height="64" rx="6" />
+                  </clipPath>
+                </defs>
+                <g clip-path="url(#bustClip)">
+                  <rect x="0" y="0" width="200" height="200" fill="url(#dots-dim)" />
+                  <ellipse cx="100" cy="80" rx="44" ry="52" fill="url(#dots)" />
+                  <rect x="62" y="120" width="76" height="64" rx="6" fill="url(#dots)" />
+                </g>
+                <ellipse cx="86" cy="74" rx="3" ry="4" fill="oklch(0.18 0.01 280)" />
+                <ellipse cx="114" cy="74" rx="3" ry="4" fill="oklch(0.18 0.01 280)" />
+                <path d="M88 100 Q100 104 112 100" stroke="oklch(0.18 0.01 280)" stroke-width="2" fill="none" stroke-linecap="round" />
+              </svg>
+              <div class="bust-caption">
+                답을 주지 않는다. 질문을 돌려준다.
+                <span class="en">Phase: idle · Spacebar to ask</span>
+              </div>
+            </div>
+          </div>
+          <div class="iframe-label">↑ <b>What you'd actually use.</b> The native macOS app. Everything outside this frame is admin chrome that has nothing to administer.</div>
+        </div>
+      </div>
+
+      <!-- Right: refusals + system prompt -->
+      <div class="card">
+        <div class="card-head">
+          <span class="title">What this dashboard does NOT do</span>
+          <span class="meta">by design</span>
+        </div>
+        <div class="card-body">
+          <div class="deflist">
+            <div class="row"><span class="k">/billing</span><span class="v strike">404 — local app</span></div>
+            <div class="row"><span class="k">/team</span><span class="v strike">404 — single user</span></div>
+            <div class="row"><span class="k">/integrations</span><span class="v strike">404 — sandboxed</span></div>
+            <div class="row"><span class="k">/api/keys</span><span class="v strike">404 — on-device</span></div>
+            <div class="row"><span class="k">/webhooks</span><span class="v strike">404 — no egress</span></div>
+            <div class="row"><span class="k">/audit-log</span><span class="v strike">404 — no cloud</span></div>
+            <div class="row"><span class="k">/health</span><span class="v">200 — but only one process to check</span></div>
+            <div class="row"><span class="k">/v1/ask</span><span class="v">↻ runs in your menubar</span></div>
+          </div>
+        </div>
+        <div class="card-head" style="border-top: 1px solid var(--line);">
+          <span class="title">System prompt (excerpt, verbatim)</span>
+          <span class="meta">SystemPrompt.swift</span>
+        </div>
+        <div class="card-body">
+<pre class="callout"><span class="c">// Sources/SocraticEngine/Gemma/SystemPrompt.swift</span>
+너는 답하지 않는다.
+너는 질문을 돌려준다.
+의료·법률·금융·응급·복지·보험은
+사람에게 넘긴다. 너는 그 자리에 없다.
+어조는 단정한 평어체.
+존댓말도 친근체도 쓰지 않는다.</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row -->
+    <div class="bottom">
+      <div class="card">
+        <div class="card-head">
+          <span class="title">Why a SaaS shell with nothing in it</span>
+          <span class="meta">the pragmatist take</span>
+        </div>
+        <div class="card-body" style="font-size: 12.5px; color: var(--muted); line-height: 1.6;">
+          The fastest way to explain what He Was Socrates <b style="color:var(--ink)">is not</b> is to draw the SaaS dashboard everyone expects and then cross out every panel a SaaS would have. No billing — there is no service to bill for. No team — the app runs on one Mac. No integrations — App Sandbox refuses network egress. No API keys — inference is local via MLX. The empty admin pane is the architecture diagram.
+          <br><br>
+          Stack choice for this preview is deliberately boring: <b style="color:var(--ink)">Next.js + Postgres + Docker</b> would be the obvious SaaS build. We did not build it. The <i>real</i> product is the macOS app embedded above. This page exists only to make that absence visible.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="title">Build manifest</span>
+          <span class="meta">verifiable</span>
+        </div>
+        <div class="card-body">
+          <table class="kv">
+            <tr><td>app target</td><td>apps/macos/HeWasSocrates</td></tr>
+            <tr><td>engine</td><td>packages/SocraticEngine (Swift Pkg)</td></tr>
+            <tr><td>model</td><td>mlx-community/gemma-4-e4b-it-4bit</td></tr>
+            <tr><td>weights</td><td>3.97 GB · OS-mediated MLX cache</td></tr>
+            <tr><td>STT</td><td>SFSpeechRecognizer · on-device=true</td></tr>
+            <tr><td>TTS</td><td>AVSpeechSynthesizer · Yuna ko / Samantha en</td></tr>
+            <tr><td>entitlement</td><td>App Sandbox · audio input only</td></tr>
+            <tr><td>network.client</td><td><span style="color: var(--strike); text-decoration: line-through;">absent</span></td></tr>
+            <tr><td>TTFT median</td><td>192 ms (PR-Λ · 24× vs 4.6 s)</td></tr>
+            <tr><td>4 functions</td><td>mode_classify · ask_back · surface_past_wonder · defer_to_human</td></tr>
+            <tr><td>tone</td><td>단정한 평어체 (verbatim)</td></tr>
+            <tr><td>aesthetic</td><td>1-bit halftone PNG swap (16 visemes)</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <span>He Was Socrates · The Gemma 4 Good Hackathon · Apache-2.0 + CC-BY-4.0</span>
+      <span>P11 The Pragmatist · ship today · Next.js + Postgres + Docker would be overkill</span>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

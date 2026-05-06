@@ -1,0 +1,11 @@
+{
+  "id": "P20",
+  "advocate": "The OSS Maintainer",
+  "framing": "Hackathon judges and OSS contributors land on the same surface — github.com/Two-Weeks-Team/he-was-socrates. The README IS the pitch, the install guide, and the hackathon submission appendix in one rendered page. Hosted Kaggle preview is a reference impl; the canonical product is the repo.",
+  "target_persona": "GitHub-native dev who clones before they read docs — Kaggle judge cross-checking claims against the source tree, plus OSS contributors arriving from /topics/gemma-4 wanting to file an issue or PR within 60 seconds.",
+  "primary_surface": "GitHub README rendered in dark theme (the repo's default page), badges row + clone command + CONTRIBUTING link own 70% of UX. Hosted Kaggle preview = reference impl that points back to repo.",
+  "opus_4_7_capability": "Long-context structural reading of CLAUDE.md + spec deltas + function_call_contract.yaml to render a README that survives engineer-skeptical inspection — every metric line is link-citable to commit/bench/source-line, and the install path actually works.",
+  "mvp_scope": "Single rendered README view with: repo header chrome, badges (license, CI, tests, model, OS floor), 1-bit halftone hero SVG, 30-second quick-start (git clone → make doctor → make engine-test → make app), Why on-device, Architecture diagram, Hackathon submission section, License, plus right-rail About/Topics/Releases/Contributors sidebar.",
+  "one_liner_pitch": "Open the repo, read the README, run three make commands — the bust talks back in 단정한 평어체 with zero bytes leaving your Mac.",
+  "spec_alignment_notes": "all fields populated in spec — followed verbatim. target_persona drawn from idea.spec.json secondary[2] 'General GitHub developer audience' (the README's actual first-contact reader) crossed with primary 'Kaggle/DeepMind judges' (who deep-dive into repo). primary_surface honors persona definition (GitHub README 70% UX, hosted = reference impl). MVP scope distilled from idea.spec.json primary_artifact_B README hero patch + key_jobs_to_be_done[2] 'first-time GitHub visitor understands in 30 seconds'. No interpretation needed beyond persona-narrowing."
+}

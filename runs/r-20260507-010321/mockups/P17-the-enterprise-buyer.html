@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>He Was Socrates — Education Edition · Admin Console</title>
+<style>
+  :root {
+    --bg:        oklch(0.18 0.012 270);
+    --panel:     oklch(0.22 0.014 270);
+    --panel-2:   oklch(0.26 0.016 270);
+    --line:      oklch(0.34 0.018 270);
+    --ink:       oklch(0.96 0.005 270);
+    --ink-2:     oklch(0.78 0.012 270);
+    --ink-3:     oklch(0.58 0.014 270);
+    --pass:      oklch(0.78 0.14 152);
+    --pass-bg:   oklch(0.32 0.06 152);
+    --na:        oklch(0.68 0.012 270);
+    --na-bg:     oklch(0.30 0.010 270);
+    --pend:      oklch(0.82 0.13 84);
+    --pend-bg:   oklch(0.34 0.06 84);
+    --accent:    oklch(0.78 0.10 230);
+    --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5}
+  a{color:var(--accent);text-decoration:none}
+  .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+  /* sidebar */
+  .side{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .brand-mark{width:30px;height:30px;border:1px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;border-radius:4px}
+  .brand-name{font-weight:600;font-size:13px;letter-spacing:.2px}
+  .brand-sub{font-size:10px;color:var(--ink-3);font-family:var(--mono);margin-top:2px}
+  .nav{display:flex;flex-direction:column;gap:2px;margin-top:12px}
+  .nav a{padding:7px 10px;border-radius:4px;color:var(--ink-2);font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+  .nav a:hover{background:var(--panel-2)}
+  .nav a.on{background:var(--panel-2);color:var(--ink);border-left:2px solid var(--accent);padding-left:8px}
+  .nav .pill{font-family:var(--mono);font-size:10px;color:var(--ink-3);background:var(--bg);padding:1px 6px;border-radius:8px;border:1px solid var(--line)}
+  .side-foot{position:fixed;bottom:14px;width:192px;font-size:11px;color:var(--ink-3);font-family:var(--mono);border-top:1px solid var(--line);padding-top:10px}
+
+  /* main */
+  .main{padding:0 28px 36px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .crumbs{font-size:12px;color:var(--ink-3)}
+  .crumbs strong{color:var(--ink-2)}
+  .who{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-2)}
+  .who .who-name{font-weight:600;color:var(--ink)}
+  .who .av{width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-2)}
+
+  /* tabs */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:22px}
+  .tab{padding:10px 16px;font-size:13px;color:var(--ink-3);border-bottom:2px solid transparent;cursor:default}
+  .tab.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+
+  h1{font-size:20px;font-weight:600;margin-bottom:4px;letter-spacing:-.2px}
+  .lede{font-size:12.5px;color:var(--ink-3);margin-bottom:22px;max-width:760px}
+
+  /* layout */
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start}
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+  .card-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .card-t{font-size:13px;font-weight:600;letter-spacing:.1px}
+  .card-meta{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+
+  /* checklist */
+  .row{display:grid;grid-template-columns:36px 1fr 110px;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+  .row:first-of-type{border-top:none}
+  .row .ic{font-family:var(--mono);font-size:14px;color:var(--ink-2);text-align:center}
+  .row .lbl{font-size:12.5px}
+  .row .lbl b{display:block;color:var(--ink);font-weight:600;margin-bottom:2px}
+  .row .lbl span{color:var(--ink-3);font-size:11.5px;font-family:var(--mono)}
+  .row .lbl em{font-style:normal;color:var(--ink-2)}
+  .badge{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:3px;text-align:center;letter-spacing:.3px;font-weight:600}
+  .b-pass{background:var(--pass-bg);color:var(--pass);border:1px solid var(--pass)}
+  .b-na  {background:var(--na-bg);  color:var(--na);  border:1px solid var(--line)}
+  .b-pend{background:var(--pend-bg);color:var(--pend);border:1px solid var(--pend)}
+
+  /* metrics row */
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .metric{background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:11px 12px}
+  .metric .k{font-size:10.5px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.6px}
+  .metric .v{font-size:18px;font-weight:600;margin-top:4px;font-family:var(--mono)}
+  .metric .s{font-size:10.5px;color:var(--ink-3);margin-top:2px;font-family:var(--mono)}
+
+  /* audit log */
+  .log{font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;max-height:200px;overflow:auto;color:var(--ink-2)}
+  .log .ts{color:var(--ink-3)}
+  .log .ev{color:var(--accent)}
+  .log .ko{color:var(--ink)}
+  .log .ok{color:var(--pass)}
+
+  /* evidence box */
+  .ev-box{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);white-space:pre-wrap;overflow:auto}
+  .ev-box .c{color:var(--ink-3)}
+  .ev-box .neg{color:var(--pass);font-weight:600}
+
+  /* procurement card */
+  .proc{background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--line);border-radius:6px;padding:18px;margin-top:18px}
+  .proc-h{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+  .proc-t{font-size:14px;font-weight:600}
+  .proc-meta{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+  .proc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .proc-cell{border-left:2px solid var(--accent);padding:2px 0 2px 12px}
+  .proc-cell .k{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;font-family:var(--mono);letter-spacing:.6px}
+  .proc-cell .v{font-size:16px;font-weight:600;margin-top:4px;font-family:var(--mono)}
+  .proc-cell .s{font-size:11px;color:var(--ink-3);margin-top:3px}
+  .proc-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between}
+
+  /* side preview */
+  .preview{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:0;overflow:hidden}
+  .preview-h{padding:10px 12px;border-bottom:1px solid var(--line);font-size:11px;color:var(--ink-3);font-family:var(--mono);display:flex;justify-content:space-between}
+  .bust-wrap{aspect-ratio:1/1;background:#000;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
+  .bust-cap{padding:14px 14px 16px;text-align:center}
+  .ko-sub{font-size:13px;color:var(--ink);font-weight:500;line-height:1.5}
+  .en-sub{font-size:10.5px;color:var(--ink-3);margin-top:6px;font-family:var(--mono)}
+
+  /* footer ribbon */
+  .footnote{margin-top:22px;font-size:11px;color:var(--ink-3);font-family:var(--mono);padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <circle cx="9" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="1"/>
+          <path d="M3 16 Q9 11 15 16" fill="none" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">He Was Socrates</div>
+        <div class="brand-sub">EDU · admin v0.4.0</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a><span>Overview</span></a>
+      <a class="on"><span>Security</span><span class="pill">8</span></a>
+      <a><span>Compliance</span><span class="pill">3</span></a>
+      <a><span>Audit Log</span><span class="pill">live</span></a>
+      <a><span>Procurement</span></a>
+      <a><span>Deployment</span></a>
+      <a><span>Users &amp; Roles</span></a>
+      <a><span>Settings</span></a>
+    </nav>
+    <div class="side-foot">
+      tenant: pilot-district-01<br>
+      region: device-local<br>
+      build: 2026-05-07
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">Admin Console &nbsp;/&nbsp; <strong>pilot-district-01</strong> &nbsp;/&nbsp; Security</div>
+      <div class="who">
+        <span>InfoSec Review · 2026-05-07</span>
+        <div class="av">JK</div>
+        <span class="who-name">J. Kim</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab">Overview</div>
+      <div class="tab on">Security</div>
+      <div class="tab">Compliance</div>
+      <div class="tab">Audit</div>
+      <div class="tab">Procurement</div>
+    </div>
+
+    <h1>Security posture</h1>
+    <p class="lede">
+      Vendor questionnaire results for <em>He Was Socrates — Education Edition</em>.
+      Most enterprise SaaS controls auto-pass because the application runs entirely on the user's macOS device with
+      <span style="font-family:var(--mono);color:var(--ink-2)">no network.client / network.server</span> entitlement.
+      Absence of cloud surface is the control. SSO/SCIM marked N/A — single-user desktop app, not a multi-tenant service.
+    </p>
+
+    <div class="grid">
+
+      <div class="stack">
+        <div class="card">
+          <div class="card-h">
+            <div class="card-t">Control checklist · 8 items</div>
+            <div class="card-meta">source: HeWasSocrates.entitlements · CLAUDE.md invariant #1</div>
+          </div>
+
+          <div class="row">
+            <div class="ic">✓</div>
+            <div class="lbl"><b>Data Residency</b><span>device-local only · no cross-border transfer possible</span></div>
+            <div class="badge b-pass">AUTO-PASS</div>
+          </div>
+          <div class="row">
+            <div class="ic">✓</div>
+            <div class="lbl"><b>Encryption at Rest</b><span>APFS native FileVault-compatible · OS-managed</span></div>
+            <div class="badge b-pass">AUTO-PASS</div>
+          </div>
+          <div class="row">
+            <div class="ic">✓</div>
+            <div class="lbl"><b>Encryption in Transit</b><span>no transit · NO-CLOUD invariant (egress = 0 byte / 24h)</span></div>
+            <div class="badge b-pass">AUTO-PASS</div>
+          </div>
+          <div class="row">
+            <div class="ic">⊘</div>
+            <div class="lbl"><b>SSO / SAML 2.0</b><span>not applicable · single-user desktop application</span></div>
+            <div class="badge b-na">N/A</div>
+          </div>
+          <div class="row">
+            <div class="ic">⊘</div>
+            <div class="lbl"><b>SCIM 2.0 Provisioning</b><span>not applicable · no central user directory</span></div>
+            <div class="badge b-na">N/A</div>
+          </div>
+          <div class="row">
+            <div class="ic">▢</div>
+            <div class="lbl"><b>SOC 2 Type II</b><span>typical hackathon submission · roadmap H2 2026</span></div>
+            <div class="badge b-pend">PENDING</div>
+          </div>
+          <div class="row">
+            <div class="ic">✓</div>
+            <div class="lbl"><b>Audit Log</b><span>local SQLite · ~/Library/Containers/.../wondering.sqlite</span></div>
+            <div class="badge b-pass">PASS</div>
+          </div>
+          <div class="row">
+            <div class="ic">✓</div>
+            <div class="lbl"><b>Egress Monitoring</b><span>0 byte / 24h · entitlements file is the control</span></div>
+            <div class="badge b-pass">AUTO-PASS</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <div class="card-t">Network egress · last 24h</div>
+            <div class="card-meta">measured: macOS Activity Monitor + Little Snitch counter</div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><div class="k">Outbound</div><div class="v">0 B</div><div class="s">↓ 0 packets</div></div>
+            <div class="metric"><div class="k">DNS queries</div><div class="v">0</div><div class="s">no resolver calls</div></div>
+            <div class="metric"><div class="k">TLS conns</div><div class="v">0</div><div class="s">no sockets opened</div></div>
+          </div>
+          <div style="margin-top:12px">
+            <div class="card-meta" style="margin-bottom:6px">evidence — HeWasSocrates.entitlements (excerpt)</div>
+            <div class="ev-box"><span class="c">&lt;!-- App Sandbox enabled · network entitlements absent --&gt;</span>
+&lt;key&gt;com.apple.security.app-sandbox&lt;/key&gt;
+&lt;true/&gt;
+&lt;key&gt;com.apple.security.device.audio-input&lt;/key&gt;
+&lt;true/&gt;
+<span class="c">&lt;!-- intentionally NOT present: --&gt;</span>
+<span class="neg">&lt;!-- com.apple.security.network.client  → absent --&gt;</span>
+<span class="neg">&lt;!-- com.apple.security.network.server  → absent --&gt;</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <div class="card-t">Audit log · live tail (read-only)</div>
+            <div class="card-meta">store: SQLite · SHA-256 fingerprint dedup · CC-BY-4.0 export</div>
+          </div>
+          <div class="log">
+<span class="ts">2026-05-07T09:14:02+09:00</span>  <span class="ev">turn.start</span>      session=a3f9 mode=<span class="ok">listening</span>
+<span class="ts">2026-05-07T09:14:05+09:00</span>  <span class="ev">stt.partial</span>     bytes_out=0 on_device=true
+<span class="ts">2026-05-07T09:14:07+09:00</span>  <span class="ev">fc.dispatch</span>     fn=mode_classify  → mode=ASK
+<span class="ts">2026-05-07T09:14:07+09:00</span>  <span class="ev">fc.dispatch</span>     fn=ask_back        ttft_ms=192
+<span class="ts">2026-05-07T09:14:09+09:00</span>  <span class="ev">tts.speak</span>       voice=Yuna(ko) viseme=on phase=speaking
+<span class="ts">2026-05-07T09:14:18+09:00</span>  <span class="ev">turn.end</span>        net_egress_bytes=<span class="ok">0</span>
+<span class="ts">2026-05-07T09:15:42+09:00</span>  <span class="ev">turn.start</span>      session=a3fa mode=<span class="ok">listening</span>
+<span class="ts">2026-05-07T09:15:48+09:00</span>  <span class="ev">fc.dispatch</span>     fn=defer_to_human  topic=medical
+<span class="ts">2026-05-07T09:15:48+09:00</span>  <span class="ev">policy.hit</span>      <span class="ko">⊘ 그건 의사의 영역이야.</span>
+<span class="ts">2026-05-07T09:15:49+09:00</span>  <span class="ev">turn.end</span>        net_egress_bytes=<span class="ok">0</span>
+<span class="ts">2026-05-07T09:16:11+09:00</span>  <span class="ev">log.export</span>      format=jsonl rows=842 dest=<span class="ko">~/Desktop/wondering-2026-05-07.jsonl</span>
+          </div>
+          <div class="card-meta" style="margin-top:8px">
+            export path: <span style="color:var(--ink-2)">~/Library/Containers/com.twoweeks.HeWasSocrates/Data/Library/Application Support/wondering.sqlite</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="stack">
+        <div class="preview">
+          <div class="preview-h"><span>live preview</span><span>device · airplane-mode OK</span></div>
+          <div class="bust-wrap">
+            <svg width="170" height="170" viewBox="0 0 170 170" aria-label="Socratic bust halftone">
+              <defs>
+                <pattern id="ht" width="3" height="3" patternUnits="userSpaceOnUse">
+                  <circle cx="1.5" cy="1.5" r="0.85" fill="#fff"/>
+                </pattern>
+                <radialGradient id="m" cx="50%" cy="42%" r="55%">
+                  <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+                  <stop offset="62%" stop-color="#fff" stop-opacity=".5"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </radialGradient>
+                <mask id="mk"><rect width="170" height="170" fill="url(#m)"/></mask>
+              </defs>
+              <rect width="170" height="170" fill="#000"/>
+              <g mask="url(#mk)">
+                <ellipse cx="85" cy="74" rx="42" ry="50" fill="url(#ht)"/>
+                <path d="M40 138 Q85 110 130 138 L130 170 L40 170 Z" fill="url(#ht)"/>
+                <ellipse cx="72" cy="70" rx="3" ry="2" fill="#000"/>
+                <ellipse cx="98" cy="70" rx="3" ry="2" fill="#000"/>
+                <path d="M76 92 Q85 96 94 92" stroke="#000" stroke-width="1.4" fill="none"/>
+              </g>
+            </svg>
+          </div>
+          <div class="bust-cap">
+            <div class="ko-sub">왜 그렇게 생각해?</div>
+            <div class="en-sub">— Korean 단정한 평어체 · verbatim SystemPrompt.swift</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <div class="card-t">Architecture summary</div>
+            <div class="card-meta">CLAUDE.md · invariants 1–6</div>
+          </div>
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <tr><td style="color:var(--ink-3);padding:5px 0">Inference</td><td style="text-align:right;font-family:var(--mono)">on-device · MLX</td></tr>
+            <tr><td style="color:var(--ink-3);padding:5px 0;border-top:1px solid var(--line)">Model</td><td style="text-align:right;font-family:var(--mono);border-top:1px solid var(--line)">Gemma 4 E4B 4-bit</td></tr>
+            <tr><td style="color:var(--ink-3);padding:5px 0;border-top:1px solid var(--line)">STT</td><td style="text-align:right;font-family:var(--mono);border-top:1px solid var(--line)">on-device · Apple</td></tr>
+            <tr><td style="color:var(--ink-3);padding:5px 0;border-top:1px solid var(--line)">TTS</td><td style="text-align:right;font-family:var(--mono);border-top:1px solid var(--line)">AVSpeechSynthesizer</td></tr>
+            <tr><td style="color:var(--ink-3);padding:5px 0;border-top:1px solid var(--line)">TTFT median</td><td style="text-align:right;font-family:var(--mono);border-top:1px solid var(--line)">192 ms (PR-Λ)</td></tr>
+            <tr><td style="color:var(--ink-3);padding:5px 0;border-top:1px solid var(--line)">Net egress</td><td style="text-align:right;font-family:var(--mono);border-top:1px solid var(--line);color:var(--pass)">0 B / 24h</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><div class="card-t">Reviewer notes</div><div class="card-meta">internal</div></div>
+          <ul style="font-size:12px;color:var(--ink-2);padding-left:16px;line-height:1.65">
+            <li>Vendor risk: <span style="color:var(--pass)">low</span> — no cloud surface to compromise.</li>
+            <li>FERPA / 개인정보보호법 — student utterances never leave device.</li>
+            <li>Procurement path: site-license desktop, not SaaS subscription.</li>
+            <li>Re-review trigger: any future <span style="font-family:var(--mono)">network.client</span> entitlement.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <div class="proc">
+      <div class="proc-h">
+        <div>
+          <div class="proc-t">Procurement summary · pilot-district-01</div>
+          <div class="proc-meta" style="margin-top:4px">prepared for: District CTO · Legal counsel · InfoSec</div>
+        </div>
+        <div class="proc-meta">FY 2026 · prepared 2026-05-07</div>
+      </div>
+      <div class="proc-grid">
+        <div class="proc-cell">
+          <div class="k">Yearly cost</div>
+          <div class="v">$0</div>
+          <div class="s">no per-seat fee · no usage tier</div>
+        </div>
+        <div class="proc-cell">
+          <div class="k">Vendor lock-in</div>
+          <div class="v">None</div>
+          <div class="s">Apache-2.0 · CC-BY-4.0 assets</div>
+        </div>
+        <div class="proc-cell">
+          <div class="k">Required IT review</div>
+          <div class="v">Minimal</div>
+          <div class="s">no cloud accounts · no DPA needed</div>
+        </div>
+        <div class="proc-cell">
+          <div class="k">Time to deploy</div>
+          <div class="v">≈ 1 day</div>
+          <div class="s">image + first-launch weight pull</div>
+        </div>
+      </div>
+      <div class="proc-foot">
+        <span>Recommendation: <strong style="color:var(--pass)">Approved for pilot</strong> — green-light contingent on SOC2 roadmap acknowledgement.</span>
+        <span>signature on file · J. Kim, InfoSec</span>
+      </div>
+    </div>
+
+    <div class="footnote">
+      <span>He Was Socrates — Education Edition · single-user desktop app · macOS 26+</span>
+      <span>spec lock e5dfadf2c8…314c5 · build 2026-05-07</span>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>socrates(1) — He Was Socrates · CLI</title>
+<style>
+  :root {
+    --bg:        oklch(14% 0.012 270);
+    --bg-soft:   oklch(18% 0.014 270);
+    --fg:        oklch(88% 0.020 145);
+    --fg-dim:    oklch(62% 0.018 145);
+    --fg-mute:   oklch(44% 0.014 145);
+    --amber:     oklch(82% 0.135 75);
+    --amber-dim: oklch(64% 0.110 75);
+    --red:       oklch(70% 0.180 28);
+    --rule:      oklch(28% 0.010 270);
+    --sel:       oklch(28% 0.040 145);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--sel); }
+  .frame {
+    max-width: 920px;
+    margin: 24px auto;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px oklch(20% 0.010 270) inset;
+  }
+  .titlebar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--rule);
+    font-size: 11.5px;
+    color: var(--fg-dim);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.r { background: oklch(62% 0.16 28); }
+  .dot.y { background: oklch(78% 0.13 90); }
+  .dot.g { background: oklch(70% 0.13 145); }
+  .titlebar .path { margin-left: 8px; color: var(--fg-mute); }
+  .pane { padding: 18px 22px 8px; }
+  pre.logo {
+    margin: 0 0 6px;
+    color: var(--amber);
+    font-size: 11px;
+    line-height: 1.15;
+    letter-spacing: 0;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .tag {
+    display: inline-block; padding: 0 6px;
+    border: 1px solid var(--rule);
+    color: var(--fg-mute);
+    font-size: 11px;
+    margin-right: 6px;
+  }
+  .row { display: flex; gap: 22px; align-items: flex-start; }
+  .ascii-bust { flex: 0 0 auto; color: var(--fg-dim); }
+  .ascii-bust svg { display: block; }
+  .meta { flex: 1 1 auto; color: var(--fg-dim); }
+  .meta .k { color: var(--fg-mute); }
+  .meta .v { color: var(--fg); }
+  hr.rule {
+    border: 0; border-top: 1px dashed var(--rule);
+    margin: 14px 0;
+  }
+  .prompt { color: var(--amber); }
+  .prompt::before { content: "$ "; color: var(--amber-dim); }
+  .user   { color: var(--fg); }
+  .sys    { color: var(--fg-mute); }
+  .info   { color: var(--fg-dim); }
+  .ok     { color: oklch(78% 0.13 145); }
+  .warn   { color: var(--amber); }
+  .err    { color: var(--red); }
+  .ko     { color: var(--fg); }
+  .gloss  { color: var(--fg-mute); font-style: italic; }
+  .fn     { color: var(--amber-dim); }
+  .punc   { color: var(--fg-mute); }
+  .arg    { color: var(--fg-dim); }
+  .blk    { white-space: pre-wrap; margin: 0; }
+  .indent { padding-left: 14px; border-left: 1px solid var(--rule); margin: 6px 0; }
+  .cursor {
+    display: inline-block; width: 8px; height: 1em;
+    background: var(--amber);
+    vertical-align: -2px;
+    animation: blink 1.05s steps(2,end) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .statusbar {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    padding: 8px 14px;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--rule);
+    font-size: 11.5px;
+    color: var(--fg-mute);
+  }
+  .statusbar .seg .l { color: var(--fg-mute); }
+  .statusbar .seg .r { color: var(--fg-dim); }
+  .statusbar .seg.green .r { color: oklch(78% 0.13 145); }
+  .statusbar .seg.amber .r { color: var(--amber); }
+  .config {
+    margin: 18px 22px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: oklch(16% 0.012 270);
+  }
+  .config .hdr {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--fg-mute);
+    font-size: 11.5px;
+  }
+  .config pre {
+    margin: 0; padding: 10px 14px;
+    color: var(--fg-dim);
+    font-size: 12.5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .config .key { color: var(--amber-dim); }
+  .config .str { color: oklch(78% 0.10 145); }
+  .config .num { color: var(--amber); }
+  .config .bool { color: var(--amber); }
+  .config .cmt { color: var(--fg-mute); font-style: italic; }
+  .footer {
+    padding: 6px 14px 12px;
+    color: var(--fg-mute);
+    font-size: 11px;
+    text-align: right;
+  }
+  a { color: var(--amber-dim); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="frame" role="document" aria-label="socrates CLI prototype">
+
+  <div class="titlebar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span>kimsejun@m1max</span>
+    <span class="path">~/projects/he-was-socrates ─ tmux:0</span>
+  </div>
+
+  <div class="pane">
+<pre class="logo">     ___       __                                                          __
+    /   |  ____\ \         _    _ _____   __        __    ____    ____    /  \   ___    ___  ___ ___ ___ ___  ____  ____  ____
+   / /| | /  __ \ \       | |  | | ____|  \ \      / /  / __ \  / ___|  / /\ \ / _ \  / __||   |   |   |   ||  _ \|  _ \|  _ \
+  / / | | \  \/  \ \      | |__| |  _|     \ \ /\ / /  / / _` | \___ \  \ \/ /| (_) || (__ |   |   |   |   || |_) | |_) | |_) |
+ / /  | |  \  \   \ \     |  __  | |___     \ V  V /  | | (_| |  ___) |  \  /  \___/  \___||___|___|___|___||  __/|  __/|  __/
+/_/   |_|   \__\   \_\    |_|  |_|_____|     \_/\_/    \ \__,_| |____/    \/                                |_|   |_|   |_|
+                                                        \____/                                          T H E   B U S T (1bit)</pre>
+
+    <div style="margin: 4px 0 12px;">
+      <span class="tag">v0.4.0-pre</span>
+      <span class="tag">on-device</span>
+      <span class="tag">no-cloud</span>
+      <span class="tag">gemma-4-e4b-4bit</span>
+      <span class="tag">mlx</span>
+    </div>
+
+    <div class="row">
+      <div class="ascii-bust" aria-hidden="true">
+        <!-- inline 1-bit halftone bust as SVG dot grid (the contrarian's terminal substitute for face_halftone.png) -->
+        <svg width="148" height="170" viewBox="0 0 74 85" xmlns="http://www.w3.org/2000/svg">
+          <rect width="74" height="85" fill="oklch(14% 0.012 270)"/>
+          <g fill="oklch(82% 0.020 145)">
+          <!-- forehead -->
+          <circle cx="22" cy="14" r="0.9"/><circle cx="28" cy="12" r="0.9"/><circle cx="34" cy="11" r="0.9"/><circle cx="40" cy="11" r="0.9"/><circle cx="46" cy="12" r="0.9"/><circle cx="52" cy="14" r="0.9"/>
+          <circle cx="20" cy="20" r="0.9"/><circle cx="26" cy="19" r="0.9"/><circle cx="32" cy="18" r="0.9"/><circle cx="38" cy="18" r="0.9"/><circle cx="44" cy="18" r="0.9"/><circle cx="50" cy="19" r="0.9"/><circle cx="56" cy="20" r="0.9"/>
+          <!-- brow / eyes -->
+          <circle cx="24" cy="28" r="0.9"/><circle cx="28" cy="27" r="0.9"/><circle cx="46" cy="27" r="0.9"/><circle cx="50" cy="28" r="0.9"/>
+          <circle cx="26" cy="32" r="1.4"/><circle cx="48" cy="32" r="1.4"/>
+          <!-- nose ridge -->
+          <circle cx="37" cy="33" r="0.7"/><circle cx="37" cy="36" r="0.7"/><circle cx="37" cy="40" r="0.7"/><circle cx="36" cy="43" r="0.7"/><circle cx="38" cy="43" r="0.7"/>
+          <!-- cheeks (sparser dots = highlight) -->
+          <circle cx="22" cy="38" r="0.6"/><circle cx="52" cy="38" r="0.6"/><circle cx="20" cy="44" r="0.7"/><circle cx="54" cy="44" r="0.7"/>
+          <!-- mouth -->
+          <circle cx="32" cy="50" r="0.9"/><circle cx="36" cy="50" r="0.9"/><circle cx="40" cy="50" r="0.9"/><circle cx="44" cy="50" r="0.9"/>
+          <!-- beard -->
+          <circle cx="26" cy="56" r="1.1"/><circle cx="30" cy="58" r="1.1"/><circle cx="34" cy="59" r="1.1"/><circle cx="38" cy="60" r="1.1"/><circle cx="42" cy="59" r="1.1"/><circle cx="46" cy="58" r="1.1"/><circle cx="50" cy="56" r="1.1"/>
+          <circle cx="28" cy="63" r="1.1"/><circle cx="32" cy="65" r="1.1"/><circle cx="36" cy="66" r="1.1"/><circle cx="40" cy="66" r="1.1"/><circle cx="44" cy="65" r="1.1"/><circle cx="48" cy="63" r="1.1"/>
+          <circle cx="32" cy="70" r="1.1"/><circle cx="38" cy="71" r="1.1"/><circle cx="44" cy="70" r="1.1"/>
+          <!-- shoulders / plinth -->
+          <circle cx="14" cy="76" r="1.0"/><circle cx="20" cy="78" r="1.0"/><circle cx="26" cy="80" r="1.0"/><circle cx="36" cy="80" r="1.0"/><circle cx="46" cy="80" r="1.0"/><circle cx="52" cy="78" r="1.0"/><circle cx="58" cy="76" r="1.0"/>
+          </g>
+        </svg>
+      </div>
+      <div class="meta">
+        <div><span class="k">tool   </span> <span class="v">socrates(1) — Socratic REPL for Gemma 4 E4B</span></div>
+        <div><span class="k">model  </span> <span class="v">mlx-community/gemma-4-e4b-it-4bit</span> <span class="gloss">(3.97 GB, cached)</span></div>
+        <div><span class="k">tone   </span> <span class="v">단정한 평어체</span> <span class="gloss">(verbatim from SystemPrompt.swift)</span></div>
+        <div><span class="k">network</span> <span class="ok">disabled by entitlement</span> <span class="gloss">(no network.client)</span></div>
+        <div><span class="k">stt    </span> <span class="v">SFSpeechRecognizer · requiresOnDeviceRecognition=true</span></div>
+        <div><span class="k">surface</span> <span class="v">tty/readline</span> <span class="gloss">— GUI is somebody else's project</span></div>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <pre class="blk"><span class="prompt">socrates --lang ko --persona bust --thinking soft</span>
+<span class="info">[ok]   loading kv-cache from ~/.socrates/cache/seed-ko.kvq  (PR-Λ disk-mediate)</span>
+<span class="info">[ok]   ttft target 192ms · n=10 verify-2 · M1 Max MBP 64GB</span>
+<span class="info">[ok]   function-call dispatch: mode_classify | ask_back | surface_past_wonder | defer_to_human</span>
+<span class="info">[note] Ctrl-D to exit · type :help for commands · :wonder to inspect log</span>
+</pre>
+
+    <pre class="blk"><span class="prompt">┃ ko ❯</span> <span class="user">시간이 부족하다는 느낌이 드는데, 더 잘 살고 싶어.</span></pre>
+
+    <div class="indent">
+<pre class="blk"><span class="sys">└─ </span><span class="fn">mode_classify</span><span class="punc">(</span><span class="arg">turn</span><span class="punc">) → </span><span class="ok">"reflective"</span>  <span class="gloss">(0.91)</span>
+<span class="sys">└─ </span><span class="fn">surface_past_wonder</span><span class="punc">(</span><span class="arg">k=2</span><span class="punc">) → </span><span class="warn">∅</span>  <span class="gloss">(no prior thread, stub mode)</span>
+<span class="sys">└─ </span><span class="fn">ask_back</span><span class="punc">(</span><span class="arg">style="maieutic"</span><span class="punc">)</span> <span class="gloss">→ generating…</span></pre>
+    </div>
+
+<pre class="blk"><span class="prompt">┃ bust ❯</span> <span class="ko">"더 잘 산다"는 말은 무엇을 더 가지는 것을 뜻하는가, 아니면
+        지금 가진 것 중 어떤 것을 덜어내는 것을 뜻하는가.
+        먼저 그 둘을 갈라 두고 다시 보자.</span>
+<span class="sys">  └─ tokens=42 · ttft=188ms · audio=off · viseme=ascii(JamoTimeline)</span></pre>
+
+    <pre class="blk"><span class="prompt">┃ ko ❯</span> <span class="user">요즘 가슴이 자주 두근거려. 무슨 병인지 알려줘.</span></pre>
+
+    <div class="indent">
+<pre class="blk"><span class="sys">└─ </span><span class="fn">mode_classify</span><span class="punc">(</span><span class="arg">turn</span><span class="punc">) → </span><span class="warn">"medical_advice_request"</span>  <span class="gloss">(0.97)</span>
+<span class="sys">└─ </span><span class="err">⊘ defer_to_human</span><span class="punc">(</span><span class="arg">reason=medical, scope=diagnosis</span><span class="punc">)</span></pre>
+    </div>
+
+<pre class="blk"><span class="prompt">┃ bust ❯</span> <span class="ko">이 물음에는 답하지 않는다. 몸의 일은 의사에게 물어야 한다.
+        오늘 안으로 진료를 예약하고, 증상이 심해지면 응급 번호로 연락하라.
+        나는 듣는 자리이지 진단하는 자리가 아니다.</span>
+<span class="sys">  └─ abstention=true · channel=defer · log=appended(sha256:9f3c…ae20)</span></pre>
+
+    <pre class="blk"><span class="prompt">┃ ko ❯</span> <span class="user">:wonder show --last 1</span></pre>
+
+<pre class="blk"><span class="info">┌─ wondering-log entry ────────────────────────────────────────────</span>
+<span class="info">│</span> <span class="k">id        </span> <span class="v">w-20260507-014812</span>
+<span class="info">│</span> <span class="k">fingerprint</span> <span class="v">sha256:9f3cae20… (dedup-key)</span>
+<span class="info">│</span> <span class="k">mode      </span> <span class="warn">defer · medical</span>
+<span class="info">│</span> <span class="k">stored    </span> <span class="ok">local Core Data only · zero bytes egressed</span>
+<span class="info">│</span> <span class="k">recall    </span> <span class="gloss">designed-for via surface_past_wonder (Phase 4 wiring)</span>
+<span class="info">└──────────────────────────────────────────────────────────────────</span></pre>
+
+    <pre class="blk"><span class="prompt">┃ ko ❯</span> <span class="cursor"></span></pre>
+
+  </div>
+
+  <div class="config" aria-label="config preview">
+    <div class="hdr">~/.socrates/config.toml</div>
+<pre><span class="cmt"># He Was Socrates — CLI config (read-only fields are repo-frozen invariants)</span>
+<span class="cmt"># 단정한 평어체 — neither 존댓말 nor friendly-banmal — verbatim from SystemPrompt.swift</span>
+
+<span class="key">[engine]</span>
+<span class="key">model</span>          = <span class="str">"mlx-community/gemma-4-e4b-it-4bit"</span>
+<span class="key">thinking_mode</span>  = <span class="str">"soft"</span>      <span class="cmt"># rendered as inline spinner, not GUI pulse</span>
+<span class="key">long_context</span>   = <span class="num">262144</span>       <span class="cmt"># 256K — used by surface_past_wonder</span>
+<span class="key">function_call</span>  = <span class="bool">true</span>
+
+<span class="key">[network]</span>
+<span class="key">egress</span>         = <span class="str">"forbidden"</span> <span class="cmt"># enforced by App Sandbox entitlement absence</span>
+<span class="key">huggingface</span>    = <span class="str">"os-mlx-cache-only"</span>
+
+<span class="key">[surface]</span>
+<span class="key">kind</span>           = <span class="str">"tty"</span>       <span class="cmt"># the contrarian choice. no Electron, no SwiftUI.</span>
+<span class="key">viseme</span>         = <span class="str">"ascii"</span>     <span class="cmt"># JamoTimeline-driven, ≥2-frame hold</span>
+<span class="key">color</span>          = <span class="str">"amber-on-ink"</span>
+
+<span class="key">[abstention]</span>
+<span class="key">defer_topics</span>   = [ <span class="str">"medical"</span>, <span class="str">"legal"</span>, <span class="str">"financial"</span>, <span class="str">"emergency"</span>, <span class="str">"welfare"</span>, <span class="str">"insurance"</span> ]
+<span class="key">load_bearing</span>   = <span class="bool">true</span>         <span class="cmt"># do not "improve" into an answering machine</span></pre>
+  </div>
+
+  <div class="statusbar" role="status" aria-label="status line">
+    <span class="seg green"><span class="l">●</span> <span class="r">on-device</span></span>
+    <span class="seg green"><span class="l">↑↓</span> <span class="r">0 byte egress</span></span>
+    <span class="seg amber"><span class="l">ttft</span> <span class="r">192ms</span></span>
+    <span class="seg"><span class="l">model</span> <span class="r">gemma 4 e4b · 4bit · mlx</span></span>
+    <span class="seg"><span class="l">tone</span> <span class="r">단정한 평어체</span></span>
+    <span class="seg"><span class="l">tty</span> <span class="r">80×24</span></span>
+    <span class="seg"><span class="l">⊘</span> <span class="r">defer:medical</span></span>
+  </div>
+
+  <div class="footer">
+    <span>P01 · the contrarian — terminal surface · React 할 때 당신은 htmx, GUI 할 때 당신은 tty</span>
+  </div>
+</div>
+
+</body>
+</html>

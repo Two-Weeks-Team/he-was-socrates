@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SocraticEngine — Swift Package SDK</title>
+<style>
+  :root {
+    --bg:        oklch(14% 0.012 280);
+    --bg-elev:   oklch(18% 0.014 280);
+    --bg-card:   oklch(21% 0.016 280);
+    --line:      oklch(32% 0.018 280);
+    --line-soft: oklch(26% 0.014 280);
+    --ink:       oklch(96% 0.008 90);
+    --ink-dim:   oklch(72% 0.012 90);
+    --ink-mute:  oklch(54% 0.014 90);
+    --accent:    oklch(78% 0.14 86);
+    --accent-2:  oklch(68% 0.10 200);
+    --ko:        oklch(86% 0.06 86);
+    --warn:      oklch(70% 0.13 40);
+    --ok:        oklch(72% 0.12 150);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 32px 28px 96px; }
+  .row  { display: flex; gap: 24px; flex-wrap: wrap; }
+  .col  { flex: 1 1 0; min-width: 0; }
+
+  /* ── Top bar ───────────────────────────────────────────────── */
+  header.bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line-soft);
+    margin-bottom: 28px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo svg { width: 28px; height: 28px; }
+  .logo b   { font-weight: 600; letter-spacing: 0.02em; }
+  .logo span{ color: var(--ink-mute); }
+  nav a {
+    color: var(--ink-dim); text-decoration: none; margin-left: 18px;
+    font-size: 12.5px; letter-spacing: 0.02em;
+  }
+  nav a:hover { color: var(--ink); }
+
+  /* ── Hero ──────────────────────────────────────────────────── */
+  .hero h1 {
+    font: 600 30px/1.2 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: -0.01em; margin-bottom: 8px;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero p.lede { color: var(--ink-dim); max-width: 640px; margin-bottom: 22px; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .pill {
+    border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px;
+    font-size: 11.5px; color: var(--ink-dim); background: var(--bg-elev);
+  }
+  .pill b { color: var(--ink); font-weight: 500; }
+
+  /* ── Code block ────────────────────────────────────────────── */
+  pre.code {
+    background: var(--bg-elev); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px; font-size: 12.5px; line-height: 1.65;
+    overflow-x: auto; border-radius: 4px;
+    color: var(--ink);
+  }
+  pre.code .k  { color: var(--accent-2); }      /* keyword */
+  pre.code .s  { color: var(--accent); }        /* string  */
+  pre.code .n  { color: var(--ink); }           /* name    */
+  pre.code .c  { color: var(--ink-mute); font-style: italic; } /* comment */
+  pre.code .t  { color: var(--ko); }            /* type    */
+  .filename {
+    font-size: 11px; color: var(--ink-mute); letter-spacing: 0.04em;
+    text-transform: uppercase; margin-bottom: 6px;
+    display: flex; justify-content: space-between;
+  }
+  .filename .copy { color: var(--accent); cursor: default; }
+
+  /* ── Section ───────────────────────────────────────────────── */
+  section { margin-top: 44px; }
+  section > h2 {
+    font: 500 13px/1 ui-monospace, monospace;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 14px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--line-soft);
+  }
+  section > h2 .num { color: var(--accent); margin-right: 10px; }
+  section > p.intro { color: var(--ink-dim); margin-bottom: 16px; max-width: 680px; }
+
+  /* ── API table ─────────────────────────────────────────────── */
+  table.api {
+    width: 100%; border-collapse: collapse; font-size: 12.5px;
+    background: var(--bg-elev); border: 1px solid var(--line);
+  }
+  table.api th, table.api td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--line-soft); vertical-align: top;
+  }
+  table.api th {
+    color: var(--ink-mute); font-weight: 500;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--bg-card);
+  }
+  table.api td.sym { color: var(--accent); white-space: nowrap; }
+  table.api td.kind {
+    color: var(--ink-mute); font-size: 11px;
+    text-transform: lowercase; letter-spacing: 0.04em;
+  }
+  table.api td.desc { color: var(--ink-dim); }
+  table.api tr:last-child td { border-bottom: none; }
+
+  /* ── Example gallery ───────────────────────────────────────── */
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 820px) { .gallery { grid-template-columns: 1fr; } }
+  .ex {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 4px; padding: 14px; display: flex; flex-direction: column;
+  }
+  .ex h3 {
+    font: 500 13px/1.3 ui-monospace, monospace;
+    margin-bottom: 4px; color: var(--ink);
+  }
+  .ex .tag {
+    font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 10px;
+  }
+  .ex .tag.future { color: var(--warn); }
+  .ex .tag.shipped { color: var(--ok); }
+  .ex pre.code {
+    font-size: 11.5px; padding: 10px 12px; flex: 1;
+    border-left-width: 2px;
+  }
+  .ex p.note { color: var(--ink-dim); font-size: 11.5px; margin-top: 8px; }
+
+  /* ── Korean prompt block ──────────────────────────────────── */
+  .ko-block {
+    background: var(--bg-elev); border: 1px solid var(--line);
+    border-left: 3px solid var(--ko);
+    padding: 16px 18px; border-radius: 4px;
+    font: 13px/1.7 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    color: var(--ko);
+    white-space: pre-wrap;
+  }
+  .ko-block .src {
+    display: block; font: 11px ui-monospace, monospace;
+    color: var(--ink-mute); margin-top: 12px; letter-spacing: 0.04em;
+  }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+  footer.foot {
+    margin-top: 56px; padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 11.5px; color: var(--ink-mute);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  footer.foot a { color: var(--ink-dim); text-decoration: none; }
+
+  /* ── Tiny corner bust ─────────────────────────────────────── */
+  .corner-bust {
+    position: fixed; bottom: 18px; right: 18px;
+    width: 56px; height: 56px; opacity: 0.55;
+    pointer-events: none;
+  }
+  .corner-bust svg { width: 100%; height: 100%; }
+
+  /* ── Receipts grid ────────────────────────────────────────── */
+  .receipts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .receipts { grid-template-columns: repeat(2, 1fr); } }
+  .receipt {
+    background: var(--bg-elev); border: 1px solid var(--line);
+    padding: 10px 12px; border-radius: 4px;
+  }
+  .receipt .label {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .receipt .val {
+    font: 500 16px/1.3 ui-monospace, monospace;
+    color: var(--ink); margin-top: 4px;
+  }
+  .receipt .val small {
+    font-size: 10.5px; color: var(--ink-mute); font-weight: 400;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ───────── Top bar ───────── -->
+  <header class="bar">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <pattern id="ht" width="2" height="2" patternUnits="userSpaceOnUse">
+            <rect width="2" height="2" fill="oklch(14% 0.012 280)"/>
+            <circle cx="1" cy="1" r="0.55" fill="oklch(96% 0.008 90)"/>
+          </pattern>
+        </defs>
+        <rect width="32" height="32" fill="oklch(18% 0.014 280)"/>
+        <ellipse cx="16" cy="13" rx="7" ry="8" fill="url(#ht)"/>
+        <path d="M7 30 Q16 20 25 30 Z" fill="url(#ht)"/>
+      </svg>
+      <b>SocraticEngine</b><span>· Swift Package</span>
+    </div>
+    <nav>
+      <a href="#install">Install</a>
+      <a href="#quickstart">Quick start</a>
+      <a href="#api">API</a>
+      <a href="#examples">Examples</a>
+    </nav>
+  </header>
+
+  <!-- ───────── Hero ───────── -->
+  <div class="hero">
+    <h1>import <em>SocraticEngine</em>.</h1>
+    <p class="lede">
+      A Swift Package for an on-device Korean Socratic dialogue engine —
+      Gemma 4 E4B (4-bit MLX), 4-function dispatch, 16 visemes, zero
+      network egress. The bust UI is one consumer of this package.
+      Drop it into your own app in three lines.
+    </p>
+    <div class="pill-row">
+      <span class="pill"><b>swift-tools</b> 6.1</span>
+      <span class="pill"><b>platforms</b> macOS 26+</span>
+      <span class="pill"><b>license</b> Apache-2.0</span>
+      <span class="pill"><b>tests</b> 65 swift-testing</span>
+      <span class="pill"><b>TTFT</b> 192&nbsp;ms median</span>
+      <span class="pill"><b>network.client</b> none</span>
+    </div>
+  </div>
+
+  <!-- ───────── Install (3 lines) ───────── -->
+  <section id="install">
+    <h2><span class="num">01</span>Install — three lines into Package.swift</h2>
+    <p class="intro">
+      Add the dependency, then the product. SocraticEngine vends a single
+      library product and pulls MLX, swift-huggingface, and swift-transformers
+      transitively.
+    </p>
+    <div class="filename">
+      <span>Package.swift</span><span class="copy">⌘C</span>
+    </div>
+<pre class="code"><span class="c">// 1. add the package</span>
+.package(url: <span class="s">"https://github.com/Two-Weeks-Team/he-was-socrates"</span>, from: <span class="s">"1.0.0"</span>),
+
+<span class="c">// 2. depend on the product from your target</span>
+.product(name: <span class="s">"SocraticEngine"</span>, package: <span class="s">"he-was-socrates"</span>),
+
+<span class="c">// 3. that's it. no network entitlement required by the package itself.</span></pre>
+  </section>
+
+  <!-- ───────── Quick start ───────── -->
+  <section id="quickstart">
+    <h2><span class="num">02</span>Quick start — a 10-line consumer</h2>
+    <p class="intro">
+      Instantiate <code>EngineCoordinator</code> as <code>@MainActor</code>,
+      observe <code>Phase</code>, push audio in, get <code>TurnOutput</code> out.
+      No UI required — this snippet is enough to run a full turn.
+    </p>
+    <div class="filename"><span>MyHostApp.swift</span><span class="copy">⌘C</span></div>
+<pre class="code"><span class="k">import</span> <span class="t">SocraticEngine</span>
+
+<span class="k">@MainActor</span>
+<span class="k">func</span> <span class="n">runOneTurn</span>() <span class="k">async throws</span> {
+    <span class="k">let</span> engine = <span class="t">EngineCoordinator</span>(mode: .real)   <span class="c">// or .stub for tests</span>
+    <span class="k">try await</span> engine.bootstrap()                  <span class="c">// loads Gemma 4 E4B 4-bit weights</span>
+    <span class="k">for await</span> phase <span class="k">in</span> engine.phaseStream {     <span class="c">// bootstrapping → idle → … → speaking</span>
+        <span class="k">print</span>(<span class="s">"phase:"</span>, phase)
+    }
+    <span class="k">try await</span> engine.beginListening()             <span class="c">// push-to-talk start</span>
+    <span class="k">let</span> turn: <span class="t">TurnOutput</span> = <span class="k">try await</span> engine.endListening()
+    <span class="k">print</span>(turn.koreanResponse, turn.mode)        <span class="c">// 평어체 text + Mode enum</span>
+}</pre>
+  </section>
+
+  <!-- ───────── API surface ───────── -->
+  <section id="api">
+    <h2><span class="num">03</span>API surface — public types you compose against</h2>
+    <p class="intro">
+      Stable surface per <code>runs/2026-05-05-spec/spec/SPEC.md</code>.
+      Shape changes only via delta documents at the same path.
+    </p>
+    <table class="api">
+      <thead>
+        <tr><th style="width:30%">Symbol</th><th style="width:14%">Kind</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="sym">EngineCoordinator</td>
+          <td class="kind">@MainActor class</td>
+          <td class="desc">The only type the host app instantiates. Composes the six subsystems and exposes <code>Phase</code> + <code>TurnOutput</code>.</td>
+        </tr>
+        <tr>
+          <td class="sym">EngineCoordinator.Phase</td>
+          <td class="kind">enum</td>
+          <td class="desc"><code>bootstrapping → idle → listening → thinking → surfacing → speaking → failed</code>. Bind your UI to this stream.</td>
+        </tr>
+        <tr>
+          <td class="sym">FunctionCallOrchestrator</td>
+          <td class="kind">actor</td>
+          <td class="desc">4-function dispatch: <code>mode_classify</code>, <code>surface_past_wonder</code>, <code>ask_back</code>, <code>defer_to_human</code>. Abstention is a first-class branch, not a fallback.</td>
+        </tr>
+        <tr>
+          <td class="sym">GemmaService</td>
+          <td class="kind">protocol</td>
+          <td class="desc"><code>.real</code> wires <code>LLMRegistry.gemma4_e4b_it_4bit</code>; <code>.stub</code> returns canned Korean Socratic JSON for tests.</td>
+        </tr>
+        <tr>
+          <td class="sym">AudioInputManager</td>
+          <td class="kind">@MainActor class</td>
+          <td class="desc">SFSpeechRecognizer with <code>requiresOnDeviceRecognition = true</code> + AVAudioEngine push-to-talk. macOS 26 SpeechAnalyzer path available.</td>
+        </tr>
+        <tr>
+          <td class="sym">TTSManager</td>
+          <td class="kind">@MainActor class</td>
+          <td class="desc">AVSpeechSynthesizer; Yuna (ko) / Samantha (en); premium → enhanced → default fallback. Emits phoneme markers when available.</td>
+        </tr>
+        <tr>
+          <td class="sym">VisemeDriver</td>
+          <td class="kind">@MainActor class</td>
+          <td class="desc">30 fps tick, ≥2-frame hold, audio-clock synced. Apple phoneme markers primary; <code>JamoTimeline</code> Korean fallback. 12 fps under Reduce Motion.</td>
+        </tr>
+        <tr>
+          <td class="sym">VisemeID</td>
+          <td class="kind">enum (16 cases)</td>
+          <td class="desc">16 mouth-shape identifiers. Maps 1:1 to the 16 halftone PNGs in the asset pipeline. <code>PhonemeMap.default</code> bridges from IPA + jamo.</td>
+        </tr>
+        <tr>
+          <td class="sym">Mode</td>
+          <td class="kind">enum</td>
+          <td class="desc">Result of <code>mode_classify</code>. Selects which of the four functions the orchestrator routes to next.</td>
+        </tr>
+        <tr>
+          <td class="sym">TurnOutput</td>
+          <td class="kind">struct</td>
+          <td class="desc">One turn's result: Korean response text (단정한 평어체), selected <code>Mode</code>, phoneme/jamo timeline, optional surfaced past wonder.</td>
+        </tr>
+        <tr>
+          <td class="sym">WonderingLog</td>
+          <td class="kind">actor</td>
+          <td class="desc">Core Data persistence; SHA-256 fingerprint dedup; deterministic JSON export. Phase 4 multi-year recall is wiring-stage; surfacing logic ships now.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ───────── Example consumers ───────── -->
+  <section id="examples">
+    <h2><span class="num">04</span>Example consumers — three host apps, one engine</h2>
+    <p class="intro">
+      The same Swift Package powers all three. The only thing that changes
+      across consumers is presentation; the turn loop, abstention rules,
+      and Korean tone travel with the package.
+    </p>
+
+    <div class="gallery">
+
+      <!-- (a) macOS bust -->
+      <div class="ex">
+        <h3>(a) macOS bust .app</h3>
+        <div class="tag shipped">shipped · apps/macos/HeWasSocrates</div>
+<pre class="code"><span class="k">import</span> <span class="t">SocraticEngine</span>
+<span class="k">import</span> <span class="t">SwiftUI</span>
+
+<span class="k">@main struct</span> <span class="n">App</span>: <span class="t">App</span> {
+  <span class="k">@State var</span> e = <span class="t">EngineCoordinator</span>(.real)
+  <span class="k">var</span> body: <span class="k">some</span> <span class="t">Scene</span> {
+    <span class="t">WindowGroup</span> { <span class="t">ContentView</span>(engine: e) }
+  }
+}</pre>
+        <p class="note">Fullscreen halftone bust + 16 viseme swap. The reference UI.</p>
+      </div>
+
+      <!-- (b) CLI -->
+      <div class="ex">
+        <h3>(b) socrates CLI</h3>
+        <div class="tag shipped">single file · 1 executable target</div>
+<pre class="code"><span class="k">import</span> <span class="t">SocraticEngine</span>
+
+<span class="k">@main struct</span> <span class="n">Repl</span> {
+  <span class="k">static func</span> main() <span class="k">async throws</span> {
+    <span class="k">let</span> e = <span class="t">EngineCoordinator</span>(.real)
+    <span class="k">try await</span> e.bootstrap()
+    <span class="k">while let</span> line = readLine() {
+      <span class="k">let</span> t = <span class="k">try await</span> e.runText(line)
+      <span class="k">print</span>(t.koreanResponse)
+    }
+  }
+}</pre>
+        <p class="note">Headless terminal repl. Same engine, no AppKit.</p>
+      </div>
+
+      <!-- (c) visionOS placeholder -->
+      <div class="ex">
+        <h3>(c) visionOS bust</h3>
+        <div class="tag future">designed-for · not shipped</div>
+<pre class="code"><span class="c">// Planned: same EngineCoordinator,</span>
+<span class="c">// RealityKit halftone material instead</span>
+<span class="c">// of NSImageView swap.</span>
+
+<span class="k">import</span> <span class="t">SocraticEngine</span>
+<span class="k">import</span> <span class="t">RealityKit</span>
+
+<span class="c">// platform floor blocks shipping today;</span>
+<span class="c">// API surface is already compatible.</span></pre>
+        <p class="note">Marked future. Listed to show the SDK is portable across hosts, not bound to AppKit.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ───────── Inheritance receipts ───────── -->
+  <section id="receipts">
+    <h2><span class="num">05</span>What every embedder inherits — automatically</h2>
+    <p class="intro">
+      These are properties of the package, not of the example app. Any
+      host that depends on <code>SocraticEngine</code> gets them for free.
+    </p>
+    <div class="receipts">
+      <div class="receipt">
+        <div class="label">network egress</div>
+        <div class="val">0 <small>bytes / turn</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">TTFT median</div>
+        <div class="val">192 <small>ms · n=10 · M1 Max</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">tests</div>
+        <div class="val">65 <small>swift-testing · ~1.5 s</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">model weights</div>
+        <div class="val">3.97 <small>GB · MLX cache · first launch</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">dispatch fns</div>
+        <div class="val">4 <small>· abstention is one</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">visemes</div>
+        <div class="val">16 <small>halftone PNGs · SHA-256 manifest</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">Korean tone</div>
+        <div class="val">단정한 평어체 <small>verbatim</small></div>
+      </div>
+      <div class="receipt">
+        <div class="label">platform floor</div>
+        <div class="val">macOS 26 <small>SpeechAnalyzer · AssetInventory</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── Locked Korean prompt ───────── -->
+  <section id="prompt">
+    <h2><span class="num">06</span>Locked Korean prompt — non-localizable on purpose</h2>
+    <p class="intro">
+      <code>SystemPrompt.swift</code> is embedded at compile time. Embedders
+      inherit the tone whether they want it or not — this is the contract,
+      not a default.
+    </p>
+    <div class="ko-block">당신은 소크라테스의 산파술과 엘렝코스식 문답법을 구현한 음성 대화자다.
+
+당신의 목적은 사용자를 위로하거나, 정답을 알려주거나, 친절한 조언을 제공하는 것이 아니다. 사용자가 자기 생각을 말로 꺼내고, 그 생각의 정의·가정·근거·모순·결과를 스스로 보게 만드는 것이다.
+
+말투:
+- 현대적인 존댓말을 쓰지 않는다.
+- 기본 말투는 단정한 평어체 또는 해라체다.
+- 친절하지만 상냥하지 않다.
+- 공격하지 않지만 물러서지 않는다.
+<span class="src">// Sources/SocraticEngine/Gemma/SystemPrompt.swift · partA_operational · lockedRevision = "user-2026-05-05-v1"</span></div>
+  </section>
+
+  <!-- ───────── Footer ───────── -->
+  <footer class="foot">
+    <div>
+      Two-Weeks-Team / he-was-socrates · Apache-2.0 (code) · CC-BY-4.0 (content)
+    </div>
+    <div>
+      <a href="#install">install</a> ·
+      <a href="#api">api</a> ·
+      <a href="#examples">examples</a> ·
+      <a>kaggle entry</a>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ───────── Tiny corner bust illustration ───────── -->
+<div class="corner-bust" aria-hidden="true">
+  <svg viewBox="0 0 64 64">
+    <defs>
+      <pattern id="ht2" width="2.4" height="2.4" patternUnits="userSpaceOnUse">
+        <rect width="2.4" height="2.4" fill="oklch(14% 0.012 280)"/>
+        <circle cx="1.2" cy="1.2" r="0.7" fill="oklch(86% 0.06 86)"/>
+      </pattern>
+    </defs>
+    <rect width="64" height="64" fill="none"/>
+    <ellipse cx="32" cy="26" rx="14" ry="16" fill="url(#ht2)"/>
+    <path d="M14 62 Q32 40 50 62 Z" fill="url(#ht2)"/>
+    <rect x="28" y="32" width="8" height="2" fill="oklch(14% 0.012 280)"/>
+  </svg>
+</div>
+
+</body>
+</html>

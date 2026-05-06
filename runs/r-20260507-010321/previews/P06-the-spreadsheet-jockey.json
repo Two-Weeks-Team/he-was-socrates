@@ -1,0 +1,11 @@
+{
+  "id": "P06",
+  "advocate": "The Spreadsheet Jockey (B2B power user)",
+  "framing": "He Was Socrates의 wondering-log를 Excel처럼 sortable·filterable·pivotable한 turn-level 데이터 그리드로 노출. 평가자가 4-function dispatch 분포·TTFT 분포·언어 비율을 한 화면에서 검증할 수 있게 한다.",
+  "target_persona": "Kaggle/DeepMind judges 중 engineering-skeptical 성향 (그리고 Two-Weeks-Team 내부 reviewer) — 'measurable claims with verifiable sources' rubric에 가장 민감한 평가자. 192ms TTFT, ask_back/defer_to_human 비율을 직접 sort·pivot으로 확인하고 싶어 하는 power user.",
+  "primary_surface": "Sticky-header dense data grid (10 columns × 30+ rows): Turn # · Date · User Question · Mode · Function · Reply Excerpt · Latency ms · Lang · Confidence · WonderingLog Hash. Top toolbar with ⌘F filter / ⌘G group-by / ⌘P pivot / ⌘E export-to-csv 단축키. Right-rail pivot panel (Mode × Function counts). Bottom status bar (rows · KB · device · ttft p50). Function 컬럼 위에 sticky filter chip: ask_back 18 / defer_to_human 4 / surface_past_wonder 6 / mode_classify 30.",
+  "opus_4_7_capability": "Long-context 정합 추론 — 30+ turn의 user_question / function / latency / confidence 행을 mutually consistent하게 합성 (defer_to_human은 medical/legal/financial/welfare/insurance/emergency 토픽에서만, ask_back은 Socratic 질문, mode_classify는 모든 turn 1회 등 contract.yaml semantics 준수). function_call_contract.yaml + SystemPrompt.swift 평어체 톤락을 grid 데이터에 일관 적용.",
+  "mvp_scope": "단일 self-contained HTML — 30+ row의 합성 wondering-log 데이터 grid + sticky header + 4개 단축키 toolbar + Function filter chip + Mode×Function pivot sidebar + status bar. JS는 column-sort용 minimal vanilla 한 함수만 (그 외 인터랙션은 정적). 4일 데모용 핵심: 평가자가 sort 한 번으로 latency 분포·function 분포를 직접 검증 가능.",
+  "one_liner_pitch": "Wondering-log를 Excel급 dense grid로 — 30 turns, 4 functions, 192ms p50 TTFT를 sort·filter·pivot으로 직접 검증.",
+  "spec_alignment_notes": "all fields populated, followed spec verbatim — target_persona narrowed to engineering-skeptical judges sub-segment (idea.spec.json target_persona.primary 'technical-leaning' anchor) because Spreadsheet-Jockey bias requires power-user framing; primary_surface intentionally diverges from other advocates' hero/scroll layouts to claim the 'dense grid' niche per P06 differentiation rule; opus_4_7_capability anchored to long-context consistent-row generation honoring function_call_contract.yaml semantics; mvp_scope sized to 4-day demo per task brief."
+}

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>He Was Socrates — Settings · Privacy &amp; Data</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg:        oklch(16% 0.012 270);
+    --panel:     oklch(20% 0.014 270);
+    --panel-2:   oklch(23% 0.016 270);
+    --line:      oklch(32% 0.018 270);
+    --ink:       oklch(95% 0.010 270);
+    --ink-dim:   oklch(72% 0.014 270);
+    --ink-mute:  oklch(55% 0.014 270);
+    --lock:      oklch(78% 0.080 165);
+    --lock-soft: oklch(40% 0.040 165 / 0.18);
+    --warn:      oklch(72% 0.120 60);
+    --danger:    oklch(68% 0.180 25);
+    --mono:      ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+    --serif:     "Times New Roman", Times, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    margin: 0; padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .window {
+    max-width: 880px; margin: 28px auto; padding: 0 20px 80px;
+  }
+  .titlebar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px 10px 0 0;
+    background: var(--panel-2); border: 1px solid var(--line); border-bottom: none;
+  }
+  .traffic { display: flex; gap: 6px; }
+  .traffic span { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+  .traffic span:nth-child(1) { background: oklch(60% 0.18 25); }
+  .traffic span:nth-child(2) { background: oklch(78% 0.16 80); }
+  .traffic span:nth-child(3) { background: oklch(70% 0.14 145); }
+  .titlebar .path { color: var(--ink-mute); font-size: 12px; font-family: var(--mono); }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 0 0 10px 10px; padding: 22px 24px;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: 22px; margin: 0 0 4px; letter-spacing: 0.2px;
+  }
+  .crumbs { color: var(--ink-mute); font-size: 12px; margin-bottom: 18px; }
+  .crumbs span { margin: 0 6px; }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 18px; }
+  .badge {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.4px;
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--lock-soft); color: var(--lock);
+    border: 1px solid oklch(50% 0.05 165 / 0.4);
+  }
+  .badge.warn { background: oklch(40% 0.06 60 / 0.18); color: var(--warn); border-color: oklch(50% 0.07 60 / 0.4); }
+
+  .section-title {
+    font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--ink-mute); margin: 22px 0 8px;
+  }
+
+  .row {
+    display: grid; grid-template-columns: 26px 1fr auto;
+    gap: 14px; padding: 14px 0;
+    border-top: 1px solid var(--line); align-items: start;
+  }
+  .row:first-of-type { border-top: none; }
+  .row .lock { color: var(--lock); font-size: 16px; line-height: 1.2; padding-top: 1px; }
+  .row .body .label { font-size: 13.5px; color: var(--ink); margin-bottom: 3px; }
+  .row .body .meta { font-size: 12px; color: var(--ink-dim); }
+  .row .body code {
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--ink-dim); background: var(--panel-2);
+    padding: 1px 6px; border-radius: 4px;
+    border: 1px solid var(--line);
+  }
+  .row .control {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .toggle {
+    width: 38px; height: 22px; border-radius: 999px;
+    background: oklch(28% 0.014 270); position: relative;
+    border: 1px solid var(--line);
+  }
+  .toggle::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--ink-mute);
+  }
+  .toggle.locked-off { opacity: 0.6; }
+  .toggle.locked-off::after { background: var(--ink-mute); }
+  .pill {
+    font-family: var(--mono); font-size: 10.5px;
+    padding: 2px 7px; border-radius: 4px;
+    border: 1px solid var(--line); color: var(--ink-dim);
+    background: var(--panel-2);
+  }
+  .pill.local { color: var(--lock); border-color: oklch(50% 0.05 165 / 0.4); background: var(--lock-soft); }
+  .pill.apple { color: oklch(75% 0.04 270); }
+
+  /* Threat model */
+  .threat {
+    margin-top: 8px; padding: 14px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: center;
+  }
+  .threat svg { width: 100%; height: auto; max-height: 220px; }
+  .threat .legend { font-size: 12px; color: var(--ink-dim); }
+  .threat .legend ul { padding-left: 16px; margin: 6px 0 0; }
+  .threat .legend li { margin: 4px 0; }
+  .threat .legend .in { color: var(--lock); }
+  .threat .legend .out { color: var(--danger); }
+
+  /* Tone lock + subtitle preview */
+  .tone {
+    margin-top: 8px; padding: 14px 16px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--serif); font-size: 14.5px; line-height: 1.7;
+    color: var(--ink-dim);
+  }
+  .tone .ko { color: var(--ink); }
+  .tone .src { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); margin-top: 8px; display: block; }
+
+  .subtitle-preview {
+    margin-top: 8px; padding: 18px 16px;
+    background: oklch(8% 0.008 270); border: 1px solid var(--line); border-radius: 8px;
+    text-align: center;
+  }
+  .subtitle-preview .face {
+    width: 56px; height: 56px; margin: 0 auto 10px;
+    background: radial-gradient(circle at 30% 30%, oklch(40% 0.014 270) 0%, oklch(8% 0.008 270) 70%);
+    border-radius: 50%; border: 1px solid var(--line);
+  }
+  .subtitle-preview .ko {
+    font-family: var(--serif); font-size: 17px; color: var(--ink);
+  }
+  .subtitle-preview .marker {
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); margin-top: 8px;
+  }
+
+  /* Receipt card */
+  .receipt {
+    margin-top: 10px; padding: 14px 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--lock); border-left: 3px solid var(--lock);
+    border-radius: 8px;
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--ink-dim);
+  }
+  .receipt .head {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--lock); font-size: 11px; letter-spacing: 0.6px;
+    margin-bottom: 8px; text-transform: uppercase;
+  }
+  .receipt dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 14px; margin: 0; }
+  .receipt dt { color: var(--ink-mute); }
+  .receipt dd { margin: 0; color: var(--ink); word-break: break-all; }
+
+  .footnote {
+    margin-top: 22px; font-size: 11px; color: var(--ink-mute);
+    line-height: 1.6;
+  }
+  .footnote a { color: var(--ink-dim); }
+
+  @media (max-width: 640px) {
+    .threat { grid-template-columns: 1fr; }
+    .receipt dl { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 22px 1fr; }
+    .row .control { grid-column: 2; margin-top: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="window">
+
+  <div class="titlebar">
+    <div class="traffic"><span></span><span></span><span></span></div>
+    <div class="path">He Was Socrates · Settings · Privacy &amp; Data</div>
+  </div>
+
+  <main class="panel">
+    <h1>Privacy &amp; Data</h1>
+    <div class="crumbs">Settings <span>›</span> Privacy &amp; Data <span>›</span> Data residency &amp; tone lock</div>
+
+    <div class="badges">
+      <span class="badge">local-first</span>
+      <span class="badge">E2EE-by-design</span>
+      <span class="badge">no network.client</span>
+      <span class="badge">no network.server</span>
+      <span class="badge">App Sandbox</span>
+      <span class="badge warn">Airplane-mode compatible</span>
+    </div>
+
+    <div class="section-title">Data residency</div>
+
+    <!-- Row 1 -->
+    <div class="row">
+      <div class="lock" aria-hidden="true">&#x1F512;</div>
+      <div class="body">
+        <div class="label">Audio leaves device</div>
+        <div class="meta">Microphone capture is processed locally by <code>SFSpeechRecognizer</code> with <code>requiresOnDeviceRecognition = true</code>. Network entitlement absent — toggle cannot be enabled.</div>
+      </div>
+      <div class="control">
+        <span class="toggle locked-off" aria-label="Off, locked"></span>
+        <span class="pill">OFF · LOCKED</span>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="row">
+      <div class="lock" aria-hidden="true">&#x1F512;</div>
+      <div class="body">
+        <div class="label">Conversation log (wondering log)</div>
+        <div class="meta">Stored as local SQLite (Core Data). SHA-256 content fingerprint dedup. Never synced to iCloud or any remote.</div>
+        <div class="meta" style="margin-top:6px;"><code>~/Library/Containers/com.twoweeksteam.HeWasSocrates/Data/Library/Application Support/wondering.db</code></div>
+      </div>
+      <div class="control"><span class="pill local">LOCAL · SQLite</span></div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="row">
+      <div class="lock" aria-hidden="true">&#x1F512;</div>
+      <div class="body">
+        <div class="label">Gemma 4 weights · gemma-4-e4b-it-4bit</div>
+        <div class="meta">3.97 GB. Downloaded once on first launch via OS-mediated MLX cache (only sanctioned network egress). Weights themselves never leave after that.</div>
+        <div class="meta" style="margin-top:6px;"><code>~/Library/Caches/com.apple.MLX/</code></div>
+      </div>
+      <div class="control"><span class="pill apple">SYSTEM · MLX</span></div>
+    </div>
+
+    <!-- Row 4 -->
+    <div class="row">
+      <div class="lock" aria-hidden="true">&#x1F512;</div>
+      <div class="body">
+        <div class="label">STT model · Speech.framework (ko_KR + en_US)</div>
+        <div class="meta">Apple-managed asset, on-device transcription. Acquired via <code>AssetInventory</code> (macOS 26). Last verified 2026-05-07.</div>
+      </div>
+      <div class="control"><span class="pill apple">APPLE-MANAGED</span></div>
+    </div>
+
+    <!-- Row 5 -->
+    <div class="row">
+      <div class="lock" aria-hidden="true">&#x1F512;</div>
+      <div class="body">
+        <div class="label">TTS voice · AVSpeechSynthesisVoice (Yuna ko / Samantha en)</div>
+        <div class="meta">Apple-managed voice asset. Premium → enhanced → default fallback chain. Synthesis is local; audio buffer never leaves the process.</div>
+      </div>
+      <div class="control"><span class="pill apple">APPLE-MANAGED</span></div>
+    </div>
+
+    <!-- Row 6 -->
+    <div class="row">
+      <div class="lock" aria-hidden="true">&#x1F512;</div>
+      <div class="body">
+        <div class="label">Telemetry / analytics / crash reports</div>
+        <div class="meta">Disabled by absence. No analytics SDK is linked; no crash collector reaches outbound. There is no toggle because there is no code path.</div>
+      </div>
+      <div class="control">
+        <span class="toggle locked-off" aria-label="Off, not implemented"></span>
+        <span class="pill">NONE</span>
+      </div>
+    </div>
+
+    <div class="section-title">Threat model (inverted)</div>
+    <div class="threat">
+      <svg viewBox="0 0 320 200" role="img" aria-label="Inverted threat model: arrows in to the Mac, none out">
+        <defs>
+          <marker id="arrIn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="oklch(78% 0.08 165)"/>
+          </marker>
+        </defs>
+        <!-- Mac (center) -->
+        <rect x="120" y="80" width="80" height="55" rx="6" fill="oklch(22% 0.014 270)" stroke="oklch(60% 0.04 270)" stroke-width="1.4"/>
+        <rect x="148" y="135" width="24" height="4" fill="oklch(60% 0.04 270)"/>
+        <rect x="135" y="139" width="50" height="3" rx="1" fill="oklch(60% 0.04 270)"/>
+        <text x="160" y="112" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="10" fill="oklch(95% 0.01 270)">your Mac</text>
+        <!-- Mic in -->
+        <circle cx="40" cy="50" r="14" fill="none" stroke="oklch(72% 0.014 270)" stroke-width="1.2"/>
+        <text x="40" y="54" text-anchor="middle" font-family="system-ui" font-size="10" fill="oklch(72% 0.014 270)">mic</text>
+        <line x1="58" y1="60" x2="118" y2="92" stroke="oklch(78% 0.08 165)" stroke-width="1.6" marker-end="url(#arrIn)"/>
+        <!-- HF weights one-time in -->
+        <rect x="20" y="150" width="48" height="22" rx="3" fill="none" stroke="oklch(72% 0.014 270)" stroke-width="1.2"/>
+        <text x="44" y="165" text-anchor="middle" font-family="system-ui" font-size="9" fill="oklch(72% 0.014 270)">HF weights</text>
+        <text x="44" y="184" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="oklch(55% 0.014 270)">(1×, day 1)</text>
+        <line x1="68" y1="155" x2="120" y2="125" stroke="oklch(78% 0.08 165)" stroke-width="1.6" stroke-dasharray="3 3" marker-end="url(#arrIn)"/>
+        <!-- Crossed-out cloud OUT -->
+        <g transform="translate(232,38)">
+          <path d="M14,28 q-12,0 -12,-12 q0,-10 10,-12 q2,-10 14,-10 q12,0 14,10 q10,2 10,12 q0,12 -12,12 z"
+                fill="none" stroke="oklch(68% 0.18 25)" stroke-width="1.4" opacity="0.85"/>
+          <line x1="-2" y1="-2" x2="52" y2="42" stroke="oklch(68% 0.18 25)" stroke-width="2"/>
+          <line x1="52" y1="-2" x2="-2" y2="42" stroke="oklch(68% 0.18 25)" stroke-width="2"/>
+        </g>
+        <text x="258" y="100" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" fill="oklch(68% 0.18 25)">no egress</text>
+        <!-- No outbound arrow stub -->
+        <line x1="200" y1="105" x2="232" y2="80" stroke="oklch(40% 0.04 25)" stroke-width="1.2" stroke-dasharray="2 4"/>
+        <text x="216" y="130" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="8" fill="oklch(55% 0.014 270)">(blocked at entitlement)</text>
+      </svg>
+      <div class="legend">
+        <div><strong style="color:var(--ink)">Inbound only.</strong></div>
+        <ul>
+          <li><span class="in">→ mic</span> · audio buffer, on-device STT</li>
+          <li><span class="in">⇢ weights</span> · 1× MLX cache fetch on first launch</li>
+          <li><span class="out">⊘ outbound</span> · no <code>network.client</code>, no <code>network.server</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-title">Tone lock · system prompt excerpt</div>
+    <div class="tone">
+      <span class="ko">너는 산파다. 답을 주지 않는다. 묻는다.</span><br>
+      <span>The system prompt is verbatim user-authored Korean 단정한 평어체 — neither 존댓말 nor friendly-banmal — embedded at compile time. It is part of the binary, not fetched at runtime.</span>
+      <span class="src">// Sources/SocraticEngine/Gemma/SystemPrompt.swift · embedded at compile time · invariant #3</span>
+    </div>
+
+    <div class="section-title">Bust subtitle preview (ko)</div>
+    <div class="subtitle-preview">
+      <div class="face" aria-hidden="true"></div>
+      <div class="ko">그 질문이 정말 답을 원하는 거야?</div>
+      <div class="marker">▣ subtitle rendered locally · never transmitted</div>
+    </div>
+
+    <div class="section-title">Privacy receipt</div>
+    <div class="receipt">
+      <div class="head">&#x1F512; verifiable receipt · last refreshed 2026-05-07 09:14 KST</div>
+      <dl>
+        <dt>entitlements SHA-256</dt>
+        <dd>e5dfadf2c81a7b0e9c4d3a26f81b40ef9a7c2db5147f6a3b8c01d9e4f7a2314c5</dd>
+        <dt>git commit</dt>
+        <dd>3f02a34 · perf(gemma): disk-mediated KV cache reuse — TTFT 4.6s→192ms (24×) [PR-Λ]</dd>
+        <dt>spec lock</dt>
+        <dd>runs/2026-05-05-spec/ · read-only · iter6</dd>
+        <dt>network entitlements</dt>
+        <dd>com.apple.security.network.client = absent · com.apple.security.network.server = absent</dd>
+        <dt>STT on-device flag</dt>
+        <dd>SFSpeechRecognizer.requiresOnDeviceRecognition = true</dd>
+        <dt>verified by</dt>
+        <dd>make ci-local · gitleaks · entitlements plist hash check</dd>
+      </dl>
+    </div>
+
+    <div class="footnote">
+      Inspect the receipts yourself: <code>shasum -a 256 apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements</code> · <code>git rev-parse HEAD</code> · <code>plutil -p</code> the entitlements file. The values above must match. If they do not, this build is not the one audited.
+    </div>
+  </main>
+</div>
+</body>
+</html>

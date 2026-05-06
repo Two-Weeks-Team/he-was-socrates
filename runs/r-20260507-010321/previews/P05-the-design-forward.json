@@ -1,0 +1,11 @@
+{
+  "id": "P05",
+  "advocate": "The Design-Forward",
+  "framing": "He Was Socrates earns its first five seconds with a single composed frame — bust, breath, and a Korean question — so that judges feel the abstention mechanic before they read about it.",
+  "target_persona": "Kaggle / Google DeepMind judges who decide in five seconds whether to scroll; the frame must resolve into product-feel, not slide-deck.",
+  "primary_surface": "The macOS app's idle launch screen rendered as a single hero plate: 1-bit halftone bust centered on ink-black, soft Phase.thinking pulse, status caption '흉상 깨우는 중', Times-serif headline 'He was Socrates.', Korean subtitle '너의 물음은 무엇인가', and a Space-key push-to-talk affordance — no buttons, no chrome, no explainer sections.",
+  "opus_4_7_capability": "Configurable thinking mode rendered as a calm visual metaphor — a sub-second breath cycle on the bust that translates Phase.thinking from log line into felt aesthetic, paired with the function-calling tone-lock surfaced verbatim in 단정한 평어체.",
+  "mvp_scope": "One self-contained HTML frame: inline halftone bust SVG, OKLCH bone-on-ink palette, breathing pulse animation, status overlay, English serif headline + Korean subtitle + Space affordance, four corner status markers (Phase / On-Device / Gemma 4 E4B / Tone Lock), and a single below-frame legend explaining 'this is the macOS app, not a webpage.'",
+  "one_liner_pitch": "The first frame is the pitch: an ink-black mac screen, a halftone bust breathing under '너의 물음은 무엇인가', and the abstention mechanic implied by every empty pixel.",
+  "spec_alignment_notes": "all fields populated, followed spec verbatim — bone #E8E0D0 mapped to oklch(0.92 0.022 85), ink-black to oklch(0.07 0.008 280); Korean limited to bust subtitle '너의 물음은 무엇인가' and status '흉상 깨우는 중' per language_policy korean_surfaces; English serif headline per headings_body_metrics_captions=English-primary; soft pulse renders Phase.thinking from CLAUDE.md 'three Gemma 4 features load-bearing'; no photoreal lip-sync (invariant #4) — pure 1-bit halftone SVG; no marketing superlatives; bust subtitle treated as identity surface, not localization."
+}

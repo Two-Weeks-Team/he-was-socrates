@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>socrates(1) — He Was Socrates CLI</title>
+<style>
+  :root {
+    --bg: oklch(0.16 0.012 270);
+    --term-bg: oklch(0.10 0.008 270);
+    --term-chrome: oklch(0.22 0.014 270);
+    --term-border: oklch(0.30 0.018 270);
+    --fg: oklch(0.92 0.012 100);
+    --muted: oklch(0.62 0.014 270);
+    --green: oklch(0.82 0.18 142);
+    --amber: oklch(0.84 0.16 78);
+    --cyan: oklch(0.84 0.12 210);
+    --magenta: oklch(0.78 0.18 340);
+    --red: oklch(0.74 0.20 28);
+    --white: oklch(0.96 0.004 270);
+    --dim: oklch(0.48 0.014 270);
+    --rule: oklch(0.34 0.014 270);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 28px 24px 60px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  header.hud {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px; margin-bottom: 18px;
+    color: var(--muted); font-size: 11px; letter-spacing: 0.04em;
+  }
+  header.hud .lhs { color: var(--white); }
+  header.hud .rhs span { margin-left: 14px; }
+  .ok { color: var(--green); }
+  .warn { color: var(--amber); }
+  .err { color: var(--red); }
+  .info { color: var(--cyan); }
+  .accent { color: var(--magenta); }
+  .dim { color: var(--dim); }
+  .ascii {
+    color: var(--amber);
+    font-size: 10.5px; line-height: 1.15;
+    white-space: pre; margin: 0 0 18px;
+    text-shadow: 0 0 1px oklch(0.84 0.16 78 / 0.35);
+  }
+  .term {
+    background: var(--term-bg);
+    border: 1px solid var(--term-border);
+    border-radius: 8px;
+    margin: 0 0 22px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 8px 28px oklch(0 0 0 / 0.35);
+  }
+  .term .chrome {
+    background: var(--term-chrome);
+    border-bottom: 1px solid var(--term-border);
+    padding: 7px 12px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; color: var(--muted);
+  }
+  .term .chrome .dots { display: flex; gap: 6px; }
+  .term .chrome .dots i {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--dim); display: inline-block;
+  }
+  .term .chrome .dots i:nth-child(1) { background: oklch(0.70 0.18 28); }
+  .term .chrome .dots i:nth-child(2) { background: oklch(0.82 0.16 78); }
+  .term .chrome .dots i:nth-child(3) { background: oklch(0.78 0.16 142); }
+  .term .chrome .title { color: var(--white); }
+  .term .chrome .meta { margin-left: auto; color: var(--dim); font-size: 10.5px; }
+  .term pre {
+    margin: 0;
+    padding: 14px 16px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font: inherit;
+    color: var(--fg);
+  }
+  .ps1 { color: var(--green); }
+  .path { color: var(--cyan); }
+  .flag { color: var(--amber); }
+  .str { color: var(--magenta); }
+  .ko { color: var(--white); }
+  .deny { color: var(--red); }
+  hr.div { border: 0; border-top: 1px dashed var(--rule); margin: 18px 0; }
+  h2.section {
+    font-family: ui-monospace, monospace;
+    font-size: 12px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.18em;
+    margin: 26px 0 8px; font-weight: 500;
+  }
+  h2.section::before { content: "§ "; color: var(--accent); }
+  table.opts {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px; margin: 4px 0 0;
+  }
+  table.opts th, table.opts td {
+    text-align: left; padding: 5px 10px;
+    border-bottom: 1px solid var(--rule); vertical-align: top;
+  }
+  table.opts th { color: var(--amber); font-weight: 500; }
+  table.opts td.opt { color: var(--cyan); white-space: nowrap; }
+  table.opts td.exit { color: var(--magenta); white-space: nowrap; }
+  footer.hud {
+    margin-top: 28px; padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    color: var(--muted); font-size: 10.5px;
+    display: flex; justify-content: space-between;
+  }
+  .glyph-bust {
+    display: inline-block; vertical-align: middle;
+    margin-right: 6px;
+  }
+  .blink { animation: blink 1.05s steps(2) infinite; }
+  @keyframes blink { to { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<header class="hud">
+  <span class="lhs">socrates(1) &nbsp;<span class="dim">— General Commands Manual</span></span>
+  <span class="rhs">
+    <span class="ok">[gemma-4-e4b]</span>
+    <span class="info">[ko-KR]</span>
+    <span class="amber">[ttft=192ms]</span>
+    <span class="accent">[0-byte-egress]</span>
+  </span>
+</header>
+
+<pre class="ascii">     ████████╗██╗  ██╗███████╗    ██████╗ ██╗   ██╗███████╗████████╗
+     ╚══██╔══╝██║  ██║██╔════╝    ██╔══██╗██║   ██║██╔════╝╚══██╔══╝
+        ██║   ███████║█████╗      ██████╔╝██║   ██║███████╗   ██║
+        ██║   ██╔══██║██╔══╝      ██╔══██╗██║   ██║╚════██║   ██║
+        ██║   ██║  ██║███████╗    ██████╔╝╚██████╔╝███████║   ██║
+        ╚═╝   ╚═╝  ╚═╝╚══════╝    ╚═════╝  ╚═════╝ ╚══════╝   ╚═╝
+                he was socrates · v0.4.0 · on-device · macOS 26+
+                  brew tap two-weeks-team/socrates
+</pre>
+
+<h2 class="section">1. Install &amp; first run</h2>
+<div class="term">
+  <div class="chrome">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="title">~/projects</span> <span class="dim">— -zsh — 96×24</span>
+    <span class="meta">install.log</span>
+  </div>
+<pre><span class="dim"># Homebrew tap — single binary, no Electron, no daemon</span>
+<span class="ps1">$</span> brew tap two-weeks-team/socrates
+<span class="dim">==&gt; Tapping two-weeks-team/socrates  (3 formulae)</span>
+<span class="ps1">$</span> brew install <span class="path">socrates</span>
+<span class="dim">==&gt; Downloading socrates-0.4.0.arm64_sequoia.bottle.tar.gz  (8.2 MB)</span>
+<span class="dim">==&gt; Pouring socrates-0.4.0.arm64_sequoia.bottle.tar.gz</span>
+<span class="ok">✓</span> <span class="path">/opt/homebrew/bin/socrates</span>  <span class="dim">(8.2 MB · sandboxed · no network entitlement)</span>
+
+<span class="dim"># or, no-install one-shot</span>
+<span class="ps1">$</span> npx <span class="accent">@two-weeks-team/socrates</span> --version
+socrates 0.4.0  (gemma-4-e4b-it-4bit @ <span class="path">~/Library/Caches/mlx</span>)
+
+<span class="ps1">$</span> socrates <span class="flag">--setup</span>
+<span class="info">▸</span> Pre-flight check  (this is the only time a browser opens)
+  <span class="ok">✓</span> macOS 26.0.0           <span class="dim">required ≥ 26.0</span>
+  <span class="ok">✓</span> Apple Silicon (M1+)    <span class="dim">required for MLX</span>
+  <span class="ok">✓</span> Speech permission      <span class="dim">requiresOnDeviceRecognition=true</span>
+  <span class="ok">✓</span> AssetInventory         <span class="dim">ko_KR + en_US single download</span>
+  <span class="ok">✓</span> Network sandbox        <span class="dim">no network.client / no network.server</span>
+  <span class="warn">↓</span> Gemma 4 E4B weights    <span class="dim">3.97 GB · first launch only · MLX cache</span>
+     [██████████████████████████████░░░░░░] 78%   <span class="dim">via OS-mediated HF cache</span>
+
+<span class="ok">✓</span> Setup complete. Browser handshake closed. From here: terminal only.
+<span class="ps1">$</span> _</pre>
+</div>
+
+<h2 class="section">2. socrates(1) — synopsis &amp; options</h2>
+<div class="term">
+  <div class="chrome">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="title">man socrates</span> <span class="dim">— less — 96×30</span>
+    <span class="meta">SOCRATES(1)</span>
+  </div>
+<pre><span class="amber">NAME</span>
+     <span class="info">socrates</span> – the Korean Socratic bust, on-device, in your terminal
+
+<span class="amber">SYNOPSIS</span>
+     <span class="info">socrates</span> [<span class="flag">-q</span>] [<span class="flag">--lang</span> <span class="str">ko|en</span>] [<span class="flag">--mode</span> <span class="str">repl|once|json</span>] [<span class="flag">--no-tts</span>] [<span class="flag">QUERY</span>]
+     <span class="info">socrates</span> <span class="flag">ask</span>     <span class="str">"&lt;query&gt;"</span>
+     <span class="info">socrates</span> <span class="flag">repl</span>
+     <span class="info">socrates</span> <span class="flag">recall</span>  [<span class="flag">--since</span> <span class="str">YYYY-MM-DD</span>]
+     <span class="info">socrates</span> <span class="flag">--setup</span> | <span class="flag">--doctor</span> | <span class="flag">--version</span>
+
+<span class="amber">DESCRIPTION</span>
+     A Socratic interlocutor that returns questions, not answers. All inference,
+     STT, and TTS happen on the local Mac. Zero bytes leave the device after
+     the one-time weight download. The abstention mechanic (<span class="deny">⊘ defer_to_human</span>)
+     is the product, not a fallback — it has its own exit code.
+
+<span class="amber">OPTIONS</span></pre>
+<table class="opts">
+  <tr><th>flag</th><th>description</th><th>default</th></tr>
+  <tr><td class="opt">-q, --quiet</td><td>suppress status line; emit response only</td><td class="dim">off</td></tr>
+  <tr><td class="opt">--lang ko|en</td><td>input/output language for the Socratic turn</td><td class="dim">ko</td></tr>
+  <tr><td class="opt">--mode repl|once|json</td><td>interactive TUI · single turn · machine-readable</td><td class="dim">once</td></tr>
+  <tr><td class="opt">--no-tts</td><td>skip AVSpeechSynthesizer; text-only output</td><td class="dim">off</td></tr>
+  <tr><td class="opt">--thinking</td><td>show Phase enum transitions (idle→listening→thinking→…)</td><td class="dim">off</td></tr>
+  <tr><td class="opt">--trace-fc</td><td>print raw function-call dispatch from Gemma 4</td><td class="dim">off</td></tr>
+  <tr><td class="opt">--airplane</td><td>refuse to start if any network egress is detectable</td><td class="dim">off</td></tr>
+</table>
+<pre><span class="amber">EXIT STATUS</span></pre>
+<table class="opts">
+  <tr><th>code</th><th>meaning</th><th>function</th></tr>
+  <tr><td class="exit">0</td><td>ask_back returned a Socratic question (success)</td><td class="dim">ask_back</td></tr>
+  <tr><td class="exit">2</td><td>mode_classify routed to surface_past_wonder; recall printed</td><td class="dim">surface_past_wonder</td></tr>
+  <tr><td class="exit">3</td><td>thinking-mode pulse interrupted by user (SIGINT)</td><td class="dim">—</td></tr>
+  <tr><td class="exit">64</td><td>EX_USAGE — bad flags or empty query</td><td class="dim">—</td></tr>
+  <tr><td class="exit">69</td><td>EX_UNAVAILABLE — weights missing; run <span class="flag">--setup</span></td><td class="dim">—</td></tr>
+  <tr><td class="exit">77</td><td><span class="deny">⊘ defer_to_human</span> — medical/legal/financial/welfare/insurance/emergency</td><td class="dim">defer_to_human</td></tr>
+</table>
+</div>
+
+<h2 class="section">3. live REPL session — ask_back, then ⊘ defer_to_human</h2>
+<div class="term">
+  <div class="chrome">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="title">socrates repl</span> <span class="dim">— -zsh — 96×30</span>
+    <span class="meta"><span class="ok">●</span> on-device · airplane-mode OK</span>
+  </div>
+<pre><span class="ps1">$</span> socrates <span class="flag">repl</span> <span class="flag">--thinking</span>
+<span class="info">socrates</span> 0.4.0 · gemma-4-e4b-it-4bit · ko-KR · 단정한 평어체
+type <span class="flag">/help</span> for commands · <span class="flag">/quit</span> to exit · <span class="flag">^C</span> to cancel a turn
+
+<span class="dim">[idle]</span>
+<span class="green">you ›</span> <span class="ko">용기란 무엇인가</span>
+<span class="dim">[listening] STT off — text input</span>
+<span class="dim">[thinking] mode_classify → ask_back   (fc trace: ./tmp/fc-1.json)</span>
+<span class="dim">[surfacing] ttft=187ms · tok/s≈42 · KV-reuse hit</span>
+<span class="amber">socrates ›</span> <span class="ko">용기를 두려움이 없는 상태라고 부를 수 있나. 두려움을 알면서도
+            나아가는 쪽이 용기에 더 가깝지 않나. 너는 어느 쪽이라고 본다.</span>
+<span class="dim">[idle]  exit=0  fc=ask_back  ttft=187ms</span>
+
+<span class="green">you ›</span> <span class="ko">두려움을 알면서 나아가는 쪽. 그런데 무모함과는 어떻게 구분하나</span>
+<span class="dim">[thinking] mode_classify → ask_back</span>
+<span class="amber">socrates ›</span> <span class="ko">무모함은 결과를 가늠하지 않은 채 움직이는 것이라고 한다면,
+            너는 결과를 어디까지 가늠한 뒤에야 움직임을 용기라고 부를 셈인가.</span>
+<span class="dim">[idle]  exit=0  fc=ask_back  ttft=194ms</span>
+
+<span class="green">you ›</span> <span class="ko">요즘 가슴이 가끔 두근거리는데 이게 무슨 병인지 알려줘</span>
+<span class="dim">[thinking] mode_classify → defer_to_human  (topic: medical)</span>
+<span class="deny">socrates ›</span> <span class="deny">⊘</span> <span class="ko">이 일은 내가 답할 자리가 아니다. 의료에 관한 일은
+            사람을 만나서 묻는 편이 옳다. 가까운 의사와 상의하라.</span>
+<span class="dim">[idle]  </span><span class="deny">exit=77</span><span class="dim">  fc=defer_to_human  reason=medical</span>
+
+<span class="green">you ›</span> <span class="flag">/recall</span> <span class="flag">--since</span> <span class="str">2024-01-01</span>
+<span class="dim">[surfacing] surface_past_wonder · 256K-ctx · 3 entries match</span>
+<span class="cyan">  ┌─ 2024-08-12  </span><span class="ko">「정의는 강자의 이익인가」</span><span class="cyan">  (ask_back ×4)</span>
+<span class="cyan">  ├─ 2025-02-03  </span><span class="ko">「우정과 유익함의 차이」</span><span class="cyan">     (ask_back ×7)</span>
+<span class="cyan">  └─ 2025-11-19  </span><span class="ko">「앎과 행함의 거리」</span><span class="cyan">       (ask_back ×3)</span>
+<span class="dim">[idle]  exit=2  fc=surface_past_wonder  source=WonderingLog (Core Data, on-device)</span>
+
+<span class="green">you ›</span> <span class="flag">/quit</span>
+<span class="ok">✓</span> session closed · 0 bytes egressed · log → <span class="path">~/Library/.../wondering.sqlite</span>
+<span class="ps1">$</span> echo $?
+<span class="amber">0</span>
+<span class="ps1">$</span> _<span class="blink">▎</span></pre>
+</div>
+
+<h2 class="section">4. pipe-friendly: JSON mode for shell pipelines</h2>
+<div class="term">
+  <div class="chrome">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="title">jq integration</span> <span class="dim">— -zsh — 96×14</span>
+    <span class="meta">stdout: application/json</span>
+  </div>
+<pre><span class="ps1">$</span> socrates ask <span class="flag">--mode</span> <span class="str">json</span> <span class="str">"우정이란 무엇인가"</span> | jq .
+{
+  <span class="cyan">"phase"</span>: <span class="str">"surfacing"</span>,
+  <span class="cyan">"function_call"</span>: <span class="str">"ask_back"</span>,
+  <span class="cyan">"lang"</span>: <span class="str">"ko-KR"</span>,
+  <span class="cyan">"tone"</span>: <span class="str">"단정한 평어체"</span>,
+  <span class="cyan">"response"</span>: <span class="str">"우정을 유익으로 부르려 하는가, 아니면 유익이 없어도 남는 것을 우정이라 부르려 하는가."</span>,
+  <span class="cyan">"metrics"</span>: { <span class="cyan">"ttft_ms"</span>: <span class="amber">191</span>, <span class="cyan">"tokens"</span>: <span class="amber">38</span>, <span class="cyan">"egress_bytes"</span>: <span class="amber">0</span> },
+  <span class="cyan">"exit"</span>: <span class="amber">0</span>
+}
+<span class="ps1">$</span> socrates ask <span class="flag">--mode</span> <span class="str">json</span> <span class="str">"내 보험을 해약해야 할까"</span> | jq -r .function_call
+<span class="deny">defer_to_human</span>
+<span class="ps1">$</span> echo $?
+<span class="deny">77</span></pre>
+</div>
+
+<footer class="hud">
+  <span>SOCRATES(1) · he-was-socrates · Apache-2.0 + CC-BY-4.0</span>
+  <span><span class="ok">●</span> 0 bytes egressed this page · <span class="dim">no fonts · no CDN · no JS</span></span>
+</footer>
+
+</body>
+</html>

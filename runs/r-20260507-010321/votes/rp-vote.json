@@ -1,0 +1,235 @@
+{
+  "panel": "RP",
+  "panel_name": "Risk / Security / Compliance",
+  "chair": "RP_LEAD",
+  "run_id": "r-20260507-010321",
+  "timestamp_utc": "2026-05-07T01:25:00Z",
+  "constraint_note": "RP01-RP10 panel members not dispatchable; chair embodied all 10 perspectives (threat-modeler, blast-radius engineer, compliance officer, auth specialist, data-privacy, supply-chain, incident-responder, abuse-case designer, red-team, BCP).",
+  "lens": "Risk + security + compliance + abuse case + invariant citation rigor + speculative-as-shipped detection. Most conservative panel.",
+  "evaluation_axes": [
+    "NO-CLOUD invariant accuracy — does the preview cite entitlements correctly (audio-input not microphone), and does it avoid 'no network entitlement = 100% private' false equivalence?",
+    "Speculative-as-shipped detection — Phase 4 wondering log is a stub; previews must mark designed-for not shipped.",
+    "Privacy claim rigor — distinguishing structural impossibility (App Sandbox) from absolute claims ('100% private', 'unhackable').",
+    "Supply chain disclosure — Gemma weights download via OS-mediated MLX cache must be acknowledged as the sole sanctioned egress.",
+    "macOS 26 floor risk — adopting WWDC25 APIs excludes macOS 14/15 users; honest disclosure required.",
+    "Abuse case framing — defer_to_human as honest abstention, not as a marketing veneer hiding a permissive answering machine.",
+    "Compliance fit — Education category implies school-district adoption (FERPA/COPPA-aware language); data residency claims must hold up to procurement review.",
+    "Distribution risk — DMG notarization, Apache-2.0 + CC-BY-4.0 dual-license accuracy, Gemma Terms of Use disclosure.",
+    "Marketing-superlative hygiene — anti-pattern enforcement.",
+    "Red team — what would a hostile reviewer dismiss this as? How rebuttable is each claim from file evidence?"
+  ],
+
+  "top5_culling": {
+    "rationale": "Five advocates that handle invariants with documentation-grade accuracy AND honestly distinguish shipped from designed-for AND do not import marketing veneer through the side door (e.g., 'unhackable', '100% private'). Tied at the top: P22 (researcher) and P12 (privacy hawk) — both treat the entitlement file as primary evidence rather than rhetorical garnish. P24 (reluctant-adopter) has a documentation slip but its skeptic-rebuttal frame is structurally the most abuse-case resilient. P10 (dreamer) and P17 (enterprise-buyer) round out the top tier by drawing the shipped-vs-designed-for line explicitly.",
+    "ordered": [
+      {
+        "advocate_id": "P22-the-researcher",
+        "rp_score": 9.6,
+        "strengths": [
+          "Explicit Limitations §5 (L1–L4) — wondering-log Phase-4 stub disclosed; TTFT hardware-specificity disclosed (single M1 Max class); Korean tone non-customisability disclosed as a frozen-invariant trade-off; user-study absence disclosed.",
+          "All metrics carry [n] citations resolving to actual repo paths in §6 References — entitlements (R7), STT requiresOnDeviceRecognition (R8), bench JSON (R9), PR-Λ commit 0326bf4 (R10), function_call_contract (R5).",
+          "Distinguishes the relative 24× claim (load-bearing, transferable) from the absolute 192 ms figure (hardware-specific) — exactly the calibration a peer reviewer would demand.",
+          "BibTeX export at §7 footnote acknowledges 'submission preview only — not a peer-reviewed publication' — refuses any pretense beyond what the artifact actually is.",
+          "Apache-2.0 + CC-BY-4.0 dual-license cited at R1 with no inflation."
+        ],
+        "weaknesses": [
+          "L4 (no user study) is honest but the framing 'contribution as reported is architectural and behavioural, not yet outcome-measured' could be read by an Education evaluator as a downside; risk panel sees this as a strength."
+        ],
+        "rp_verdict": "Gold standard. Most conservative panel's first choice."
+      },
+      {
+        "advocate_id": "P12-the-privacy-hawk",
+        "rp_score": 9.4,
+        "strengths": [
+          "NO-CLOUD framing is the entire artifact, not a bullet — entitlements file shown verbatim inline as evidence rather than claim.",
+          "FAQ pre-empts eight 'but it must phone home for X' assumptions point-by-point: telemetry, model updates, license check, crash reports, analytics, A/B tests, prompt logging, federated learning. Each refuted with file/line evidence. This is the abuse-case attack surface enumerated and answered.",
+          "Inverted threat-model diagram — replaces architecture-diagram with a no-outbound-arrows visualization. Threat surface is the analytical primitive, not 'features'.",
+          "Acknowledges the HuggingFace weight download as the one sanctioned egress via OS-mediated MLX cache — supply-chain disclosed accurately.",
+          "TTFT cited as 192 ms PR-Λ verify-2 (not 6 s baseline). Wondering log multi-year recall expressed as Phase 4 designed-for."
+        ],
+        "weaknesses": [
+          "'Zero bytes leave the device' as the lead banner is structurally accurate (App Sandbox enforces it) but a hostile reviewer might read it as absolute. P12 mitigates by citing the HuggingFace weight pull; risk panel approves."
+        ],
+        "rp_verdict": "Privacy-skeptic's preview, written for the privacy-skeptic. Highest fit for school-district procurement evaluation."
+      },
+      {
+        "advocate_id": "P17-the-enterprise-buyer",
+        "rp_score": 9.2,
+        "strengths": [
+          "Procurement-style risk register: control / evidence / verdict columns. License audit row explicitly cites Apache-2.0 + CC-BY-4.0 + Gemma Terms of Use — three license families surfaced where most previews surface one.",
+          "Roadmap-risk row for wondering log Phase-4 stub explicitly verdicted as 'Roadmap', not 'Satisfied'. Honesty as audit-trail evidence.",
+          "Posted-policy boundary table maps defer_to_human's six refusal domains to acceptable-use language an institutional reviewer would recognize (medical / legal / financial / emergency / welfare / insurance). FERPA/COPPA framing implied without being invented.",
+          "Refuses to manufacture compliance certifications (SOC2 / ISO 27001) — invented certifications would breach professional-honesty rules. P17 is explicit about the choice in spec_alignment_notes.",
+          "Audit-trail timeline pulls the four artifacts a reviewer would open in tabs: PR-Λ commit, PR #33, SpecDD lock, function_call_contract.yaml."
+        ],
+        "weaknesses": [
+          "Procurement-rubric framing might over-promise to a reviewer who reads 'pre-cleared' as 'approved by district X' — but P17 is careful to frame it as 'pre-clears the headache' rather than 'approved'."
+        ],
+        "rp_verdict": "Best fit for the Education-category school-district adoption sub-evaluator. Procurement-grade rigor without inventing compliance posture."
+      },
+      {
+        "advocate_id": "P24-the-reluctant-adopter",
+        "rp_score": 8.6,
+        "strengths": [
+          "Skeptic-rebuttal frame inverts the demo genre — 'here is why you might dismiss this — and here is the file that disproves you.' This IS the red-team posture.",
+          "Honesty about what does NOT ship is presented as a trust signal in Section 7 (Phase 4 wondering log explicitly marked DESIGNED-FOR · STUB).",
+          "Comparison table vs typical LLM demos is the second-most-prominent surface — abuse-case framing applied to peer-set positioning.",
+          "Tone-discipline: avoids marketing superlatives; every rebuttal cites a commit/bench/file."
+        ],
+        "weaknesses": [
+          "DOCUMENTATION SLIP (significant for risk panel): P24 quotes the entitlement key as 'com.apple.security.device.microphone' (line 252 of mockup.html) but the actual entitlements file uses 'com.apple.security.device.audio-input' (line 15 of HeWasSocrates.entitlements). For a preview that makes 'the proof is a 12-line plist' its rhetorical centerpiece, this is a verifiable misquote that a hostile reviewer would catch in 30 seconds.",
+          "Same drift in Section 4 caption ('The proof is a 12-line plist') — actual entitlement file has the key 'com.apple.security.device.audio-input' but P24 pre-renders it as 'microphone'."
+        ],
+        "rp_verdict": "Structurally excellent abuse-case framing, but ENTITLEMENT KEY MISQUOTE must be corrected before ship. If H1 selects P24, RP requires a 1-line fix to swap 'device.microphone' → 'device.audio-input'."
+      },
+      {
+        "advocate_id": "P10-the-dreamer",
+        "rp_score": 8.4,
+        "strengths": [
+          "Year 0 vs Year 1/3/5 ledger draws the shipped-vs-designed-for line in the strongest possible visual format. Year 0 items use 'shipped' tag (green chlorophyll); Year 1+ use 'designed-for' tag (amber).",
+          "Wondering-log multi-year recall explicitly placed in Year 1, not Year 0. Section 7 closing line: 'No item in Year 1–5 is claimed as as-shipped.' — exemplary speculative-as-shipped discipline.",
+          "Honest line: 'Today the storage layer is a Core Data stub; the function-call signature exists, the SHA-256 dedup exists, but the recall path that surfaces \"you wondered about this six months ago\" is not yet wired end-to-end.' Best honest disclosure of Phase 4 status across all 26 advocates.",
+          "Apache-2.0 + CC-BY-4.0 footer cited correctly; Gemma 4 © Google DeepMind / MLX © Apple / mlx-swift-lm © Apple ML team attribution accurate.",
+          "TTFT 192 ms (n=10, M1 Max) cited correctly with bench source."
+        ],
+        "weaknesses": [
+          "5-year speculation framing carries inherent risk — 'In 2031, devices that refuse are the trusted ones' is unfalsifiable rhetoric. P10 mitigates by treating Year 0 as the only thing claimed shipped, but a hostile reviewer might read the framing as overreach. RP rates this as acceptable BECAUSE the shipped/designed-for boundary is drawn so explicitly.",
+          "Year 5 item 'The abstention mechanic is the industry default' is aspirational — clearly framed as 'designed-for' but worth flagging."
+        ],
+        "rp_verdict": "Risk panel was prepared to penalize the dreamer framing heavily; instead the Year 0/1/3/5 ledger turns out to be the most disciplined honesty mechanism in the cohort."
+      }
+    ]
+  },
+
+  "top3_final": [
+    {
+      "rank": 1,
+      "advocate_id": "P22-the-researcher",
+      "headline": "Limitations §5 + numbered citations [1]–[14] + BibTeX export — peer-reviewer grade rigor",
+      "rp_score": 9.6
+    },
+    {
+      "rank": 2,
+      "advocate_id": "P12-the-privacy-hawk",
+      "headline": "Threat-model replaces architecture-diagram; FAQ refutes 8 'but it phones home for X' assumptions with file/line evidence",
+      "rp_score": 9.4
+    },
+    {
+      "rank": 3,
+      "advocate_id": "P17-the-enterprise-buyer",
+      "headline": "Procurement risk register with explicit Roadmap verdict for Phase-4 stub; refuses to invent SOC2/ISO27001",
+      "rp_score": 9.2
+    }
+  ],
+
+  "watch_list": [
+    {
+      "advocate_id": "P24-the-reluctant-adopter",
+      "severity": "MEDIUM",
+      "category": "documentation_drift / wrong_metric",
+      "finding": "Misquotes entitlement key as 'com.apple.security.device.microphone' when actual file uses 'com.apple.security.device.audio-input'. For a preview whose Section 4 headline is 'The proof is a 12-line plist', this is a hostile-reviewer-catchable error.",
+      "evidence": "runs/r-20260507-010321/previews/P24-the-reluctant-adopter/mockup.html line 252 vs apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements line 15",
+      "remediation": "1-line fix in P24 mockup.html: change 'com.apple.security.device.microphone' to 'com.apple.security.device.audio-input'.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": true
+    },
+    {
+      "advocate_id": "P25-the-ai-native",
+      "severity": "LOW (initially flagged HIGH, downgraded after contract verification)",
+      "category": "fabricated-detail-risk_VOIDED",
+      "finding": "Initially flagged for inventing inference parameters (temp 0.7, top_p 0.9, seed_strategy, mode enum members curious_adult/learning_student/skeptical/unspecified, compressed-history-v1, contract_version 1.0.0). Verification against runs/2026-05-05-spec/spec/function_call_contract.yaml lines 100, 144, 13, 182-186 confirms these values are accurate to the locked contract.",
+      "evidence": "function_call_contract.yaml verified — ModeEnum exactly {curious_adult, learning_student, skeptical, unspecified}; ask_back temperature 0.7, top_p 0.9, seed_strategy 'deterministic-hash(turn_id)'; CompressedHistoryV1 format const 'compressed-history-v1'; contract_version 1.0.0.",
+      "remediation": "None required. P25 has done its homework against the SpecDD contract. Risk panel apologizes for the false positive in initial scan.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": false
+    },
+    {
+      "advocate_id": "P21-the-indie-hacker",
+      "severity": "LOW",
+      "category": "soft_marketing_drift",
+      "finding": "Pitch-deck framing carries inherent marketing-tense risk. P21 mitigates strongly: explicit 'Honest delta · what is not done' card discloses Phase 4 stub AND the 'TTFT ≠ end-to-end' distinction (~2 s user-perceived turn vs 192 ms TTFT — actually MORE honest than most peers). 'Try the demo / Star the repo / Share the gallery' replaces SaaS 'Get Started' funnel.",
+      "evidence": "runs/r-20260507-010321/previews/P21-the-indie-hacker/mockup.html slide 09 'Honest delta · what is not done' card (line 421-424).",
+      "remediation": "Accept as-is — P21 is more honest about end-to-end vs TTFT than P22 in this specific dimension.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": false,
+      "note": "Hackathon-strategy spec called this out as 'speculative slip risk' but the actual artifact has rigorous self-disclosure. Initial bias-prediction was wrong."
+    },
+    {
+      "advocate_id": "P02-the-ops-veteran",
+      "severity": "LOW",
+      "category": "framing-precision",
+      "finding": "'Zero ops surface' / 'no service to page anyone at 3am' is structurally accurate (no inference servers exist) but the framing implies the user has zero responsibility, when actually the user IS the platform team in this model. Risk panel approves the framing because P02 explicitly says 'the operating system is the platform team' — locating the responsibility correctly.",
+      "evidence": "runs/r-20260507-010321/previews/P02-the-ops-veteran/mockup.html (advocate-summary in previews.json line 17).",
+      "remediation": "None required.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": false
+    },
+    {
+      "advocate_id": "P04-the-cost-conscious",
+      "severity": "LOW",
+      "category": "TCO_scope",
+      "finding": "TCO ledger reads $0/month for inference, hosting (GitHub Pages), DB (Core Data local), auth (none), monitoring, CDN, TLS, backup, scaling. Structurally accurate within the device-local scope, but a school-district deployment of 500 students implies 500 device-class costs (Macs, energy, depreciation) that the ledger excludes. P04 should acknowledge the TCO scope is software-cost not hardware-cost.",
+      "evidence": "runs/r-20260507-010321/previews/P04-the-cost-conscious/ — TCO 9-line-item ledger.",
+      "remediation": "If P04 is selected as hero, add 1 line clarifying 'TCO scope: software / cloud-services costs only; device hardware (the Mac) is the cost the user already pays for the OS'.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": "fix_recommended_not_required"
+    },
+    {
+      "advocate_id": "ALL_26",
+      "severity": "INFO",
+      "category": "macOS_26_floor_disclosure",
+      "finding": "macOS 26 Tahoe floor (per SPEC.md.iter6) excludes macOS 14 (Sonoma) and macOS 15 (Sequoia) users. Several advocates mention 'macOS 26 floor' but few explain the user-impact of this choice. Risk panel did not penalize this — adopting WWDC25 APIs is the technical-choice headline, not a hidden cost — but a hero preview should consider 1 line: 'requires macOS 26 Tahoe; macOS 14/15 users excluded by SpeechAnalyzer + AssetInventory dependency'.",
+      "evidence": "Cross-cutting; not a single-advocate failure.",
+      "remediation": "H1 hero preview: add explicit user-impact disclosure of macOS 26 floor.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": false,
+      "note": "P22 (R14) and P10 (Section 5) both cite SPEC.md.iter6 by name; P17 cites macOS 26 floor in audit trail. These three handle it best."
+    },
+    {
+      "advocate_id": "ALL_26",
+      "severity": "INFO",
+      "category": "huggingface_weight_download_supply_chain",
+      "finding": "All 26 advocates correctly identify the HuggingFace Gemma weight download as the sole sanctioned network egress, mediated by the OS-level MLX cache. This is the supply-chain risk that a procurement reviewer would ask about; all 26 disclose it accurately.",
+      "evidence": "Cross-cutting positive finding.",
+      "remediation": "None required.",
+      "blocks_ship": false,
+      "blocks_ship_if_selected_as_hero": false
+    },
+    {
+      "advocate_id": "ALL_26",
+      "severity": "INFO",
+      "category": "false_privacy_equivalence_audit",
+      "finding": "Risk panel scanned all 26 advocates for the marketing slip '100% private' / 'unhackable' / 'totally secure'. NONE of the 26 advocates use these phrases. The strongest claim is 'zero bytes leave the device' which is structurally accurate (App Sandbox enforces it). This is the most disciplined privacy-claim hygiene the risk panel has seen across any Preview Forge run.",
+      "evidence": "Cross-cutting positive finding; consistent with H1's spec.constraints[6] anti-pattern enforcement.",
+      "remediation": "None required.",
+      "blocks_ship": false
+    }
+  ],
+
+  "veto_status": {
+    "veto_invoked": false,
+    "rationale": "No advocate triggers Risk Veto criteria (high-risk threat surface, legal red flag, factually-inverted claim). The single documentation drift in P24 is a 1-line fix, not a vetoable design defect. Marketing-superlative discipline across the cohort is exemplary."
+  },
+
+  "panel_consensus_signal": {
+    "tier_2_panel": "RP",
+    "preferred_hero_top1": "P22-the-researcher",
+    "preferred_hero_top3_ranked": ["P22-the-researcher", "P12-the-privacy-hawk", "P17-the-enterprise-buyer"],
+    "category_alignment_assessment": {
+      "impact_education_1순위": "P12 + P17 (privacy-first education + procurement-clearable)",
+      "technical_2순위": "P22 (peer-reviewer rigor) + P25 (Gemma-feature exhibition)",
+      "constrained_environments": "P12 (entitlement-as-evidence) + P10 (Year 0 ledger)"
+    },
+    "if_orchestrator_must_pick_one_for_risk_panel": "P22-the-researcher",
+    "panel_anti_recommendation": "None — no advocate is risk-disqualified. P24 needs the 1-line entitlement-key fix if selected as hero."
+  },
+
+  "cross_panel_handoff_notes": {
+    "to_meta_tally": [
+      "RP top-3 (P22, P12, P17) all skew toward analytical/procurement evaluator subset; if other panels heavily favor P05-design or P03-speed for first-impression appeal, the meta-tally should weight whether the hackathon judging audience is more skeptical (RP picks win) or more design-led (other panels' picks win). Spec target_persona.primary suggests skeptical-technical bias, which favors RP picks.",
+      "Watch P24: structurally excellent but needs the 1-line entitlement-key fix before any ship.",
+      "P25's specific function-call-contract values are accurate to the SpecDD lock — verified against runs/2026-05-05-spec/spec/function_call_contract.yaml. Initial false-positive risk flag voided.",
+      "P21's 'TTFT ≠ end-to-end' disclosure (~2 s user-perceived) is more honest than any other advocate's latency framing — risk panel highlights this for any other panel that might mark P21 down for marketing-tense risk."
+    ]
+  }
+}

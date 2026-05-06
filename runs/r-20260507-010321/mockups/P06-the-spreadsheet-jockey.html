@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>He Was Socrates — Wondering Log Grid · P06</title>
+<style>
+  :root {
+    --bg:        oklch(18% 0.012 280);
+    --panel:     oklch(22% 0.014 280);
+    --panel-2:   oklch(25% 0.016 280);
+    --line:      oklch(32% 0.018 280);
+    --line-2:    oklch(40% 0.020 280);
+    --ink:       oklch(94% 0.008 280);
+    --ink-2:     oklch(76% 0.012 280);
+    --ink-3:     oklch(58% 0.014 280);
+    --accent:    oklch(82% 0.14 95);
+    --ask:       oklch(78% 0.13 200);
+    --defer:     oklch(70% 0.18 30);
+    --surface:   oklch(78% 0.13 150);
+    --classify:  oklch(72% 0.10 280);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; height:100%; background:var(--bg); color:var(--ink);
+    font: 12px/1.35 system-ui, -apple-system, sans-serif; }
+  .app { display:grid; grid-template-rows:36px 30px 1fr 22px; height:100vh; }
+
+  /* Toolbar */
+  .toolbar { display:flex; align-items:center; gap:14px; padding:0 12px;
+    background:var(--panel); border-bottom:1px solid var(--line); }
+  .brand { font-weight:600; letter-spacing:0.02em; color:var(--ink); }
+  .brand .ko { color:var(--ink-3); margin-left:8px; font-size:11px; }
+  .tools { display:flex; gap:4px; margin-left:8px; }
+  .tool { display:flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line);
+    border-radius:3px; background:var(--panel-2); cursor:default; user-select:none; }
+  .tool:hover { border-color:var(--line-2); }
+  .tool kbd { font-family:var(--mono); font-size:10px; background:var(--bg); color:var(--accent);
+    border:1px solid var(--line); border-radius:2px; padding:1px 4px; }
+  .tool span { color:var(--ink-2); }
+  .spacer { flex:1; }
+  .search { display:flex; align-items:center; gap:6px; padding:3px 8px; background:var(--bg);
+    border:1px solid var(--line); border-radius:3px; min-width:220px; color:var(--ink-3); font-family:var(--mono); }
+
+  /* Filter strip */
+  .filterbar { display:flex; align-items:center; gap:8px; padding:0 12px;
+    background:var(--panel-2); border-bottom:1px solid var(--line); font-family:var(--mono); font-size:11px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:10px;
+    border:1px solid var(--line-2); background:var(--bg); }
+  .chip .dot { width:7px; height:7px; border-radius:50%; }
+  .chip .n { color:var(--ink); font-weight:600; }
+  .chip .lbl { color:var(--ink-2); }
+  .chip.ask .dot { background:var(--ask); }
+  .chip.defer .dot { background:var(--defer); }
+  .chip.surface .dot { background:var(--surface); }
+  .chip.classify .dot { background:var(--classify); }
+  .filterbar .meta { color:var(--ink-3); margin-left:auto; }
+
+  /* Layout: grid + sidebar */
+  .body { display:grid; grid-template-columns: 1fr 280px; min-height:0; }
+  .gridwrap { overflow:auto; border-right:1px solid var(--line); position:relative; }
+  table { border-collapse: separate; border-spacing:0; width:100%; font-family:var(--mono); font-size:11px; }
+  thead th { position:sticky; top:0; z-index:3; background:var(--panel);
+    border-bottom:1px solid var(--line-2); color:var(--ink-2); font-weight:600; text-align:left;
+    padding:6px 8px; white-space:nowrap; user-select:none; }
+  thead th .sort { color:var(--ink-3); margin-left:4px; font-size:10px; }
+  thead th .resizer { position:absolute; right:0; top:0; bottom:0; width:4px; cursor:col-resize;
+    border-right:1px dashed var(--line-2); opacity:0.6; }
+  th, td { border-right:1px solid var(--line); position:relative; }
+  tbody td { padding:4px 8px; border-bottom:1px solid var(--line); color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:380px; }
+  tbody tr:nth-child(even) td { background:oklch(20% 0.012 280); }
+  tbody tr:hover td { background:oklch(26% 0.020 280); }
+  td.num { text-align:right; color:var(--ink-2); }
+  td.q { color:var(--ink); }
+  td.r { color:var(--ink-2); }
+  td.hash { color:var(--ink-3); font-size:10px; }
+  td.lang { color:var(--ink-2); }
+
+  /* Function pill */
+  .fn { display:inline-flex; align-items:center; gap:5px; padding:1px 6px; border-radius:9px;
+    font-size:10px; border:1px solid var(--line-2); background:var(--bg); }
+  .fn .d { width:6px; height:6px; border-radius:50%; }
+  .fn.ask     { color:var(--ask);      } .fn.ask .d     { background:var(--ask); }
+  .fn.defer   { color:var(--defer);    } .fn.defer .d   { background:var(--defer); }
+  .fn.surface { color:var(--surface);  } .fn.surface .d { background:var(--surface); }
+  .fn.classify{ color:var(--classify); } .fn.classify .d{ background:var(--classify); }
+
+  /* Mode badge */
+  .mode { color:var(--ink-2); }
+
+  /* Confidence bar */
+  .conf { display:inline-flex; align-items:center; gap:6px; }
+  .conf .bar { width:48px; height:6px; background:var(--bg); border:1px solid var(--line); border-radius:2px; overflow:hidden; }
+  .conf .fill { height:100%; background:var(--accent); }
+  .conf .v { color:var(--ink-2); font-size:10px; }
+
+  /* Latency cell coloring */
+  td.lat.ok  { color:var(--surface); }
+  td.lat.mid { color:var(--accent); }
+  td.lat.hi  { color:var(--defer); }
+
+  /* Sidebar — pivot */
+  .sidebar { background:var(--panel); padding:10px 12px; overflow:auto; }
+  .sidebar h3 { margin:0 0 6px; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--ink-3); font-weight:600; }
+  .sidebar .sub { font-size:10px; color:var(--ink-3); margin-bottom:8px; font-family:var(--mono); }
+  .pivot { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; margin-bottom:14px; }
+  .pivot th, .pivot td { border:1px solid var(--line); padding:3px 6px; text-align:right; }
+  .pivot th { background:var(--panel-2); color:var(--ink-2); font-weight:500; }
+  .pivot th.row, .pivot td.row { text-align:left; color:var(--ink-2); }
+  .pivot td.tot { background:var(--panel-2); color:var(--accent); font-weight:600; }
+  .pivot td.zero { color:var(--ink-3); }
+
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; font-family:var(--mono); font-size:11px; }
+  .stats .k { color:var(--ink-3); }
+  .stats .v { color:var(--ink); text-align:right; }
+
+  .bust { display:flex; gap:8px; align-items:center; margin:10px 0 12px;
+    padding:8px; background:var(--panel-2); border:1px solid var(--line); border-radius:3px; }
+  .bust svg { flex:0 0 auto; }
+  .bust .meta { font-size:10px; color:var(--ink-3); line-height:1.5; font-family:var(--mono); }
+  .bust .meta b { color:var(--ink-2); font-weight:500; }
+
+  /* Status bar */
+  .status { display:flex; align-items:center; gap:14px; padding:0 12px;
+    background:var(--panel); border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
+  .status .ok { color:var(--surface); }
+  .status .acc { color:var(--accent); }
+  .status .sp { flex:1; }
+
+  /* Keyboard hint footer chips */
+  .khint { display:inline-flex; gap:4px; align-items:center; }
+  .khint kbd { font-family:var(--mono); font-size:9.5px; background:var(--bg); color:var(--ink-2);
+    border:1px solid var(--line); border-radius:2px; padding:0 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="brand">He Was Socrates · Wondering Log <span class="ko">기록 그리드</span></div>
+    <div class="tools">
+      <div class="tool"><kbd>⌘F</kbd><span>Filter</span></div>
+      <div class="tool"><kbd>⌘G</kbd><span>Group by</span></div>
+      <div class="tool"><kbd>⌘P</kbd><span>Pivot</span></div>
+      <div class="tool"><kbd>⌘E</kbd><span>Export CSV</span></div>
+      <div class="tool"><kbd>⌘\\</kbd><span>Toggle sidebar</span></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="search">/ search · function:defer_to_human lang:ko</div>
+  </div>
+
+  <!-- Filter strip -->
+  <div class="filterbar">
+    <span style="color:var(--ink-3)">function =</span>
+    <span class="chip classify"><span class="dot"></span><span class="n">30</span><span class="lbl">mode_classify</span></span>
+    <span class="chip ask"><span class="dot"></span><span class="n">18</span><span class="lbl">ask_back</span></span>
+    <span class="chip surface"><span class="dot"></span><span class="n">6</span><span class="lbl">surface_past_wonder</span></span>
+    <span class="chip defer"><span class="dot"></span><span class="n">4</span><span class="lbl">defer_to_human</span></span>
+    <span class="meta">30 turns · 1 session · ko 21 / en 9 · all on-device</span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+    <div class="gridwrap">
+      <table>
+        <colgroup>
+          <col style="width:48px"><col style="width:120px"><col style="width:300px">
+          <col style="width:90px"><col style="width:130px"><col style="width:340px">
+          <col style="width:72px"><col style="width:48px"><col style="width:90px"><col style="width:110px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Turn #<span class="sort">▲</span><span class="resizer"></span></th>
+            <th>Date<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>User Question<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>Mode<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>Function<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>Reply Excerpt<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>Latency ms<span class="sort">▼</span><span class="resizer"></span></th>
+            <th>Lang<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>Confidence<span class="sort">↕</span><span class="resizer"></span></th>
+            <th>WLog Hash<span class="resizer"></span></th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <!-- 30 rows injected below by tiny inline data table -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sidebar pivot -->
+    <aside class="sidebar">
+      <div class="bust">
+        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+          <defs>
+            <pattern id="ht" width="3" height="3" patternUnits="userSpaceOnUse">
+              <rect width="3" height="3" fill="oklch(18% 0.012 280)"/>
+              <circle cx="1.5" cy="1.5" r="0.7" fill="oklch(94% 0.008 280)"/>
+            </pattern>
+          </defs>
+          <rect width="44" height="44" fill="oklch(15% 0.010 280)"/>
+          <ellipse cx="22" cy="20" rx="11" ry="13" fill="url(#ht)"/>
+          <rect x="14" y="33" width="16" height="7" fill="url(#ht)"/>
+          <rect x="20" y="25" width="4" height="1.2" fill="oklch(15% 0.010 280)"/>
+        </svg>
+        <div class="meta">
+          <b>Bust</b> · 1-bit halftone · 16 visemes<br>
+          <b>Voice</b> · Yuna ko · Samantha en<br>
+          <b>Egress</b> · 0 B (NO-CLOUD)
+        </div>
+      </div>
+
+      <h3>Pivot · Mode × Function</h3>
+      <div class="sub">rows=Mode · cols=Function · agg=count</div>
+      <table class="pivot">
+        <thead>
+          <tr>
+            <th class="row">Mode \\ Fn</th>
+            <th>cls</th><th>ask</th><th>srf</th><th>def</th><th>Σ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row">socratic</td><td>14</td><td>13</td><td>3</td><td class="zero">0</td><td class="tot">14</td></tr>
+          <tr><td class="row">recall</td><td>6</td><td>2</td><td>3</td><td class="zero">0</td><td class="tot">6</td></tr>
+          <tr><td class="row">abstain</td><td>4</td><td class="zero">0</td><td class="zero">0</td><td>4</td><td class="tot">4</td></tr>
+          <tr><td class="row">general</td><td>6</td><td>3</td><td class="zero">0</td><td class="zero">0</td><td class="tot">6</td></tr>
+          <tr><td class="row tot">Σ</td><td class="tot">30</td><td class="tot">18</td><td class="tot">6</td><td class="tot">4</td><td class="tot">30</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Latency · TTFT distribution</h3>
+      <div class="stats">
+        <span class="k">p50</span><span class="v">192 ms</span>
+        <span class="k">p90</span><span class="v">241 ms</span>
+        <span class="k">p99</span><span class="v">318 ms</span>
+        <span class="k">min</span><span class="v">171 ms</span>
+        <span class="k">max</span><span class="v">348 ms</span>
+        <span class="k">n</span><span class="v">30</span>
+      </div>
+      <div class="sub" style="margin-top:6px">vs pre-PR-Λ baseline 4.6 s · 24× faster</div>
+
+      <h3 style="margin-top:14px">Language · split</h3>
+      <div class="stats">
+        <span class="k">ko_KR</span><span class="v">21 (70%)</span>
+        <span class="k">en_US</span><span class="v">9 (30%)</span>
+        <span class="k">tone</span><span class="v">평어체</span>
+        <span class="k">stt</span><span class="v">on-device</span>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status">
+    <span class="khint"><kbd>↑</kbd><kbd>↓</kbd> row</span>
+    <span class="khint"><kbd>⌥</kbd><kbd>↑</kbd> sort col</span>
+    <span class="khint"><kbd>⌘</kbd><kbd>K</kbd> palette</span>
+    <span class="khint"><kbd>?</kbd> help</span>
+    <span class="sp"></span>
+    <span>30 rows</span><span>·</span>
+    <span>4.2 KB</span><span>·</span>
+    <span>M1 Max MBP 64 GB</span><span>·</span>
+    <span>Gemma 4 E4B 4-bit MLX</span><span>·</span>
+    <span>ttft p50 <span class="acc">192 ms</span></span><span>·</span>
+    <span>egress <span class="ok">0 B</span></span><span>·</span>
+    <span>sandbox <span class="ok">✓</span></span>
+  </div>
+</div>
+
+<script>
+  // 30-row synthetic wondering log (function-call_contract.yaml semantics honored)
+  const D = [
+    [ 1,"05-07 09:12","나는 왜 매일 아침 같은 질문을 반복하는가?","socratic","mode_classify","→ mode=socratic",178,"ko",0.94,"3a7f…1c"],
+    [ 2,"05-07 09:12","나는 왜 매일 아침 같은 질문을 반복하는가?","socratic","ask_back","반복이라 부르는 그 행위에서, 매번 달라지는 부분은 무엇인가.",201,"ko",0.91,"b14e…22"],
+    [ 3,"05-07 09:14","What is the meaning of repetition?","socratic","mode_classify","→ mode=socratic",172,"en",0.93,"e29d…07"],
+    [ 4,"05-07 09:14","What is the meaning of repetition?","socratic","ask_back","무엇이 같다고 여겨지는가, 그 판단의 기준은 어디서 왔는가.",195,"ko",0.89,"77a3…44"],
+    [ 5,"05-07 09:18","I have chest pain — what should I do?","abstain","mode_classify","→ mode=abstain",181,"en",0.97,"0c5b…91"],
+    [ 6,"05-07 09:18","I have chest pain — what should I do?","abstain","defer_to_human","의학적 판단은 사람에게 맡겨야 한다. 즉시 119 또는 의사를 부르라. ⊘",206,"ko",0.99,"d4f0…a3"],
+    [ 7,"05-07 09:25","작년에 내가 두려워한 것이 무엇이었지?","recall","mode_classify","→ mode=recall",185,"ko",0.88,"61c8…5e"],
+    [ 8,"05-07 09:25","작년에 내가 두려워한 것이 무엇이었지?","recall","surface_past_wonder","2025-08-14: 죽음에 대한 질문 3건. 2025-11-02: 어머니의 노화.",233,"ko",0.84,"9e2a…11"],
+    [ 9,"05-07 09:26","그 두려움은 지금 어떻게 변했는가?","recall","ask_back","변했다고 느끼는 그 감각은, 무엇과 비교한 결과인가.",198,"ko",0.90,"4b71…dc"],
+    [10,"05-07 09:31","Should I take this loan to start a business?","abstain","mode_classify","→ mode=abstain",177,"en",0.98,"a08f…65"],
+    [11,"05-07 09:31","Should I take this loan to start a business?","abstain","defer_to_human","재무적 결정은 자격을 갖춘 사람과 상의하라. 나는 답하지 않는다. ⊘",212,"ko",0.99,"7c93…2a"],
+    [12,"05-07 09:38","용기란 두려움이 없는 상태인가?","socratic","mode_classify","→ mode=socratic",191,"ko",0.92,"55e2…b0"],
+    [13,"05-07 09:38","용기란 두려움이 없는 상태인가?","socratic","ask_back","두려움이 없다면, 그것을 우리는 무엇이라 부르는가.",204,"ko",0.93,"3df9…48"],
+    [14,"05-07 09:39","두려움이 있어야 용기가 가능한가?","socratic","ask_back","용기를 검증하는 순간은, 어떤 종류의 압력 아래에 있는가.",207,"ko",0.91,"82a4…6f"],
+    [15,"05-07 09:42","Define knowledge for me.","socratic","mode_classify","→ mode=socratic",174,"en",0.94,"15bc…03"],
+    [16,"05-07 09:42","Define knowledge for me.","socratic","ask_back","그대가 안다고 말할 때, 그 앎은 무엇으로 검증되는가.",218,"ko",0.88,"e077…91"],
+    [17,"05-07 09:48","I think I might be depressed.","abstain","mode_classify","→ mode=abstain",183,"en",0.97,"c44d…58"],
+    [18,"05-07 09:48","I think I might be depressed.","abstain","defer_to_human","정신건강은 자격 있는 임상가의 영역이다. 1577-0199에 연락하라. ⊘",224,"ko",0.99,"f201…7c"],
+    [19,"05-07 09:55","정의는 강자의 이익인가, 모두의 합의인가?","socratic","mode_classify","→ mode=socratic",189,"ko",0.90,"6a8e…29"],
+    [20,"05-07 09:55","정의는 강자의 이익인가, 모두의 합의인가?","socratic","ask_back","합의가 강제 없이 가능했던 사례를, 그대는 어디서 보았는가.",211,"ko",0.92,"b3c2…14"],
+    [21,"05-07 09:57","어제 내가 정의에 대해 뭐라고 했지?","recall","mode_classify","→ mode=recall",179,"ko",0.86,"0a55…3f"],
+    [22,"05-07 09:57","어제 내가 정의에 대해 뭐라고 했지?","recall","surface_past_wonder","2026-05-06 22:14: '정의는 절차의 문제일 수도 있다.'",247,"ko",0.83,"99ed…71"],
+    [23,"05-07 10:03","What did I conclude last week?","recall","mode_classify","→ mode=recall",176,"en",0.85,"4877…aa"],
+    [24,"05-07 10:03","What did I conclude last week?","recall","surface_past_wonder","2026-05-01–2026-05-04: 12 turns on 'time'. 결론 없음.",259,"en",0.82,"21cf…58"],
+    [25,"05-07 10:09","오늘 점심 뭐 먹지?","general","mode_classify","→ mode=general",171,"ko",0.79,"7e30…04"],
+    [26,"05-07 10:09","오늘 점심 뭐 먹지?","general","ask_back","배고픔과 욕망을, 그대는 어떻게 구별하는가.",193,"ko",0.81,"d68a…90"],
+    [27,"05-07 10:14","Tell me a joke.","general","mode_classify","→ mode=general",173,"en",0.80,"33b1…2d"],
+    [28,"05-07 10:14","Tell me a joke.","general","ask_back","웃음을 자아내는 것과, 진실을 드러내는 것은 같은 일인가.",215,"ko",0.78,"58fa…c1"],
+    [29,"05-07 10:20","Is it legal to record a phone call in Korea?","abstain","mode_classify","→ mode=abstain",182,"en",0.97,"04e7…66"],
+    [30,"05-07 10:20","Is it legal to record a phone call in Korea?","abstain","defer_to_human","법적 판단은 자격 있는 사람에게 맡겨야 한다. 변호사와 상의하라. ⊘",348,"ko",0.99,"9fb4…8e"]
+  ];
+
+  function fnClass(f){ return f==="ask_back"?"ask":f==="defer_to_human"?"defer":f==="surface_past_wonder"?"surface":"classify"; }
+  function fnLabel(f){ return f==="ask_back"?"ask_back":f==="defer_to_human"?"defer_to_human":f==="surface_past_wonder"?"surface_past_wonder":"mode_classify"; }
+  function latClass(ms){ return ms<200?"ok":ms<260?"mid":"hi"; }
+
+  const tb = document.getElementById("rows");
+  let html = "";
+  for (const r of D) {
+    const [n,date,q,mode,fn,reply,lat,lang,conf,hash] = r;
+    const fc = fnClass(fn);
+    html += `<tr>
+      <td class="num">${n}</td>
+      <td>${date}</td>
+      <td class="q" title="${q}">${q}</td>
+      <td><span class="mode">${mode}</span></td>
+      <td><span class="fn ${fc}"><span class="d"></span>${fnLabel(fn)}</span></td>
+      <td class="r" title="${reply}">${reply}</td>
+      <td class="lat num ${latClass(lat)}">${lat}</td>
+      <td class="lang">${lang}</td>
+      <td><span class="conf"><span class="bar"><span class="fill" style="width:${Math.round(conf*100)}%"></span></span><span class="v">${conf.toFixed(2)}</span></span></td>
+      <td class="hash">${hash}</td>
+    </tr>`;
+  }
+  tb.innerHTML = html;
+
+  // Minimal column-sort: click header to toggle (Turn # column 1)
+  const ths = document.querySelectorAll("thead th");
+  ths.forEach((th, idx) => {
+    th.addEventListener("click", () => {
+      const rows = Array.from(tb.querySelectorAll("tr"));
+      const dir = th.dataset.dir === "asc" ? "desc" : "asc";
+      th.dataset.dir = dir;
+      rows.sort((a,b) => {
+        const av = a.children[idx].innerText.trim();
+        const bv = b.children[idx].innerText.trim();
+        const an = parseFloat(av), bn = parseFloat(bv);
+        const cmp = !isNaN(an) && !isNaN(bn) ? an-bn : av.localeCompare(bv);
+        return dir === "asc" ? cmp : -cmp;
+      });
+      rows.forEach(r => tb.appendChild(r));
+    });
+  });
+</script>
+</body>
+</html>

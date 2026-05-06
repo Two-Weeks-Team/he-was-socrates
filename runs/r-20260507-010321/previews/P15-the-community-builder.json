@@ -1,0 +1,11 @@
+{
+  "id": "P15",
+  "advocate": "The Community Builder",
+  "framing": "He Was Socrates는 1인 on-device 도구이지만, Two-Weeks-Team이 실제로 서로의 wondering을 나누고 평가 의사결정을 하려면 day-1부터 다인용 surface가 필요하다. 평가자에게 보이는 첫 화면을 'Korean Socratic 학습자들이 합의·초대·공유하는 워크스페이스'로 재정의한다.",
+  "target_persona": "Two-Weeks-Team 멤버 3인 (KS · JH · MK) 및 외부 검토자 — 26개 advocate 갤러리를 함께 review하고 H1 hero를 합의해야 하는 협업 팀.",
+  "primary_surface": "단일 He Was Socrates workspace에 멤버 avatar / role-based access (owner·editor·viewer) / @mention activity feed / shared wondering log / consent toggle (default OFF) / Socrates를 special non-human member로 표현.",
+  "opus_4_7_capability": "Gemma 4 native function calling의 surface_past_wonder를 다인 컨텍스트로 확장 — 각 멤버의 consented wondering thread를 256K long-context로 합쳐 'workspace memory'를 구성, 팀 학습 패턴을 mode_classify가 인지.",
+  "mvp_scope": "4일 데모: (1) 3-member workspace shell, (2) Share-to-workspace consent toggle (default OFF, privacy preserved), (3) shared wondering feed with @mention + Add-to-thread, (4) Socrates as non-human member with bust avatar.",
+  "one_liner_pitch": "Solo on-device Socratic bust, but day-1 designed for teams: opt-in shared wondering log, role-based workspace, and Socrates as a non-human teammate.",
+  "spec_alignment_notes": "spec primary_surface는 Kaggle preview HTML 단일 평가자 surface로 정의됨. Community Builder 역할로 이를 'Two-Weeks-Team 내부 합의 surface (success_criteria.team_sharing)'로 재해석 — secondary persona §2 Two-Weeks-Team org members를 1차로 승격. Privacy invariant (#1 NO-CLOUD)를 깨지 않기 위해 Share toggle을 default OFF로 명시 — workspace는 UI 가설일 뿐, 실제 데이터 egress는 발생하지 않는 mock surface임을 시각적으로 표현."
+}

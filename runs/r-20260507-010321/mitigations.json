@@ -1,0 +1,86 @@
+{
+  "run_id": "r-20260507-010321",
+  "generated_at": "2026-05-07",
+  "generator": "MD Tier 4 Mitigation Designer (M3 routed via Bash)",
+  "panel_consensus": {
+    "strongest": [
+      {"advocate": "P22-the-researcher", "panels_in_top3": ["TP", "UP", "RP"],
+       "rationale": "Only advocate appearing in 3 of 4 panels' top-3. Rigor + Limitations + citations resonate broadly."}
+    ],
+    "secondary": [
+      {"advocate": "P12-the-privacy-hawk", "panels_in_top3": ["BP", "RP"],
+       "rationale": "Threat-model evidence + on-device privacy framing. BP elevates as Impact narrative anchor."}
+    ],
+    "category_anchors": {
+      "impact_education_1순위": {
+        "primary": "P14-the-educator",
+        "supporting": ["P15-the-community-builder", "P12-the-privacy-hawk"],
+        "note": "User confirmed 1순위 is Impact-Education. BP top-3 maps directly. P14 is the lead pedagogy voice."
+      },
+      "technical_2순위_backup": {
+        "primary": "P25-the-ai-native",
+        "supporting": ["P13-the-data-nerd", "P22-the-researcher"],
+        "note": "TP top-3. Must NOT lead — serves as backup proof beneath Impact hero."
+      },
+      "aesthetic_validators": {
+        "primary": "P05-the-design-forward",
+        "supporting": ["P18-the-designer"],
+        "note": "UP top-3. Gate monochrome 1-bit halftone fidelity."
+      }
+    },
+    "panel_divergence_summary": "TP↔BP sharpest split (Technical evidence vs Impact narrative). User 1순위 Impact-Education → BP signal carries extra weight at H1."
+  },
+  "hard_fixes_for_chosen": [
+    {"id": "M01", "severity": "high", "scope": "any preview citing entitlements",
+     "concern": "P24 entitlements key error — `device.microphone` is not valid macOS entitlement key.",
+     "fix": "verify key is `com.apple.security.device.audio-input`. Cross-check against apps/macos/HeWasSocrates/Resources/HeWasSocrates.entitlements.",
+     "verification": "grep chosen HTML for `device.microphone` literal — must be 0 hits."},
+    {"id": "M02", "severity": "high", "scope": "any preview using semantic color tokens",
+     "concern": "Multi-color violations flagged by UP — P02/P15/P14/P08 violate monochrome 1-bit halftone aesthetic.",
+     "fix": "reduce to monochrome bone accent only. Replace semantic colors with halftone-density / text-prefix markers (✓/✕/!).",
+     "verification": "computed-style audit: only ink, bone, and halftone gray ramp permitted."},
+    {"id": "M03", "severity": "medium", "scope": "all previews mentioning wondering log / Phase 4",
+     "concern": "Phase 4 wondering log shown as if shipped (UP + RP cross-flag).",
+     "fix": "mark Phase 4 multi-year recall explicitly as designed-for. Use roadmap badge or `Phase 4 (designed)` label.",
+     "verification": "every wondering-log mention within 1 sibling of `designed`/`roadmap` marker."},
+    {"id": "M04", "severity": "high", "scope": "all previews",
+     "concern": "Anti-pattern flagged by BP — Technical-first hero violates user's confirmed Impact-Education 1순위.",
+     "fix": "Lead section MUST be Impact-Education narrative. Technical evidence appears below the fold.",
+     "verification": "first 1.5 viewport-heights contain Impact-Education vocabulary; Technical specs need Impact framing sentence preceding them."},
+    {"id": "M05", "severity": "medium", "scope": "all previews",
+     "concern": "Korean tone leakage — 단정한 평어체 must not bleed into chrome/UI text.",
+     "fix": "Korean restricted to: (a) system-prompt excerpt block, (b) defer_to_human demo dialogue, (c) bust subtitle.",
+     "verification": "any Korean glyph outside three permitted surfaces fails."},
+    {"id": "M06", "severity": "medium", "scope": "all previews citing metrics",
+     "concern": "RP rigor — uncited metrics undermine credibility.",
+     "fix": "every metric (TTFT, RAM, model size, latency floor) must include source path or `measured on M1 Max` qualifier.",
+     "verification": "each numeric claim has adjacent citation, footnote, or measurement-context phrase."}
+  ],
+  "composite_opportunity": {
+    "rationale": "No single advocate is Pareto-optimal. Composite leveraging structural strengths from four advocates may outperform verbatim picks.",
+    "shell": {"advocate": "P15-the-community-builder", "contribution": "workspace shell layout — sidebar nav + content pane"},
+    "content": {"advocate": "P14-the-educator", "contribution": "pedagogy framing + Impact-Education hero — serves 1순위"},
+    "evidence": {"advocate": "P12-the-privacy-hawk", "contribution": "threat model + on-device privacy proof"},
+    "rigor": {"advocate": "P22-the-researcher", "contribution": "Limitations + citations + measured-not-claimed phrasing"},
+    "technical_backup": {"advocate": "P25-the-ai-native or P13-the-data-nerd", "contribution": "below-fold technical evidence block"},
+    "aesthetic_gate": {"advocate": "P05-the-design-forward", "contribution": "monochrome 1-bit halftone fidelity check"},
+    "h1_decision_options": [
+      "OPTION A: P22 verbatim (strongest cross-panel consensus, rigor-first)",
+      "OPTION B: P14 verbatim (BP lead, Impact-first, aligns with user 1순위)",
+      "OPTION C: composite (P15 shell + P14 content + P12 evidence + P22 rigor + P25 below-fold + P05 aesthetic) — highest expected quality, synthesis effort",
+      "OPTION D: P12 verbatim (privacy-first Impact + RP rigor)",
+      "OPTION E: user picks other from 26"
+    ]
+  },
+  "h1_gate_constraints": [
+    "Lead = Impact-Education (M04)",
+    "Korean restricted to identity surfaces (M05)",
+    "All metrics cited with source (M06)",
+    "Phase 4 marked designed-for (M03)",
+    "Monochrome only (M02)",
+    "Entitlements key correctness (M01)",
+    "3 Gemma 4 load-bearing features referenced (configurable thinking, 256K context, native function-calling)",
+    "abstention mechanic (defer_to_human) is the product"
+  ],
+  "spec_dd_handoff_notes": "After H1: lock chosen HTML structure as delta `runs/2026-05-05-spec/spec/iter<N>-preview-publication.md` (never edit frozen spec). Define GitHub Pages publication path + CI gate. Verify M01-M06 pass before publish."
+}

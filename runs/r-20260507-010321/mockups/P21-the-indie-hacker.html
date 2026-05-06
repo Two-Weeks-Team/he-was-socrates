@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing — He Was Socrates</title>
+<style>
+  :root{
+    --ink:oklch(18% 0.012 280);
+    --ink-2:oklch(22% 0.012 280);
+    --ink-3:oklch(28% 0.014 280);
+    --paper:oklch(96% 0.006 90);
+    --paper-2:oklch(88% 0.008 90);
+    --rule:oklch(40% 0.012 280);
+    --muted:oklch(62% 0.012 280);
+    --accent:oklch(72% 0.14 50);
+    --ok:oklch(74% 0.13 145);
+    --na:oklch(60% 0.018 280);
+    --badge-bg:oklch(28% 0.05 145 / 0.4);
+    --badge-fg:oklch(86% 0.14 145);
+    --donate:oklch(76% 0.16 30);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--paper);font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.55}
+  a{color:var(--paper);text-decoration:none;border-bottom:1px solid var(--rule)}
+  a:hover{border-bottom-color:var(--accent)}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.92em}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 28px 72px}
+  /* top nav */
+  nav.top{display:flex;align-items:center;justify-content:space-between;padding:6px 0 28px;border-bottom:1px solid var(--ink-3);margin-bottom:36px}
+  nav.top .brand{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:0.01em}
+  nav.top .brand svg{width:28px;height:28px}
+  nav.top ul{list-style:none;margin:0;padding:0;display:flex;gap:22px;font-size:13px;color:var(--muted)}
+  nav.top ul a{border-bottom:none;color:var(--muted)}
+  nav.top ul a:hover{color:var(--paper)}
+  nav.top .signin{font-size:13px;color:var(--muted);border:1px solid var(--ink-3);padding:6px 12px;border-radius:6px}
+  /* hero */
+  header.hero{padding:8px 0 36px;border-bottom:1px solid var(--ink-3);margin-bottom:44px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end}
+  .hero h1{font-family:"Times New Roman",Times,serif;font-weight:500;font-size:46px;line-height:1.1;margin:0 0 14px;letter-spacing:-0.01em}
+  .hero p.sub{margin:0;color:var(--muted);max-width:640px;font-size:16px}
+  .hero .bust{position:relative;width:140px;height:140px;border:1px solid var(--ink-3);background:var(--ink-2);display:flex;align-items:center;justify-content:center}
+  .hero .bust svg{width:96px;height:96px;opacity:0.92}
+  .hero .bust .ko{position:absolute;left:0;right:0;bottom:-26px;text-align:center;font-size:11px;color:var(--muted);letter-spacing:0.02em}
+  /* pillars */
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--ink-3);border-radius:8px;overflow:hidden;margin-bottom:48px}
+  .pillars .cell{padding:18px 20px;border-right:1px solid var(--ink-3)}
+  .pillars .cell:last-child{border-right:none}
+  .pillars .lbl{font-size:11px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+  .pillars .val{font-family:"Times New Roman",Times,serif;font-size:24px;color:var(--paper)}
+  .pillars .na{color:var(--na);font-style:italic;font-size:13px;margin-top:4px;font-family:system-ui,sans-serif}
+  /* layout split */
+  .split{display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start}
+  @media(max-width:960px){.split{grid-template-columns:1fr}.pillars{grid-template-columns:repeat(2,1fr)}.pillars .cell:nth-child(2){border-right:none}.pillars .cell:nth-child(1),.pillars .cell:nth-child(2){border-bottom:1px solid var(--ink-3)}}
+  /* tiers */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:36px}
+  @media(max-width:780px){.tiers{grid-template-columns:1fr}}
+  .tier{border:1px solid var(--ink-3);border-radius:10px;padding:26px 22px;background:linear-gradient(180deg,var(--ink-2),var(--ink));position:relative;display:flex;flex-direction:column}
+  .tier .name{font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .tier .price{font-family:"Times New Roman",Times,serif;font-size:48px;line-height:1;margin-bottom:4px;letter-spacing:-0.02em}
+  .tier .price small{font-size:14px;color:var(--muted);font-family:system-ui,sans-serif;letter-spacing:0;margin-left:4px}
+  .tier .seats{font-size:12px;color:var(--muted);margin-bottom:18px}
+  .tier ul{list-style:none;padding:0;margin:0 0 22px}
+  .tier ul li{font-size:13px;padding:7px 0;color:var(--paper);display:flex;align-items:flex-start;gap:8px;border-top:1px solid var(--ink-3)}
+  .tier ul li:first-child{border-top:none}
+  .tier ul li svg{flex-shrink:0;width:14px;height:14px;margin-top:3px;color:var(--ok)}
+  .tier .cta{margin-top:auto;width:100%;padding:11px;background:transparent;border:1px solid var(--ink-3);color:var(--muted);border-radius:6px;font-size:13px;letter-spacing:0.04em;cursor:default;font-family:inherit}
+  .tier .badge{display:inline-flex;align-items:center;gap:6px;background:var(--badge-bg);color:var(--badge-fg);padding:5px 10px;border-radius:99px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;border:1px solid oklch(60% 0.13 145 / 0.3)}
+  .tier .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--badge-fg)}
+  /* matrix */
+  h2.section{font-family:"Times New Roman",Times,serif;font-weight:500;font-size:24px;margin:48px 0 18px}
+  h2.section .num{color:var(--muted);font-size:13px;letter-spacing:0.1em;margin-right:10px;font-family:system-ui,sans-serif}
+  table.matrix{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px}
+  table.matrix th,table.matrix td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--ink-3)}
+  table.matrix thead th{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  table.matrix tbody td:first-child{color:var(--muted);font-size:13px}
+  table.matrix tbody td.check{text-align:center;color:var(--ok);font-family:ui-monospace,monospace}
+  table.matrix tbody tr:hover{background:oklch(22% 0.014 280 / 0.5)}
+  /* faq */
+  .faq{border-top:1px solid var(--ink-3);padding-top:18px;margin-top:36px}
+  .faq dl{margin:0}
+  .faq dt{font-weight:500;color:var(--paper);font-size:14px;margin-top:18px}
+  .faq dd{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+  /* sidebar (donate) */
+  aside.donate{position:sticky;top:32px;border:1px solid var(--ink-3);border-radius:10px;padding:24px 22px;background:var(--ink-2)}
+  aside.donate h3{font-family:"Times New Roman",Times,serif;font-weight:500;font-size:20px;margin:0 0 6px;letter-spacing:-0.005em}
+  aside.donate p.lede{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.6}
+  aside.donate .links{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+  aside.donate .lnk{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--ink-3);border-radius:8px;color:var(--paper);text-decoration:none;background:var(--ink);transition:border-color .15s}
+  aside.donate .lnk:hover{border-color:var(--donate)}
+  aside.donate .lnk svg{flex-shrink:0;width:20px;height:20px;color:var(--donate)}
+  aside.donate .lnk .name{font-size:13px;font-weight:500;line-height:1.2}
+  aside.donate .lnk .url{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;margin-top:2px}
+  aside.donate .small{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--ink-3);padding-top:14px;margin:0}
+  /* footnote block */
+  .footnote{margin-top:64px;border:1px dashed var(--ink-3);padding:24px 26px;border-radius:8px;background:oklch(20% 0.008 280)}
+  .footnote p{margin:0;color:var(--paper);font-size:14px;line-height:1.7;max-width:760px;font-family:"Times New Roman",Times,serif;font-style:italic}
+  .footnote .tag{font-family:system-ui,sans-serif;font-style:normal;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:block}
+  /* footer */
+  footer{margin-top:56px;padding-top:24px;border-top:1px solid var(--ink-3);display:flex;justify-content:space-between;color:var(--muted);font-size:12px;flex-wrap:wrap;gap:14px}
+  footer .left a{color:var(--muted);border-bottom-color:var(--ink-3)}
+  footer code{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <pattern id="dt" width="3" height="3" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="0.7" fill="oklch(96% 0.006 90)"/>
+          </pattern>
+        </defs>
+        <rect width="32" height="32" fill="oklch(22% 0.012 280)"/>
+        <ellipse cx="16" cy="13" rx="7" ry="9" fill="url(#dt)"/>
+        <path d="M9 24 Q16 21 23 24 L23 32 L9 32 Z" fill="url(#dt)"/>
+      </svg>
+      <span>He Was Socrates</span>
+    </div>
+    <ul>
+      <li><a href="#">Product</a></li>
+      <li><a href="#">Docs</a></li>
+      <li><a href="#" style="color:var(--paper)">Pricing</a></li>
+      <li><a href="#">GitHub</a></li>
+    </ul>
+    <span class="signin">Sign in</span>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <h1>Simple, transparent pricing.</h1>
+      <p class="sub">One Mac. Zero servers. Three tiers. Pick the one that fits your team — billing handled by no one, because there is no billing.</p>
+    </div>
+    <div class="bust" aria-hidden="true">
+      <svg viewBox="0 0 96 96">
+        <defs>
+          <pattern id="ht" width="3" height="3" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="0.85" fill="oklch(96% 0.006 90)"/>
+          </pattern>
+        </defs>
+        <ellipse cx="48" cy="38" rx="22" ry="28" fill="url(#ht)"/>
+        <path d="M22 70 Q48 60 74 70 L74 96 L22 96 Z" fill="url(#ht)"/>
+      </svg>
+      <div class="ko">묻는 자가 누구냐.</div>
+    </div>
+  </header>
+
+  <section class="pillars" aria-label="Billing surface">
+    <div class="cell">
+      <div class="lbl">Payments</div>
+      <div class="val">—</div>
+      <div class="na">no Stripe account</div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Cancellation</div>
+      <div class="val">—</div>
+      <div class="na">nothing to cancel</div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Refunds</div>
+      <div class="val">—</div>
+      <div class="na">$0 × any qty = $0</div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Invoices</div>
+      <div class="val">—</div>
+      <div class="na">none issued</div>
+    </div>
+  </section>
+
+  <div class="split">
+    <main>
+
+      <h2 class="section"><span class="num">01</span>Plans</h2>
+
+      <div class="tiers">
+
+        <article class="tier">
+          <div class="badge">Current plan</div>
+          <div class="name">Personal</div>
+          <div class="price">$0<small>/month</small></div>
+          <div class="seats">1 user · personal Mac</div>
+          <ul>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>On-device Gemma 4 E4B 4-bit MLX</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>Korean 단정한 평어체 system prompt</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>defer_to_human abstention</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>4-function dispatch · 192 ms TTFT</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>Wondering log (Core Data, local)</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>NO-CLOUD invariant</li>
+          </ul>
+          <button class="cta" disabled>Already installed</button>
+        </article>
+
+        <article class="tier">
+          <div class="badge">Current plan</div>
+          <div class="name">Team</div>
+          <div class="price">$0<small>/month</small></div>
+          <div class="seats">share via consent · per-Mac</div>
+          <ul>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>On-device Gemma 4 E4B 4-bit MLX</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>Korean 단정한 평어체 system prompt</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>defer_to_human abstention</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>4-function dispatch · 192 ms TTFT</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>Wondering log (Core Data, local)</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>NO-CLOUD invariant</li>
+          </ul>
+          <button class="cta" disabled>Already installed</button>
+        </article>
+
+        <article class="tier">
+          <div class="badge">Current plan</div>
+          <div class="name">School District</div>
+          <div class="price">$0<small>/month</small></div>
+          <div class="seats">100+ users · CC-BY-4.0 content</div>
+          <ul>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>On-device Gemma 4 E4B 4-bit MLX</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>Korean 단정한 평어체 system prompt</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>defer_to_human abstention</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>4-function dispatch · 192 ms TTFT</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>Wondering log (Core Data, local)</li>
+            <li><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7l3 3 7-7"/></svg>NO-CLOUD invariant</li>
+          </ul>
+          <button class="cta" disabled>Already installed</button>
+        </article>
+
+      </div>
+
+      <h2 class="section"><span class="num">02</span>Compare features</h2>
+
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th style="width:38%">Feature</th>
+            <th style="text-align:center">Personal</th>
+            <th style="text-align:center">Team</th>
+            <th style="text-align:center">School District</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>On-device inference (Gemma 4 E4B 4-bit)</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>Korean 단정한 평어체 system prompt</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>defer_to_human abstention</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>4-function dispatch · 192 ms TTFT</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>Wondering log (Core Data, local)</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>NO-CLOUD invariant · zero egress</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>1-bit halftone bust + 16 viseme swap</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>Apache-2.0 source · CC-BY-4.0 content</td><td class="check">included</td><td class="check">included</td><td class="check">included</td></tr>
+          <tr><td>Priority support / SSO / SLA</td><td style="text-align:center;color:var(--na)">—</td><td style="text-align:center;color:var(--na)">—</td><td style="text-align:center;color:var(--na)">—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="faq">
+        <h2 class="section" style="margin-top:18px"><span class="num">03</span>Frequently asked</h2>
+        <dl>
+          <dt>How do you make money?</dt>
+          <dd>We don't. Donations to the Two-Weeks-Team collective fund the developers' coffee and the HuggingFace bandwidth on first-launch weight pulls. Nothing else.</dd>
+          <dt>Why are all three tiers $0?</dt>
+          <dd>Every CLAUDE.md invariant — NO-CLOUD, abstention-as-product, Korean 평어체 lock, no photoreal — refuses paid-tier gating. The privacy invariant and the zero-cost invariant turn out to be the same invariant.</dd>
+          <dt>Can I cancel?</dt>
+          <dd>There is no subscription to cancel. Drag the .app to Trash; remove ~/Library/Application Support/HeWasSocrates. The wondering log goes with it. No data is held remotely because no data was ever sent remotely.</dd>
+          <dt>Do you offer enterprise SSO?</dt>
+          <dd>No. macOS user accounts are the auth boundary. The model runs under each user's sandbox. There is nothing to federate.</dd>
+        </dl>
+      </div>
+
+    </main>
+
+    <aside class="donate">
+      <h3>Donate to Two-Weeks-Team</h3>
+      <p class="lede">If this work earns its place on your Mac, and you are looking for a place to send the price you would have paid — these two links are it.</p>
+      <div class="links">
+        <a class="lnk" href="https://github.com/sponsors/Two-Weeks-Team">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7-4.5-9.3-9.1C1 8.4 3 5 6.4 5c2 0 3.4 1 4.6 2.5C12.2 6 13.6 5 15.6 5 19 5 21 8.4 19.3 11.9 17 16.5 12 21 12 21z"/></svg>
+          <span><span class="name">GitHub Sponsors</span><span class="url">github.com/sponsors/Two-Weeks-Team</span></span>
+        </a>
+        <a class="lnk" href="https://opencollective.com/two-weeks-team">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M16 8a5 5 0 100 8"/></svg>
+          <span><span class="name">Open Collective</span><span class="url">opencollective.com/two-weeks-team</span></span>
+        </a>
+      </div>
+      <p class="small">Public ledger. Quarterly disbursement. No equity, no token, no NFT, no hidden tier behind the donation.</p>
+    </aside>
+  </div>
+
+  <div class="footnote">
+    <span class="tag">Footnote</span>
+    <p>"We considered a paid tier. We could not name a feature worth gating. So this is what indie-hacking-on-free-software looks like."</p>
+  </div>
+
+  <footer>
+    <div class="left">
+      <a href="https://github.com/Two-Weeks-Team/he-was-socrates">github.com/Two-Weeks-Team/he-was-socrates</a> · Apache-2.0 · CC-BY-4.0 content
+    </div>
+    <div class="right">
+      <code>main @ 3f02a34</code> · TTFT 192 ms (n=10, M1 Max) · NO-CLOUD invariant
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

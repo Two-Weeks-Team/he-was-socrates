@@ -1,0 +1,11 @@
+{
+  "id": "P16",
+  "advocate": "The Solo Founder",
+  "framing": "He Was Socrates is the rare LLM project where the operator, the admin, and the user are the same person on the same Mac — so the entire control surface collapses into one personal admin panel with no tenancy, no roles, and no billing.",
+  "target_persona": "A single Mac owner running He Was Socrates locally — also the maintainer, also the only end-user. No team, no invites, no shared workspace. KS@local on one machine.",
+  "primary_surface": "Single-account personal admin panel — owner = admin = user, no role concept. Top-level tabs (General · Engine · Audio · Privacy · Maintenance) with toggle-first interactions, locked-receipt rows for invariants, and a footer that names the same person three times.",
+  "opus_4_7_capability": "Function calling surfaced as inspectable settings — every Gemma 4 dispatch (mode_classify · surface_past_wonder · ask_back · defer_to_human) appears as a togglable engine row with its contract path, making the 4-function product mechanic legible in a self-service config UI rather than buried in YAML.",
+  "mvp_scope": "A single self-contained HTML admin panel that renders the full local-only settings surface for one operator: read-only invariant receipts (NO-CLOUD entitlements, Korean prompt SHA), live-editable preferences (locale, voice, KV cache, thinking-mode pulse), and one-click maintenance actions (clear wondering log, re-verify weights, reinstall STT asset).",
+  "one_liner_pitch": "나 혼자 운영. 한 페이지짜리 personal admin panel — 토글로 끝, 팀 초대 없음, 비용 0원.",
+  "spec_alignment_notes": "target_persona narrowed from spec's 4-audience set (judges/team/dev/end-users) to the operator-as-user collapse demanded by P16 bias; primary_surface re-cast from spec's 'Kaggle preview HTML / README patch / gallery' triad into a single-tenant settings panel because the solo-founder lens reads the project as a one-Mac tool not a multi-stakeholder asset; opus_4_7_capability kept aligned to spec's 4-function dispatch but reframed as admin rows; constraints (NO-CLOUD, Korean prompt verbatim, no photoreal, abstention-as-product) preserved verbatim and shown as locked receipts; defer_to_human surfaced as a non-toggle invariant per CLAUDE.md absolute invariant #2."
+}

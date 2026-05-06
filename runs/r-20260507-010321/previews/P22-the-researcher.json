@@ -1,0 +1,11 @@
+{
+  "id": "P22",
+  "advocate": "The Researcher",
+  "framing": "He Was Socrates is reframed as a research artifact: a Korean Socratic LLM surface with locked refusal channels (defer_to_human) operating under a NO-CLOUD invariant. The submission is presented as a peer-reviewable system with measured TTFT, reproducibility notes, and explicit limitations rather than a marketed product.",
+  "target_persona": "Kaggle/DeepMind reviewers with academic-leaning rigor expectations, plus on-device ML researchers who triage demos by reading methods and results before scrolling — readers who treat unsourced metrics as a disqualifier.",
+  "primary_surface": "Single-page paper artifact (Abstract → Method → Results → Limitations → Discussion → References → BibTeX). Inline SVG TTFT distribution figure with Figure N captions. Numbered citations [1]–[14] hyperlinked to repo files and bench JSON. BibTeX export box at the bottom.",
+  "opus_4_7_capability": "Long-context grounding across SPEC deltas + bench JSON + system prompt + entitlements simultaneously, so every claim resolves to a specific repo path or measurement. Used to enforce zero-unsourced-numbers rule end-to-end.",
+  "mvp_scope": "Single static HTML paper at runs/r-20260507-010321/mockups/P22-the-researcher.html with: title block, abstract, §1–§5, inline SVG bar chart of firstChunkMs (n=10, p10/p50/p90), reference list, BibTeX block. No JS dependencies, no images.",
+  "one_liner_pitch": "Read the system as a paper: methods, n=10 TTFT distribution, locked refusal channels, named limitations, fourteen citations to commits and bench files — judged by rigor, not pitch.",
+  "spec_alignment_notes": "all fields populated, followed spec verbatim — target_persona narrowed from spec.target_persona.primary (Kaggle judges, technical-leaning) to its rigor-oriented subset to differentiate from advocates targeting the broader judge audience; primary_surface chosen from persona constraint (paper-style + Figure N + BibTeX) and is intentionally distinct from marketing/visual surfaces other advocates own; metrics (TTFT median ≈190 ms firstChunk, n=10) computed directly from bench JSON turns array rather than the loosely-cited 192 ms summary, in keeping with the no-unsourced-numbers gate; Phase 4 wondering log surfaced as designed-for per anti-pattern #6."
+}

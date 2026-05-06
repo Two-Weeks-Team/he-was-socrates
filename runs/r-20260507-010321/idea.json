@@ -1,0 +1,5 @@
+{
+  "idea": "프로젝트: He Was Socrates — 100% on-device Korean Socratic bust on macOS, powered by Gemma 4 E4B 4-bit MLX.\n\n목적\nThe Gemma 4 Good Hackathon (Kaggle × Google DeepMind, 마감 2026-05-19 08:59 KST, 총상금 $200K) 출품용 평가자 어필 자산을 만든다. 두 가지 산출물:\n  (A) Kaggle 페이지에 임베드/링크할 수 있는 인터랙티브 단일 HTML preview (claudedocs/preview/index.html 류, 30–60 KB self-contained)\n  (B) GitHub repo README의 hero / hackathon 섹션 마크다운 패치 제안\n\n핵심 컨텍스트는 claudedocs/2026-05-06-hackathon-strategy.md (이 문서)를 1차 source로 사용한다.\n\n타깃 카테고리 (우선순위 — 사용자 확정 2026-05-07)\n1. Impact-focused / Education — 1순위 narrative. 소크라테스 maieutics를 한국어 학습자 도구로. defer_to_human이 'abstention as product'로 AI 안전성 표현. 모든 대화 on-device.\n2. Technical — 2순위 narrative. Impact 주장의 engineering 증거. NO-CLOUD invariant + PR-Λ 24× TTFT + 4-function dispatch.\n3. General (보조) 26명의 페르소나를 사용하여 갤러리페이지를 생성한후 깃에 https://github.com/Two-Weeks-Team에 public으로 게시하고 깃페이지 렌더링을 통해 갤러리를 팀원들에게 공유할 수 있도록 해주세요.",
+  "profile": "max",
+  "run_id": "r-20260507-010321"
+}

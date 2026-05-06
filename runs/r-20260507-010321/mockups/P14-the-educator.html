@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>He Was Socrates — Lesson 3 of 4</title>
+<style>
+  :root {
+    --ink: oklch(18% 0.02 280);
+    --ink-2: oklch(22% 0.02 280);
+    --paper: oklch(96% 0.01 90);
+    --paper-2: oklch(88% 0.01 90);
+    --rule: oklch(72% 0.01 90 / 0.35);
+    --accent: oklch(82% 0.14 75);
+    --accent-2: oklch(68% 0.16 75);
+    --warn: oklch(70% 0.18 30);
+    --ok: oklch(74% 0.14 150);
+    --shadow: 0 1px 0 oklch(100% 0 0 / 0.06), 0 8px 24px oklch(0% 0 0 / 0.45);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    color: var(--paper);
+    font: 14px/1.5 system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  /* progress chrome */
+  .chrome {
+    position: fixed; inset: 0 0 auto 0;
+    padding: 14px 24px 12px;
+    background: linear-gradient(180deg, oklch(0% 0 0 / 0.55), oklch(0% 0 0 / 0));
+    display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
+    z-index: 30;
+  }
+  .brand {
+    font-family: "Times New Roman", serif;
+    font-size: 16px; letter-spacing: 0.02em;
+    color: var(--paper);
+  }
+  .brand small { color: oklch(70% 0.01 90); font-style: italic; margin-left: 6px; font-size: 12px; }
+  .progress {
+    display: grid; grid-template-rows: auto 6px; gap: 6px;
+  }
+  .progress-meta {
+    display: flex; justify-content: space-between; font-size: 11px;
+    color: oklch(75% 0.01 90); letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .progress-meta b { color: var(--paper); font-weight: 600; }
+  .bar {
+    height: 6px; background: oklch(28% 0.01 280); border-radius: 999px; overflow: hidden;
+    position: relative;
+  }
+  .bar > i {
+    display: block; height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    border-radius: 999px;
+    box-shadow: 0 0 12px oklch(82% 0.14 75 / 0.45);
+  }
+  .bar > .pips { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+  .bar > .pips span { border-right: 1px solid oklch(0% 0 0 / 0.5); }
+  .bar > .pips span:last-child { border-right: 0; }
+  .ctrls { display: flex; gap: 8px; }
+  .btn {
+    appearance: none; border: 1px solid var(--rule); background: oklch(0% 0 0 / 0.25);
+    color: var(--paper); font: 12px/1 system-ui, sans-serif; letter-spacing: 0.04em;
+    padding: 8px 12px; border-radius: 6px; cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: var(--ink); border-color: transparent; font-weight: 600; }
+  /* stage */
+  .stage {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 320px;
+  }
+  .canvas {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 45%, oklch(26% 0.02 280) 0%, oklch(14% 0.02 280) 60%, oklch(10% 0.02 280) 100%);
+  }
+  .bust-wrap {
+    position: absolute; inset: 0; display: grid; place-items: center;
+  }
+  .bust { width: min(58vh, 480px); height: auto; filter: drop-shadow(0 30px 60px oklch(0% 0 0 / 0.6)); }
+  .bust-caption {
+    position: absolute; left: 50%; bottom: 9%; transform: translateX(-50%);
+    font-family: "Times New Roman", serif; font-size: 22px; color: var(--paper);
+    letter-spacing: 0.01em;
+    background: oklch(0% 0 0 / 0.55); padding: 10px 18px; border-radius: 8px;
+    border: 1px solid var(--rule);
+    backdrop-filter: blur(4px);
+    text-align: center;
+  }
+  .bust-caption .glyph { font-size: 28px; color: var(--warn); margin-right: 8px; vertical-align: -2px; }
+  .bust-caption .en { display: block; font-family: system-ui, sans-serif; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(72% 0.01 90); margin-top: 6px; }
+  /* coachmarks */
+  .coach {
+    position: absolute; max-width: 280px;
+    background: var(--paper); color: var(--ink);
+    border-radius: 10px; padding: 12px 14px;
+    box-shadow: var(--shadow);
+    font-size: 13px; line-height: 1.45;
+  }
+  .coach.dim { opacity: 0.42; filter: saturate(0.6); }
+  .coach .tag {
+    display: inline-block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 4px; margin-bottom: 6px;
+    background: var(--ink); color: var(--paper); font-weight: 600;
+  }
+  .coach.active .tag { background: var(--accent); color: var(--ink); }
+  .coach h4 { font-size: 13px; margin-bottom: 4px; font-weight: 600; }
+  .coach p { font-size: 12.5px; color: oklch(30% 0.02 280); }
+  .coach .why {
+    margin-top: 8px; padding-top: 8px; border-top: 1px dashed oklch(50% 0.01 90 / 0.4);
+    font-size: 11px; color: oklch(38% 0.02 280); font-style: italic;
+  }
+  .coach::after {
+    content: ""; position: absolute; width: 10px; height: 10px;
+    background: inherit; transform: rotate(45deg);
+  }
+  /* coach positions + arrows */
+  .coach-1 { top: 22%; left: 6%; }
+  .coach-1::after { right: -5px; top: 24px; }
+  .coach-2 { top: 58%; left: 4%; }
+  .coach-2::after { right: -5px; top: 28px; }
+  .coach-3 {
+    top: 32%; right: 360px;
+    background: var(--paper); border: 2px solid var(--accent);
+    box-shadow: 0 0 0 6px oklch(82% 0.14 75 / 0.18), var(--shadow);
+  }
+  .coach-3::after { left: -6px; top: 32px; background: var(--paper); border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); border-top: 0; border-right: 0; }
+  .coach-4 { bottom: 8%; right: 360px; }
+  .coach-4::after { left: -5px; bottom: 14px; }
+  .coach .num {
+    display: inline-grid; place-items: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    font-size: 10px; font-weight: 700; margin-right: 6px;
+  }
+  .coach.active .num { background: var(--accent-2); color: var(--paper); }
+  .coach .ko { font-family: "Times New Roman", serif; font-size: 13px; color: var(--ink); margin-top: 6px; }
+  /* sidebar */
+  .side {
+    background: var(--ink-2);
+    border-left: 1px solid var(--rule);
+    padding: 76px 22px 22px;
+    overflow-y: auto;
+    color: var(--paper);
+  }
+  .side h2 {
+    font-family: "Times New Roman", serif; font-size: 18px; font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .side .kicker {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .side p { font-size: 12.5px; color: oklch(82% 0.01 90); margin-bottom: 12px; }
+  .side .quote {
+    border-left: 2px solid var(--accent); padding-left: 10px;
+    font-family: "Times New Roman", serif; font-style: italic;
+    color: oklch(88% 0.01 90); font-size: 13px; margin: 14px 0;
+  }
+  .lesson-list { list-style: none; margin-top: 14px; }
+  .lesson-list li {
+    display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start;
+    padding: 9px 0; border-top: 1px solid var(--rule); font-size: 12px;
+  }
+  .lesson-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .lesson-list .dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid var(--rule); margin-top: 2px;
+    display: grid; place-items: center; font-size: 9px; color: oklch(70% 0.01 90);
+  }
+  .lesson-list .done .dot { background: var(--ok); border-color: var(--ok); color: var(--ink); }
+  .lesson-list .now .dot { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  .lesson-list .now strong { color: var(--accent); }
+  .lesson-list small { display: block; color: oklch(65% 0.01 90); font-size: 10.5px; margin-top: 2px; }
+  .prompt-card {
+    margin-top: 18px; background: var(--ink); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 12px;
+  }
+  .prompt-card .label {
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: oklch(62% 0.01 90); margin-bottom: 6px;
+  }
+  .prompt-card pre {
+    font: 11px/1.55 ui-monospace, "JetBrains Mono", monospace;
+    color: oklch(86% 0.01 90); white-space: pre-wrap; word-break: keep-all;
+  }
+  .prompt-card pre .hi { color: var(--accent); }
+  /* toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+    background: oklch(96% 0.01 90); color: var(--ink);
+    padding: 12px 16px 12px 14px; border-radius: 999px;
+    box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px;
+    font-size: 12.5px; font-weight: 500; z-index: 40;
+    border: 1px solid oklch(80% 0.01 90 / 0.5);
+  }
+  .toast .check {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--ok);
+    display: grid; place-items: center; color: var(--ink); font-size: 12px; font-weight: 700;
+  }
+  .toast small { color: oklch(40% 0.01 90); font-weight: 400; margin-left: 4px; }
+  /* function-call mini badge */
+  .fc-badge {
+    position: absolute; top: 22%; right: 24%;
+    background: oklch(0% 0 0 / 0.6); border: 1px solid var(--accent);
+    padding: 6px 10px; border-radius: 6px;
+    font: 10.5px/1 ui-monospace, monospace; color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+  .fc-badge .pulse {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); margin-right: 6px; vertical-align: 1px;
+    box-shadow: 0 0 0 0 var(--accent);
+    animation: pulse 1.6s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 oklch(82% 0.14 75 / 0.6); }
+    100% { box-shadow: 0 0 0 10px oklch(82% 0.14 75 / 0); }
+  }
+  .hint-key {
+    display: inline-block; padding: 1px 6px; border-radius: 4px;
+    background: oklch(94% 0.01 90); color: var(--ink);
+    border: 1px solid oklch(80% 0.01 90); font: 11px/1.4 ui-monospace, monospace;
+    margin: 0 2px;
+  }
+  .legend {
+    position: absolute; left: 24px; bottom: 20px; display: flex; gap: 14px; align-items: center;
+    color: oklch(70% 0.01 90); font-size: 11px;
+  }
+  .legend kbd {
+    border: 1px solid var(--rule); padding: 3px 7px; border-radius: 4px;
+    font: 10px/1 ui-monospace, monospace; color: var(--paper); background: oklch(0% 0 0 / 0.35);
+  }
+</style>
+</head>
+<body>
+
+<header class="chrome">
+  <div class="brand">He Was Socrates <small>— guided introduction</small></div>
+  <div class="progress">
+    <div class="progress-meta">
+      <span><b>Lesson 2 of 4</b> · The abstention demo</span>
+      <span>50% complete</span>
+    </div>
+    <div class="bar"><i></i><div class="pips"><span></span><span></span><span></span><span></span></div></div>
+  </div>
+  <div class="ctrls">
+    <button class="btn">Skip tour</button>
+    <button class="btn primary">Next lesson →</button>
+  </div>
+</header>
+
+<main class="stage">
+  <section class="canvas">
+
+    <!-- 1-bit halftone bust (inline SVG) -->
+    <div class="bust-wrap">
+      <svg class="bust" viewBox="0 0 320 400" aria-label="Socratic bust, 1-bit halftone">
+        <defs>
+          <pattern id="dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="3" r="1.4" fill="oklch(96% 0.01 90)"/>
+          </pattern>
+          <pattern id="dots-dense" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.2" fill="oklch(96% 0.01 90)"/>
+          </pattern>
+          <radialGradient id="head-mask" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="white" stop-opacity="1"/>
+            <stop offset="70%" stop-color="white" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.1"/>
+          </radialGradient>
+          <mask id="bust-mask">
+            <rect width="320" height="400" fill="black"/>
+            <ellipse cx="160" cy="155" rx="92" ry="115" fill="url(#head-mask)"/>
+            <path d="M60,400 C60,300 100,260 160,260 C220,260 260,300 260,400 Z" fill="white" opacity="0.85"/>
+          </mask>
+        </defs>
+        <rect width="320" height="400" fill="url(#dots)" mask="url(#bust-mask)"/>
+        <!-- beard / hair shading -->
+        <ellipse cx="160" cy="200" rx="78" ry="58" fill="url(#dots-dense)" mask="url(#bust-mask)" opacity="0.85"/>
+        <!-- eyes (closed slits — defer state) -->
+        <path d="M128,148 q12,-4 22,0" stroke="oklch(96% 0.01 90)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M170,148 q12,-4 22,0" stroke="oklch(96% 0.01 90)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <!-- brow -->
+        <path d="M126,138 q11,-3 22,0" stroke="oklch(96% 0.01 90)" stroke-width="1.4" fill="none" opacity="0.8"/>
+        <path d="M172,138 q11,-3 22,0" stroke="oklch(96% 0.01 90)" stroke-width="1.4" fill="none" opacity="0.8"/>
+        <!-- mouth: viseme.silent for defer -->
+        <path d="M146,205 q14,3 28,0" stroke="oklch(96% 0.01 90)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- subtle plinth line -->
+        <path d="M40,395 L280,395" stroke="oklch(96% 0.01 90)" stroke-width="0.8" opacity="0.4"/>
+      </svg>
+
+      <div class="bust-caption">
+        <span class="glyph">⊘</span>이건 사람에게 물어야 한다.
+        <span class="en">defer_to_human · medical topic detected</span>
+      </div>
+    </div>
+
+    <!-- function-call mini badge -->
+    <div class="fc-badge"><span class="pulse"></span>fn: defer_to_human()</div>
+
+    <!-- coachmarks -->
+    <aside class="coach coach-1 dim">
+      <span class="tag"><span class="num">1</span>Lesson 1 · done</span>
+      <h4>Press <span class="hint-key">Space</span> to ask</h4>
+      <p>Hold space, speak, release. Pacing is part of the practice — the bust waits for you.</p>
+    </aside>
+
+    <aside class="coach coach-2 dim">
+      <span class="tag"><span class="num">2</span>Lesson 2 · done</span>
+      <h4>Korean is 단정한 평어체</h4>
+      <p>Assertive plain — neither honorific nor friendly. The tone is locked into the system prompt; it won't soften.</p>
+    </aside>
+
+    <aside class="coach coach-3 active">
+      <span class="tag"><span class="num">3</span>You are here</span>
+      <h4>Ask about medicine — Socrates defers.</h4>
+      <p>You just asked <em>"Should I take ibuprofen with my blood pressure meds?"</em> The bust returned <b>⊘</b> instead of advice.</p>
+      <div class="ko">이게 abstention mechanic이다.<br/>의료·법률·금융·응급 영역은 사람에게 위임한다.</div>
+      <div class="why">Why? AI safety, made into a first-class product feature — not a disclaimer the model sometimes ignores.</div>
+    </aside>
+
+    <aside class="coach coach-4 dim">
+      <span class="tag"><span class="num">4</span>Up next</span>
+      <h4>Your wondering log is local</h4>
+      <p>Every question you've ever asked stays on this Mac. Zero bytes leave the device.</p>
+    </aside>
+
+    <div class="legend">
+      <span><kbd>Space</kbd> ask</span>
+      <span><kbd>→</kbd> next lesson</span>
+      <span><kbd>Esc</kbd> exit tour</span>
+    </div>
+  </section>
+
+  <!-- sidebar: Why this matters -->
+  <aside class="side">
+    <div class="kicker">Why this matters</div>
+    <h2>The midwife, not the oracle.</h2>
+    <p>Most assistants race to answer. This one practices <em>maieutics</em> — Socrates' method of returning a question that helps you find the answer yourself.</p>
+    <p>So when you ask something only a human should answer — a doctor, a lawyer, a person who knows your life — the bust says so. That refusal is the product, not a bug.</p>
+
+    <div class="quote">"I cannot teach anybody anything. I can only make them think." — attributed to Socrates</div>
+
+    <ol class="lesson-list">
+      <li class="done">
+        <span class="dot">✓</span>
+        <div>Press Space to ask
+          <small>Push-to-talk pacing · on-device STT</small>
+        </div>
+      </li>
+      <li class="done">
+        <span class="dot">✓</span>
+        <div>The Korean tone is locked
+          <small>단정한 평어체 · verbatim system prompt</small>
+        </div>
+      </li>
+      <li class="now">
+        <span class="dot">3</span>
+        <div><strong>Watch the bust defer</strong>
+          <small>defer_to_human · medical / legal / financial / emergency / welfare / insurance</small>
+        </div>
+      </li>
+      <li>
+        <span class="dot">4</span>
+        <div>Your wondering log is local
+          <small>Core Data on disk · zero network egress</small>
+        </div>
+      </li>
+    </ol>
+
+    <div class="prompt-card">
+      <div class="label">System prompt (excerpt)</div>
+<pre>너는 소크라테스다.
+답을 주지 않는다. <span class="hi">묻는다.</span>
+의료·법률·금융·응급 영역은
+<span class="hi">사람에게 위임한다.</span></pre>
+    </div>
+  </aside>
+</main>
+
+<!-- friendly toast confirming the prior lesson advance -->
+<div class="toast" role="status" aria-live="polite">
+  <span class="check">✓</span>
+  Lesson 2 complete — tone lock understood.
+  <small>Next: see abstention in action.</small>
+</div>
+
+</body>
+</html>

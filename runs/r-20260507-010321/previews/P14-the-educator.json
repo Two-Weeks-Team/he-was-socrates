@@ -1,0 +1,11 @@
+{
+  "id": "P14",
+  "advocate": "The Educator",
+  "framing": "He Was Socrates is unfamiliar by design — abstention, 평어체, on-device-only. Teach the user what makes this different while they meet the bust, lesson by lesson, so the product's mechanics become legible without a manual.",
+  "target_persona": "First-time macOS users meeting the Socratic bust on launch — judges/devs who have heard 'Gemma 4' but don't yet know what defer_to_human means or why the bust speaks 단정한 평어체.",
+  "primary_surface": "Fullscreen bust with a 4-lesson tutorial overlay system: top progress bar (Lesson 2 of 4 · 50%), coachmark callouts pinned to bust regions, a 'Why this matters' sidebar that explains maieutics, friendly toast confirmations on lesson advance. Lesson 3 demonstrates abstention live — bust mid-defer with Korean ⊘ caption.",
+  "opus_4_7_capability": "Function-call introspection — each lesson surfaces which of the 4 dispatch functions (mode_classify / surface_past_wonder / ask_back / defer_to_human) is firing, turning Gemma 4's native function calling from a hidden mechanic into a teachable moment. Lesson 3 specifically narrates defer_to_human invocation in real time.",
+  "mvp_scope": "Single tutorial scene frozen on Lesson 3 of 4 (abstention demo). Bust SVG halftone center, English coachmarks + Korean defer caption, sidebar explaining maieutic principle, progress chrome, a friendly 'Lesson advanced' toast. No backend wiring — all state is pre-staged for the 4-day demo.",
+  "one_liner_pitch": "A bust that teaches you how to talk to it — 4 lessons, inline coachmarks, and a live abstention demo, so the product explains itself.",
+  "spec_alignment_notes": "all fields populated, followed spec verbatim — target_persona narrowed from idea.spec primary (Kaggle judges) to 'first-time users mid-onboarding' because The Educator's bias is teaching-during-use, which only fires on first contact; primary_surface mapped to coachmark/sidebar/progress trio per persona prompt; abstention mechanic (defer_to_human, Korean 평어체) and 1-bit halftone preserved per CLAUDE.md frozen invariants #2/#3/#4."
+}

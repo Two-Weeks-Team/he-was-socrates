@@ -1,0 +1,327 @@
+{
+  "_schema_version": "1.0",
+  "_filled_ratio": 1.0,
+  "_source_provenance": {
+    "primary": "claudedocs/2026-05-06-hackathon-strategy.md (24 KB, 12 sections, last updated 2026-05-07)",
+    "supporting": [
+      "runs/r-20260507-010321/idea.json",
+      "CLAUDE.md (absolute invariants × 6)",
+      "runs/2026-05-05-spec/spec/SPEC.md + iter2/4/5/6 deltas",
+      "runs/2026-05-05-spec/spec/function_call_contract.yaml",
+      "Sources/SocraticEngine/Gemma/SystemPrompt.swift (Korean 평어체 verbatim)",
+      "claudedocs/bench/2026-05-06-latency-bench.json (PR-Λ verify-2)",
+      "claudedocs/2026-05-06-firstlaunch-ux-bestpractices.html (PR #33 reference)"
+    ],
+    "interview_strategy": "I1 detected that the strategy doc + idea.json + system-prompt 'already-decided' list together cover 9/9 anchor fields. AskUserQuestion was suppressed to avoid re-litigating §11 (2026-05-07 confirmed) decisions. The only genuinely-new requirement (idea §3 General — GitHub Pages publish to Two-Weeks-Team org) is captured under primary_surface and success_criteria with explicit inferred-default markers; user is invited to amend at H1 design gate if defaults misalign."
+  },
+
+  "idea_summary": "He Was Socrates — 100% on-device Korean Socratic bust on macOS, powered by Gemma 4 E4B 4-bit MLX. Submission asset for The Gemma 4 Good Hackathon (Kaggle × Google DeepMind, deadline 2026-05-19 08:59 KST, $200K total prize pool). Two artifacts requested: (A) interactive single-file HTML preview embeddable in/linkable from the Kaggle entry page (~30–60 KB self-contained, claudedocs/preview/index.html style), and (B) a markdown patch proposal for the GitHub repo README's hero / hackathon section. Target categories (user-confirmed 2026-05-07): #1 Impact-focused / Education (primary narrative — Socratic maieutics as a Korean-language learning tool, defer_to_human as 'abstention as product' for AI safety, all dialogue on-device), #2 Technical (engineering evidence backing the impact claim — NO-CLOUD invariant + PR-Λ 24× TTFT improvement + 4-function dispatch), #3 General (auxiliary). Newly-added §3 General requirement: generate a 26-persona gallery page from the 26 Preview Forge advocates, publish it publicly to https://github.com/Two-Weeks-Team via GitHub Pages, and share the rendered gallery URL with team members.",
+
+  "target_persona": {
+    "primary": {
+      "label": "Kaggle / Google DeepMind hackathon judges (English-reading, technical-leaning)",
+      "context": "Evaluators of The Gemma 4 Good Hackathon. Familiar with Gemma 4 model family, function calling, and constrained-environments framing. Need explanation of NO-CLOUD invariant, defer_to_human abstention mechanic, and Korean 단정한 평어체 tone lock as these are not generic LLM-demo concepts.",
+      "reading_environment": "Kaggle competition entry page → linked HTML preview → optional GitHub repo deep-dive. Skim-then-deep-read pattern; first 5 seconds decide whether to scroll.",
+      "evaluation_criteria": "Impact (social/educational value) + technical execution + clear use-case communication. Strong bias toward measurable claims with verifiable sources."
+    },
+    "secondary": [
+      {
+        "label": "Two-Weeks-Team org members (internal stakeholders)",
+        "context": "Team members reviewing the 26-advocate gallery to discuss which preview direction to ship to Kaggle. Need quick visual scan + ability to share a public URL in chat. Bilingual (ko/en) but defaults to Korean conversation; comfortable reading English copy."
+      },
+      {
+        "label": "General GitHub developer audience (English-reading, broader OSS community)",
+        "context": "Lands on the public repo README. Skim hero → metrics → Why on-device. May not know Gemma 4 specifics; needs the project to explain itself in 30 seconds."
+      },
+      {
+        "label": "Korean-language learners / educators (end-users, future-tense)",
+        "context": "The actual end-users the Impact narrative serves. Not the immediate evaluation audience but the social-impact justification rests on them. Represented via system-prompt excerpts, defer_to_human capture, and bust subtitle in Korean 평어체."
+      }
+    ],
+    "tone_for_each": {
+      "judges": "factual, evidence-led English with measurable claims and source links",
+      "team": "concise, neutral, gallery-scan friendly with shareable preview URLs",
+      "general_dev": "English hero + metrics, Korean for identity surfaces only",
+      "end_users_indirect": "Korean 단정한 평어체 (verbatim from SystemPrompt.swift) — neither 존댓말 nor friendly-banmal"
+    }
+  },
+
+  "core_value_prop": "He Was Socrates makes the abstention mechanic the product: a Korean Socratic interlocutor that runs entirely on the user's Mac (zero bytes leave the device), gives back questions instead of answers, and honestly defers to humans for medical / legal / financial / emergency / welfare / insurance topics — turning AI safety from a disclaimer into a first-class product feature, evidenced by PR-Λ's 24× TTFT improvement (4.6 s → 192 ms) under a NO-CLOUD invariant.",
+
+  "key_jobs_to_be_done": [
+    {
+      "job": "Help Kaggle/DeepMind judges evaluate Impact-Education fit in under 60 seconds of scrolling",
+      "functional": "Render a single-file HTML preview that maps the abstention mechanic, on-device Korean Socratic dialogue, and Gemma 4 function calling to the hackathon's impact + technical execution + clear use-case rubric.",
+      "emotional": "Earn evaluator trust by avoiding marketing superlatives and citing every metric to a commit / bench file / source-line.",
+      "social": "Position the project as the rare LLM demo where 'I cannot answer this' is the headline feature — distinct from the answering-machine peer set."
+    },
+    {
+      "job": "Provide an immediately-shareable public gallery URL for Two-Weeks-Team internal review",
+      "functional": "Publish the 26-advocate gallery (and the H1-chosen hero preview) to GitHub Pages on the Two-Weeks-Team org so members can open one URL and scan all 26 directions side-by-side.",
+      "emotional": "Reduce decision friction — let the team converge on a preview direction without local-clone friction.",
+      "social": "Make the deliberation process transparent and reviewable inside the org (and inspectable by Kaggle judges, since the repo is public)."
+    },
+    {
+      "job": "Patch the public README so a first-time GitHub visitor understands the project in 30 seconds",
+      "functional": "Produce a diff-hunk-style markdown patch (claudedocs/preview/README-hero.md) that inserts a hero block + hackathon-appeal section into the existing README.",
+      "emotional": "Make the repo immediately legible to drive-by readers from the Kaggle entry page.",
+      "social": "Establish the project's visual + verbal identity (1-bit halftone + Korean 평어체) at first contact."
+    },
+    {
+      "job": "Demonstrate the Korean 단정한 평어체 identity without requiring evaluators to install the app",
+      "functional": "Capture defer_to_human in action — a medical question (English user input) → Korean 평어체 ⊘ response — as a static visual artifact inside the preview HTML.",
+      "emotional": "Signal that Korean is not a localization afterthought but the product's identity surface.",
+      "social": "Differentiate from English-only LLM demos in the hackathon peer set."
+    },
+    {
+      "job": "Surface PR-Λ engineering evidence so the Technical category narrative is bench-backed",
+      "functional": "Embed the latency bench excerpt (192 ms median TTFT, n=10, M1 Max) + entitlements file excerpt (no network.client) + Phase enum + function_call_contract.yaml fragment.",
+      "emotional": "Convert the Impact claim ('all dialogue on-device') from rhetoric to inspection-ready evidence.",
+      "social": "Make the project credible to engineering-skeptical evaluators."
+    }
+  ],
+
+  "primary_surface": {
+    "primary_artifact_A": {
+      "name": "Kaggle preview HTML",
+      "path_target": "claudedocs/preview/index.html (preview-forge runs/r-20260507-010321 will produce here)",
+      "format": "single-file self-contained HTML, scroll layout, dark theme (ink-black #1F1D2F-ish), monochrome accent",
+      "size_budget": "30–60 KB measured (no external CDN dependencies beyond what is strictly needed; ideally zero)",
+      "section_order": [
+        "Hero (face_halftone.png + English tagline + Korean 평어체 subtitle)",
+        "The Abstention Mechanic (Impact #1 narrative, defer_to_human medical-question demo capture)",
+        "Why on-device (entitlements excerpt + airplane-mode demo placeholder)",
+        "The Engineering (PR-Λ bench excerpt + Phase enum + function_call YAML)",
+        "The Aesthetic (16 viseme swap + 1-bit halftone principle)",
+        "macOS 26 Pre-flight UX (PR #33 PreflightView + AssetInventory bilingual)",
+        "Categories Mapping (Impact-Education #1 / Technical #2 appeal table)",
+        "Verification (source links + commit/bench citations)",
+        "Roadmap (Phase 4 wondering-log multi-year recall — designed-for, current stub)",
+        "Footer (repo / Kaggle entry / Apache-2.0 + CC-BY-4.0)"
+      ]
+    },
+    "primary_artifact_B": {
+      "name": "README hero markdown patch",
+      "path_target": "claudedocs/preview/README-hero.md",
+      "format": "diff-hunk-style markdown showing insertion/replacement points in the existing README",
+      "language_policy": "English-primary + Korean parallel (Korean limited to identity-expression surfaces)"
+    },
+    "primary_artifact_C_NEW": {
+      "name": "26-advocate gallery + GitHub Pages publication",
+      "source": "idea.json §3 General (newly-added requirement, 2026-05-07)",
+      "scope_decision_inferred_default": {
+        "what_publishes": "Both the 26-preview gallery (gallery.html) AND the H1-chosen hero preview (index.html) are published — gallery as the navigation index, hero as the canonical entry. Rationale: judges may follow the gallery URL during evaluation, so the hero must also be reachable at a stable Pages path.",
+        "github_org": "Two-Weeks-Team (per idea.json §3 explicit URL https://github.com/Two-Weeks-Team)",
+        "repo_strategy_options_to_resolve_at_H1": [
+          "Option 1 (RECOMMENDED): publish via the existing he-was-socrates repo's gh-pages branch or /docs folder on main — keeps gallery co-located with code, single source of truth.",
+          "Option 2: create a new public repo Two-Weeks-Team/preview-gallery — cleaner separation but adds maintenance overhead.",
+          "DEFER decision to H1 design gate; either is compatible with the spec."
+        ],
+        "pages_url_pattern_inferred": "https://two-weeks-team.github.io/he-was-socrates/ (Option 1) OR https://two-weeks-team.github.io/preview-gallery/ (Option 2)",
+        "access_policy": "public — Kaggle/DeepMind judges + Two-Weeks-Team members + general GitHub audience all granted access. Public is required because the Kaggle entry page must be able to link out to the gallery.",
+        "team_sharing_mechanism": "single public URL pasted into team chat; no auth gate"
+      }
+    },
+    "language_policy": {
+      "headings_body_metrics_captions": "English-primary",
+      "korean_surfaces": [
+        "system_prompt excerpt (verbatim from SystemPrompt.swift)",
+        "defer_to_human response capture (Korean 평어체)",
+        "bust subtitle / hero secondary line",
+        "any 'identity-expression' sidebar"
+      ],
+      "code_comments": "English",
+      "external_citations": "English (Apple Developer, WWDC25, Kaggle/DeepMind, repo commits)"
+    }
+  },
+
+  "differentiators": [
+    {
+      "name": "The Abstention Mechanic is the Product",
+      "evidence": "function_call_contract.yaml defer_to_human function + SystemPrompt.swift 평어체 abstention rubric for medical/legal/financial/emergency/welfare/insurance",
+      "vs_peers": "Most LLM demos compete on 'answer better'. He Was Socrates makes 'honestly cannot answer' the headline feature."
+    },
+    {
+      "name": "Korean 단정한 평어체 system-prompt verbatim lock",
+      "evidence": "Sources/SocraticEngine/Gemma/SystemPrompt.swift (user-authored, embedded at compile time, frozen invariant per CLAUDE.md)",
+      "vs_peers": "Distinct Korean identity vs English-default LLM demos; neither 존댓말 nor friendly-banmal."
+    },
+    {
+      "name": "1-bit halftone aesthetic",
+      "evidence": "assets/face_halftone.png + 16 viseme PNGs generated deterministically by scripts/ Python pipeline, manifest SHA-256 verified in CI",
+      "vs_peers": "Refuses photoreal AI avatar / SadTalker / Audio2Face stylings; visually consistent identity."
+    },
+    {
+      "name": "Zero bytes leave the device (NO-CLOUD invariant)",
+      "evidence": "apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements has NO network.client / network.server; STT uses requiresOnDeviceRecognition = true; demo can run in airplane mode",
+      "vs_peers": "Constrained-environments rubric textbook case — Apple App Sandbox + zero network egress."
+    },
+    {
+      "name": "PR-Λ disk-mediated KV cache reuse: TTFT 4.6 s → 192 ms (24×)",
+      "evidence": "claudedocs/bench/2026-05-06-latency-bench.json + .log, n=10 on M1 Max MBP 64GB, GPU-verified, PR #32 merged",
+      "vs_peers": "Measurable, public, reproducible technical achievement on the constrained-environments axis."
+    },
+    {
+      "name": "Native function calling: 4-function dispatch",
+      "evidence": "function_call_contract.yaml — mode_classify / surface_past_wonder / ask_back / defer_to_human (loadbearing for abstention, tone-locking, multi-year recall)",
+      "vs_peers": "Function calling drives product mechanic, not a feature checkbox demo."
+    },
+    {
+      "name": "macOS 26 SpeechAnalyzer + AssetInventory (PR #33)",
+      "evidence": "apps/macos/HeWasSocrates/HeWasSocrates/Preflight.swift + SPEC.md.iter6 delta; bilingual ko_KR + en_US single-download UX",
+      "vs_peers": "Adopts WWDC25 latest-platform APIs; bilingual onboarding without permission-purgatory."
+    }
+  ],
+
+  "constraints": [
+    {
+      "type": "frozen_invariant",
+      "value": "Zero bytes leave the device — no network.client/network.server entitlement; on-device STT (requiresOnDeviceRecognition=true); HuggingFace weights via OS-mediated MLX cache only",
+      "source": "CLAUDE.md absolute invariants #1"
+    },
+    {
+      "type": "frozen_invariant",
+      "value": "defer_to_human abstention is load-bearing — must not be 'improved' into an answering machine",
+      "source": "CLAUDE.md absolute invariants #2"
+    },
+    {
+      "type": "frozen_invariant",
+      "value": "Korean tone locked to 단정한 평어체 — neither 존댓말 nor friendly-banmal; SystemPrompt.swift is verbatim user-authored",
+      "source": "CLAUDE.md absolute invariants #3"
+    },
+    {
+      "type": "frozen_invariant",
+      "value": "No photoreal lip-sync — 1-bit halftone PNG swap only; SadTalker / Audio2Face out of scope",
+      "source": "CLAUDE.md absolute invariants #4"
+    },
+    {
+      "type": "frozen_invariant",
+      "value": "runs/2026-05-05-spec/ is read-only — changes only via new iter<N>-<topic>.md delta documents at the same path",
+      "source": "CLAUDE.md absolute invariants #5"
+    },
+    {
+      "type": "frozen_invariant",
+      "value": ".env is not modified without explicit user instruction",
+      "source": "CLAUDE.md absolute invariants #6"
+    },
+    {
+      "type": "anti_pattern",
+      "value": "No marketing superlatives ('blazingly fast', 'revolutionary', '100% secure', 'unprecedented') — every claim must cite commit/bench/file",
+      "source": "CLAUDE.md professional honesty + strategy doc §7"
+    },
+    {
+      "type": "anti_pattern",
+      "value": "No speculative-as-shipped claims — wondering log multi-year recall is Phase 4 wiring (currently stub); must be expressed as 'designed for' / 'roadmap'",
+      "source": "strategy doc §7 anti-pattern #6"
+    },
+    {
+      "type": "anti_pattern",
+      "value": "No incorrect metrics — TTFT is 192 ms (PR-Λ verify-2), not 6 s (pre-PR-Λ baseline)",
+      "source": "strategy doc §7 anti-pattern #7 + bench/2026-05-06-latency-bench.json"
+    },
+    {
+      "type": "anti_pattern",
+      "value": "No cloud architecture diagrams (factually inverted), no photoreal AI avatar mockups, no 'friendly chatbot / your AI friend' copy, no Korean-only hierarchy (English-primary with Korean for identity surfaces)",
+      "source": "strategy doc §7 + §12.2 'avoid' list"
+    },
+    {
+      "type": "submission_workflow",
+      "value": "make ci-local before push; Conventional Commits with scopes {engine, viseme, audio, gemma, app, scripts, ci, docs, spec}; gh pr merge --merge (squash forbidden, --rebase only on conflict); AI-assisted commits include Co-Authored-By trailer",
+      "source": "CLAUDE.md workflow conventions + strategy doc §3.3"
+    },
+    {
+      "type": "delivery_format",
+      "value": "Self-contained HTML (no external CDN dependencies beyond bare minimum); 30–60 KB measured size; dark theme with monochrome accent; Times New Roman serif headings; Inter/system-ui body; JetBrains Mono for code/metric",
+      "source": "strategy doc §12.3 design guide"
+    },
+    {
+      "type": "deadline",
+      "value": "2026-05-19 08:59 KST (D-12 from today 2026-05-07) — preview must be freeze-ready well before this",
+      "source": "strategy doc §1.1"
+    }
+  ],
+
+  "success_criteria": [
+    {
+      "type": "category_appeal",
+      "value": "Impact-Education narrative explicitly mapped to defer_to_human + Korean Socratic maieutics + privacy-first education in a categories-mapping table; Technical narrative mapped to NO-CLOUD invariant + PR-Λ bench + 4-function dispatch in the same table"
+    },
+    {
+      "type": "verifiability",
+      "value": "Every metric cited has a markdown hyperlink to commit / bench JSON / source file; zero unsourced numbers"
+    },
+    {
+      "type": "tone_consistency",
+      "value": "Korean 평어체 surfaces verbatim from SystemPrompt.swift; English headings/body free of marketing superlatives"
+    },
+    {
+      "type": "aesthetic_consistency",
+      "value": "1-bit halftone visual identity throughout; face_halftone.png hero + 16 viseme swap representation; no photoreal mockups"
+    },
+    {
+      "type": "invariants_compliance",
+      "value": "Zero violations of the 6 CLAUDE.md absolute invariants; PR #33 bilingual + macOS 26 floor + iter6 + PR-Λ all accurately reflected"
+    },
+    {
+      "type": "delivery_size",
+      "value": "Preview HTML measures within 30–60 KB; gallery page renders all 26 advocates as scannable cards"
+    },
+    {
+      "type": "github_pages_publish_NEW",
+      "value": "Gallery + hero preview both reachable at a public Two-Weeks-Team GitHub Pages URL; URL paste-able into team chat works for Kaggle judges and Two-Weeks-Team members alike (no auth gate)"
+    },
+    {
+      "type": "team_sharing",
+      "value": "Two-Weeks-Team members can review all 26 advocate previews via one URL and converge on H1 hero selection without local clone"
+    },
+    {
+      "type": "evaluator_first_impression",
+      "value": "Kaggle/DeepMind judge landing on the preview understands NO-CLOUD + abstention + Korean identity within first 5 seconds of scroll; first 60 seconds covers all 7 differentiators"
+    },
+    {
+      "type": "readme_patch_actionability",
+      "value": "claudedocs/preview/README-hero.md is a clean diff-hunk-style patch the user can apply with a single editor action"
+    }
+  ],
+
+  "domain_terms": {
+    "product_lexicon": [
+      {"term": "abstention mechanic / abstention as product", "definition": "defer_to_human function returning ⊘ for medical/legal/financial/emergency/welfare/insurance — a first-class feature, not a fallback"},
+      {"term": "defer_to_human", "definition": "1 of 4 dispatch functions; honest hand-off when topic is outside Socratic-bust scope"},
+      {"term": "mode_classify", "definition": "function call that classifies user turn into Mode enum"},
+      {"term": "surface_past_wonder", "definition": "function call that retrieves prior wondering-log entries via Gemma 4 256K context"},
+      {"term": "ask_back", "definition": "function call that returns a Socratic question instead of an answer"},
+      {"term": "wondering log", "definition": "Core Data persistence of user's multi-year inquiry threads, SHA-256 fingerprint dedup, never leaves device (Phase 4 wiring; current stub for surfacing logic)"},
+      {"term": "단정한 평어체", "definition": "assertive 평어 Korean tone — neither 존댓말 nor friendly-banmal — verbatim-locked in SystemPrompt.swift"},
+      {"term": "Socratic maieutics", "definition": "midwifery method of teaching by asking — the bust returns questions, not answers"}
+    ],
+    "engineering_lexicon": [
+      {"term": "NO-CLOUD invariant", "definition": "App Sandbox without network.client/network.server entitlements; only sanctioned egress is HuggingFace weight download via OS-mediated MLX cache"},
+      {"term": "on-device", "definition": "all inference, STT, TTS happen on user's Mac; airplane mode compatible after first weight download"},
+      {"term": "PR-Λ", "definition": "disk-mediated KV cache reuse PR #32 — TTFT 4.6 s → 192 ms (24×)"},
+      {"term": "TTFT", "definition": "time to first token — 192 ms median (n=10, M1 Max MBP 64GB, PR-Λ verify-2)"},
+      {"term": "Gemma 4 E4B 4-bit MLX", "definition": "frozen model variant — mlx-community/gemma-4-e4b-it-4bit, 3.97 GB"},
+      {"term": "viseme", "definition": "16 mouth-shape PNGs swapped per audio frame; ≥2-frame hold; >50ms drift triggers alert; 12fps under Reduce Motion"},
+      {"term": "halftone", "definition": "1-bit aesthetic — deterministic Python/Pillow pipeline produces SHA-256-stable manifest"},
+      {"term": "function calling", "definition": "Gemma 4 native function-call API used for the 4-function dispatch"},
+      {"term": "configurable thinking mode", "definition": "Gemma 4 feature visualized as Phase.thinking soft pulse on the bust"},
+      {"term": "long context (256K)", "definition": "Gemma 4 capability used for compressed multi-year recall via surface_past_wonder"},
+      {"term": "AssetInventory", "definition": "macOS 26 API used in PR #33 for in-app bilingual STT model download (ko_KR + en_US single download)"},
+      {"term": "SpeechAnalyzer", "definition": "WWDC25 #277 macOS 26 STT API; on-device with requiresOnDeviceRecognition = true"},
+      {"term": "Phase enum", "definition": "EngineCoordinator.Phase: bootstrapping → idle → listening → thinking → surfacing → speaking → failed; stable public surface"},
+      {"term": "JamoTimeline", "definition": "Korean syllable decomposition fallback for viseme timing when Apple phoneme markers absent (SPEC.md.iter5)"},
+      {"term": "MLX / mlx-swift-lm", "definition": "Apple ML team's Swift bindings for MLX inference"}
+    ],
+    "hackathon_lexicon": [
+      {"term": "The Gemma 4 Good Hackathon", "definition": "Kaggle × Google DeepMind, $200K total, deadline 2026-05-19 08:59 KST"},
+      {"term": "Impact-focused / Education", "definition": "1순위 target category — social/educational impact emphasis"},
+      {"term": "Technical", "definition": "2순위 target category — engineering execution emphasis"},
+      {"term": "constrained environments", "definition": "Kaggle rubric axis — He Was Socrates is a textbook fit (NO-CLOUD + Apple Sandbox)"}
+    ],
+    "attribution": [
+      {"term": "Gemma 4", "owner": "Google DeepMind"},
+      {"term": "MLX", "owner": "Apple"},
+      {"term": "mlx-swift-lm", "owner": "Apple ML team"}
+    ]
+  }
+}

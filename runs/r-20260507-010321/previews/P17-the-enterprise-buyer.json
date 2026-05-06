@@ -1,0 +1,11 @@
+{
+  "id": "P17",
+  "advocate": "The Enterprise Buyer",
+  "framing": "An enterprise procurement reviewer treats He Was Socrates as a school-district vendor evaluation: every standard SaaS security checkbox (data residency, transit encryption, egress, vendor lock-in) is auto-passed because the architecture is on-device, not because a control was implemented.",
+  "target_persona": "K-12 / higher-ed district IT procurement reviewer running an InfoSec + legal questionnaire pass before greenlighting a Korean-language pilot",
+  "primary_surface": "Enterprise admin portal mock — Overview / Security (active) / Compliance / Audit / Procurement tabs. Security checklist with AUTO-PASS markers tied to NO-CLOUD invariant; SAML/SCIM marked N/A (single-user app); local SQLite audit-log paths visible; egress meter pinned at 0 byte/24h sourced from entitlements file; procurement summary card showing $0 yearly cost, no vendor lock-in, minimal IT review.",
+  "opus_4_7_capability": "Long-context structured-evidence rendering — pulling the entitlements excerpt, function_call_contract, bench JSON, and audit-log path into a single coherent procurement-grade page; reframing absence-of-feature (no SSO, no transit) as positive controls.",
+  "mvp_scope": "One static portal page rendering the Security tab with 8 checklist rows + audit log preview + procurement summary card; tab strip is visual-only (no routing) for the 4-day demo.",
+  "one_liner_pitch": "The procurement questionnaire that auto-passes itself: zero network egress means the security review is a one-page evidence dump, not a six-week vendor-risk cycle.",
+  "spec_alignment_notes": "target_persona deliberately narrowed beyond idea.spec primary judges to a procurement reviewer (within secondary-audience spirit and persona contract). primary_surface honors P17 contract verbatim (SAML/SCIM/audit/residency/SOC2). Korean limited to bust subtitle in side preview pane per language_policy; English everywhere else per enterprise-portal convention. Cited claims (TTFT 192ms, no network.client entitlement, NO-CLOUD invariant) all sourced to differentiators[] entries in idea.spec — no unsourced numbers."
+}

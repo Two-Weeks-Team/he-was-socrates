@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Two-Weeks-Team/he-was-socrates — README</title>
+<style>
+  :root {
+    --bg: oklch(17% 0.012 270);
+    --bg-elev: oklch(20% 0.014 270);
+    --bg-code: oklch(22% 0.014 270);
+    --border: oklch(30% 0.012 270);
+    --border-soft: oklch(26% 0.010 270);
+    --fg: oklch(92% 0.008 270);
+    --fg-muted: oklch(68% 0.012 270);
+    --fg-dim: oklch(55% 0.012 270);
+    --link: oklch(72% 0.110 240);
+    --link-hover: oklch(80% 0.110 240);
+    --green: oklch(68% 0.150 145);
+    --green-bg: oklch(28% 0.060 145);
+    --amber: oklch(78% 0.130 85);
+    --amber-bg: oklch(28% 0.050 85);
+    --violet: oklch(72% 0.110 295);
+    --violet-bg: oklch(28% 0.050 295);
+    --red: oklch(70% 0.180 25);
+    --btn: oklch(24% 0.012 270);
+    --btn-hover: oklch(30% 0.014 270);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.5; }
+  code, pre, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { color: var(--link-hover); text-decoration: underline; }
+
+  /* Top nav */
+  .topnav { background: oklch(13% 0.010 270); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 16px; font-size: 13px; }
+  .topnav .logo { width: 22px; height: 22px; }
+  .topnav input { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px; color: var(--fg-muted); padding: 4px 10px; width: 280px; font-size: 12px; }
+  .topnav .spacer { flex: 1; }
+  .topnav .navlink { color: var(--fg); font-weight: 600; padding: 4px 8px; }
+
+  /* Repo header */
+  .repo-header { padding: 16px 24px 0; border-bottom: 1px solid var(--border); }
+  .repo-title { font-size: 20px; font-weight: 400; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .repo-title .org { color: var(--link); }
+  .repo-title .sep { color: var(--fg-dim); }
+  .repo-title .name { color: var(--link); font-weight: 600; }
+  .badge-public { font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; color: var(--fg-muted); margin-left: 4px; }
+  .repo-actions { margin: 12px 0 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { background: var(--btn); border: 1px solid var(--border); color: var(--fg); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .btn:hover { background: var(--btn-hover); }
+  .btn .count { background: oklch(28% 0.012 270); padding: 1px 6px; border-radius: 999px; font-weight: 500; color: var(--fg-muted); }
+  .repo-tabs { display: flex; gap: 4px; font-size: 13px; padding-top: 8px; }
+  .repo-tabs .tab { padding: 8px 12px; color: var(--fg); border-bottom: 2px solid transparent; }
+  .repo-tabs .tab.active { border-color: var(--amber); font-weight: 600; }
+  .repo-tabs .tab .num { color: var(--fg-dim); margin-left: 4px; font-size: 11px; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 1fr 296px; gap: 32px; padding: 24px; max-width: 1280px; margin: 0 auto; }
+  .main { min-width: 0; }
+  .sidebar { font-size: 13px; }
+
+  /* File-tree row */
+  .repo-summary { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; }
+  .repo-summary .row { padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .repo-summary .row + .row { border-top: 1px solid var(--border-soft); }
+  .commit-author { color: var(--fg); font-weight: 600; }
+  .commit-msg { color: var(--fg-muted); }
+  .commit-sha { color: var(--fg-dim); }
+  .file-row { padding: 6px 16px; }
+  .file-name { color: var(--link); width: 280px; }
+  .file-msg { color: var(--fg-muted); flex: 1; }
+  .file-age { color: var(--fg-dim); font-size: 12px; }
+  .file-row.dir .file-name::before { content: "▸ "; color: var(--amber); }
+  .file-row.doc .file-name::before { content: "▤ "; color: var(--fg-dim); }
+
+  /* README pane */
+  .readme { border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+  .readme-head { padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--fg-muted); display: flex; align-items: center; gap: 8px; }
+  .readme-body { padding: 32px 40px; }
+
+  /* Markdown rendering */
+  .md h1 { font-size: 28px; font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin: 0 0 16px; }
+  .md h2 { font-size: 22px; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin: 28px 0 14px; }
+  .md h3 { font-size: 17px; font-weight: 600; margin: 22px 0 10px; }
+  .md p { margin: 10px 0; color: var(--fg); }
+  .md p.muted { color: var(--fg-muted); }
+  .md ul { padding-left: 22px; margin: 10px 0; }
+  .md li { margin: 4px 0; }
+  .md hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; }
+  .md code.inline { background: oklch(28% 0.012 270 / 0.55); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .md pre { background: var(--bg-code); border: 1px solid var(--border-soft); border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-size: 12.5px; line-height: 1.55; }
+  .md pre .c { color: var(--fg-dim); }
+  .md pre .k { color: var(--violet); }
+  .md pre .s { color: var(--green); }
+  .md pre .n { color: var(--amber); }
+  .md table { border-collapse: collapse; margin: 14px 0; width: 100%; font-size: 13px; }
+  .md th, .md td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
+  .md th { background: var(--bg-elev); font-weight: 600; }
+  .md blockquote { border-left: 4px solid var(--amber); background: oklch(22% 0.020 85 / 0.25); padding: 8px 14px; margin: 12px 0; color: var(--fg-muted); }
+
+  /* Badge row */
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 16px; }
+  .b { display: inline-flex; height: 20px; border-radius: 3px; overflow: hidden; font-size: 11px; font-family: ui-monospace, monospace; line-height: 20px; }
+  .b .l { background: oklch(30% 0.005 270); color: oklch(95% 0 0); padding: 0 6px; }
+  .b .r { padding: 0 6px; color: oklch(15% 0 0); font-weight: 600; }
+  .b .green { background: oklch(70% 0.150 145); }
+  .b .blue { background: oklch(72% 0.110 240); color: oklch(98% 0 0); }
+  .b .amber { background: oklch(78% 0.130 85); }
+  .b .violet { background: oklch(70% 0.110 295); color: oklch(98% 0 0); }
+  .b .gray { background: oklch(55% 0.010 270); color: oklch(98% 0 0); }
+
+  /* Hero SVG */
+  .hero { display: flex; align-items: center; gap: 24px; padding: 12px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .hero svg { flex-shrink: 0; }
+  .hero .tag { font-size: 13px; color: var(--fg-muted); }
+  .hero .tag .ko { display: block; margin-top: 6px; color: var(--fg); font-size: 14px; }
+
+  /* Sidebar */
+  .side-section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .side-section:last-child { border-bottom: 0; }
+  .side-h { font-size: 12px; font-weight: 600; color: var(--fg); text-transform: none; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .side-h .gear { color: var(--fg-dim); font-size: 11px; }
+  .topics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .topic { background: oklch(28% 0.060 240 / 0.45); color: oklch(80% 0.110 240); border: 1px solid oklch(35% 0.060 240 / 0.6); padding: 2px 9px; border-radius: 999px; font-size: 11px; }
+  .release-tag { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-weight: 600; font-size: 13px; }
+  .release-meta { color: var(--fg-muted); font-size: 12px; margin-top: 2px; }
+  .contributors { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--bg-elev); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: var(--fg-muted); font-weight: 600; }
+
+  /* Architecture diagram */
+  .arch { background: var(--bg-code); border: 1px solid var(--border-soft); border-radius: 6px; padding: 16px; margin: 12px 0; }
+</style>
+</head>
+<body>
+
+<!-- top github nav -->
+<div class="topnav">
+  <svg class="logo" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-1.93c-3.2.7-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.95.1-.74.4-1.25.73-1.54-2.55-.29-5.23-1.27-5.23-5.66 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.17a10.97 10.97 0 0 1 5.74 0c2.19-1.48 3.15-1.17 3.15-1.17.62 1.58.23 2.75.11 3.04.74.8 1.18 1.82 1.18 3.07 0 4.4-2.69 5.36-5.25 5.65.41.36.78 1.06.78 2.13v3.16c0 .31.21.66.79.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+  <input type="text" placeholder="Type / to search" />
+  <a class="navlink" href="#">Pull requests</a>
+  <a class="navlink" href="#">Issues</a>
+  <a class="navlink" href="#">Marketplace</a>
+  <a class="navlink" href="#">Explore</a>
+  <span class="spacer"></span>
+  <span style="color:var(--fg-muted);">@app-2weeks</span>
+</div>
+
+<!-- repo header -->
+<div class="repo-header">
+  <div class="repo-title">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="oklch(68% 0.012 270)"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+    <span class="org">Two-Weeks-Team</span>
+    <span class="sep">/</span>
+    <span class="name">he-was-socrates</span>
+    <span class="badge-public">Public</span>
+  </div>
+  <div class="repo-actions">
+    <span class="btn">Pin</span>
+    <span class="btn">Unwatch <span class="count">12</span></span>
+    <span class="btn">Fork <span class="count">47</span></span>
+    <span class="btn">★ Star <span class="count">812</span></span>
+  </div>
+  <div class="repo-tabs">
+    <span class="tab active">▤ Code</span>
+    <span class="tab">⊙ Issues<span class="num">7</span></span>
+    <span class="tab">⇄ Pull requests<span class="num">2</span></span>
+    <span class="tab">▶ Actions</span>
+    <span class="tab">⌗ Projects</span>
+    <span class="tab">⛨ Security</span>
+    <span class="tab">📊 Insights</span>
+  </div>
+</div>
+
+<!-- main / sidebar -->
+<div class="layout">
+  <div class="main">
+
+    <!-- file summary strip -->
+    <div class="repo-summary">
+      <div class="row">
+        <div class="avatar" style="background:oklch(60% 0.080 30);color:oklch(15% 0 0);">AK</div>
+        <span class="commit-author">app-2weeks</span>
+        <span class="commit-msg">Merge pull request #32 from Two-Weeks-Team/perf/disk-mediated-kv-reuse-pr-lambda</span>
+        <span class="spacer" style="flex:1"></span>
+        <span class="commit-sha mono">3f02a34</span>
+        <span class="file-age">yesterday</span>
+        <span class="commit-msg">⊙ 412</span>
+      </div>
+      <div class="row file-row dir"><span class="file-name">apps/macos</span><span class="file-msg">feat(app): PreflightView + PermissionExplainerView (PR #33)</span><span class="file-age">3 hours ago</span></div>
+      <div class="row file-row dir"><span class="file-name">packages/SocraticEngine</span><span class="file-msg">perf(gemma): disk-mediated KV cache reuse — TTFT 4.6s→192ms</span><span class="file-age">yesterday</span></div>
+      <div class="row file-row dir"><span class="file-name">assets</span><span class="file-msg">chore(scripts): regenerate halftone manifest (deterministic)</span><span class="file-age">3 days ago</span></div>
+      <div class="row file-row dir"><span class="file-name">runs/2026-05-05-spec</span><span class="file-msg">spec(iter6): macOS 26 floor + AssetInventory delta</span><span class="file-age">5 days ago</span></div>
+      <div class="row file-row doc"><span class="file-name">CLAUDE.md</span><span class="file-msg">docs: absolute invariants × 6, frozen contract pointers</span><span class="file-age">last week</span></div>
+      <div class="row file-row doc"><span class="file-name">CONTRIBUTING.md</span><span class="file-msg">docs: Conventional Commits scopes + make ci-local gate</span><span class="file-age">last week</span></div>
+      <div class="row file-row doc"><span class="file-name">LICENSE-CODE</span><span class="file-msg">Apache-2.0</span><span class="file-age">last month</span></div>
+      <div class="row file-row doc"><span class="file-name">LICENSE-CONTENT</span><span class="file-msg">CC-BY-4.0 (system prompt + halftone aesthetic)</span><span class="file-age">last month</span></div>
+      <div class="row file-row doc"><span class="file-name">Makefile</span><span class="file-msg">make doctor / engine / engine-test / app / ci-local</span><span class="file-age">last week</span></div>
+      <div class="row file-row doc"><span class="file-name">README.md</span><span class="file-msg">docs: hackathon hero + 30s quick-start</span><span class="file-age">2 hours ago</span></div>
+    </div>
+
+    <!-- README -->
+    <div class="readme">
+      <div class="readme-head">
+        <span>▤</span><span>README.md</span>
+        <span class="spacer" style="flex:1"></span>
+        <span style="color:var(--fg-dim);">⌗ Outline</span>
+        <span style="color:var(--fg-dim);">✎ Edit</span>
+        <span style="color:var(--fg-dim);">⌧ Raw</span>
+      </div>
+      <div class="readme-body md">
+
+        <h1>He Was Socrates</h1>
+
+        <div class="badges">
+          <span class="b"><span class="l">license</span><span class="r green">Apache-2.0</span></span>
+          <span class="b"><span class="l">content</span><span class="r violet">CC-BY-4.0</span></span>
+          <span class="b"><span class="l">CI</span><span class="r green">passing</span></span>
+          <span class="b"><span class="l">tests</span><span class="r green">65 / 65</span></span>
+          <span class="b"><span class="l">model</span><span class="r blue">Gemma 4 E4B 4-bit MLX</span></span>
+          <span class="b"><span class="l">platform</span><span class="r amber">macOS 26+</span></span>
+          <span class="b"><span class="l">network</span><span class="r gray">0 byte egress</span></span>
+          <span class="b"><span class="l">TTFT</span><span class="r green">192 ms</span></span>
+          <span class="b"><span class="l">hackathon</span><span class="r violet">Gemma 4 Good</span></span>
+        </div>
+
+        <div class="hero">
+          <!-- 1-bit halftone bust SVG -->
+          <svg width="120" height="140" viewBox="0 0 120 140" aria-label="halftone bust">
+            <defs>
+              <radialGradient id="ht" cx="50%" cy="42%" r="60%">
+                <stop offset="0%" stop-color="oklch(95% 0 0)"/>
+                <stop offset="55%" stop-color="oklch(60% 0 0)"/>
+                <stop offset="100%" stop-color="oklch(20% 0 0)"/>
+              </radialGradient>
+              <pattern id="dots" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.1" fill="oklch(92% 0.008 270)"/>
+              </pattern>
+              <mask id="bust">
+                <rect width="120" height="140" fill="black"/>
+                <ellipse cx="60" cy="56" rx="34" ry="42" fill="white"/>
+                <path d="M22 138 Q60 96 98 138 Z" fill="white"/>
+              </mask>
+            </defs>
+            <rect width="120" height="140" fill="oklch(17% 0.012 270)"/>
+            <g mask="url(#bust)">
+              <rect width="120" height="140" fill="url(#ht)"/>
+              <rect width="120" height="140" fill="url(#dots)" style="mix-blend-mode:multiply;opacity:.55"/>
+            </g>
+            <rect x="0.5" y="0.5" width="119" height="139" fill="none" stroke="oklch(30% 0.012 270)"/>
+          </svg>
+          <div class="tag">
+            100% on-device Korean Socratic bust on macOS, powered by Gemma 4 E4B 4-bit MLX.
+            Zero bytes leave the device. The abstention mechanic is the product.
+            <span class="ko">묻는 법을 가르친다. 답하지 않는다.</span>
+          </div>
+        </div>
+
+        <blockquote>
+          <strong>Submission:</strong> The Gemma 4 Good Hackathon (Kaggle × Google DeepMind, $200K, deadline 2026-05-19 08:59 KST). Categories: <em>Impact-focused / Education</em> (primary) · <em>Technical</em> (secondary). See <a href="#hackathon">§ Hackathon submission</a>.
+        </blockquote>
+
+        <h2>Quick start</h2>
+        <p class="muted">Tested on macOS 26 Tahoe, M1 Max / M2 Pro / M3. Requires Xcode 15.2+ for the <code class="inline">.app</code> target; engine layer builds with Command Line Tools alone.</p>
+
+<pre><span class="c"># clone</span>
+git clone https://github.com/Two-Weeks-Team/he-was-socrates.git
+cd he-was-socrates
+
+<span class="c"># 1. toolchain audit (Swift / Xcode / xcodegen / python3 / swift-format)</span>
+make doctor
+
+<span class="c"># 2. engine layer — 65 swift-testing scenarios, ~1.5 s on M2 Pro</span>
+make engine-test
+
+<span class="c"># 3. app target (regenerates xcodeproj, builds Debug, opens fullscreen bust)</span>
+make xcodeproj &amp;&amp; make app
+open apps/macos/HeWasSocrates/build/Debug/HeWasSocrates.app
+
+<span class="c"># first launch downloads ~3.97 GB Gemma 4 E4B 4-bit weights via OS-mediated MLX cache</span>
+<span class="c"># (only sanctioned network egress — entitlements file has no network.client)</span></pre>
+
+        <p>Press <code class="inline">Space</code> to talk. Release to think. The bust returns a question, not an answer.</p>
+
+        <h2>Why on-device</h2>
+        <ul>
+          <li><strong>Zero bytes leave the device.</strong> No <code class="inline">network.client</code> / <code class="inline">network.server</code> entitlement. Verify: <a href="#">apps/macos/HeWasSocrates/Resources/HeWasSocrates.entitlements</a>.</li>
+          <li><strong>STT is on-device.</strong> <code class="inline">SFSpeechRecognizer</code> with <code class="inline">requiresOnDeviceRecognition = true</code>. Pull the WiFi mid-demo — nothing breaks.</li>
+          <li><strong>The abstention mechanic is the product.</strong> <code class="inline">defer_to_human</code> handles medical / legal / financial / emergency / welfare / insurance topics. Honest hand-off, not an answering machine.</li>
+          <li><strong>Korean tone is locked.</strong> 단정한 평어체 — neither 존댓말 nor friendly-banmal. System prompt is verbatim user-authored at <a href="#">Sources/SocraticEngine/Gemma/SystemPrompt.swift</a>.</li>
+        </ul>
+
+        <h2>Architecture</h2>
+        <div class="arch">
+<pre style="background:transparent;border:0;padding:0;">
+  Spacebar press
+    <span class="k">→</span> AudioInputManager        <span class="c">// SFSpeechRecognizer + AVAudioEngine, push-to-talk</span>
+    <span class="k">→</span> FunctionCallOrchestrator  <span class="c">// Gemma 4 native function calling</span>
+         <span class="k">├──</span> mode_classify
+         <span class="k">├──</span> surface_past_wonder    <span class="c">// 256K context, multi-year recall (Phase 4 wiring)</span>
+         <span class="k">├──</span> ask_back               <span class="c">// returns a Socratic question</span>
+         <span class="k">└──</span> defer_to_human         <span class="c">// ⊘ for med/legal/fin/emerg/welfare/insurance</span>
+    <span class="k">→</span> GemmaService             <span class="c">// mlx-swift-lm, 4-bit MLX, 3.97 GB</span>
+    <span class="k">→</span> TTSManager               <span class="c">// AVSpeechSynthesizer (Yuna ko / Samantha en)</span>
+    <span class="k">→</span> VisemeDriver             <span class="c">// 30 fps, audio-clock synced, 16 PNG swap</span>
+    <span class="k">→</span> WonderingLog             <span class="c">// Core Data, SHA-256 dedup, never leaves device</span>
+</pre>
+        </div>
+        <p class="muted">See <a href="#">runs/2026-05-05-spec/spec/SPEC.md</a> (lock SHA <code class="inline">e5dfadf2c8…314c5</code>) and <a href="#">function_call_contract.yaml</a> for the frozen contract.</p>
+
+        <h2>Performance</h2>
+        <table>
+          <tr><th>Metric</th><th>Value</th><th>Source</th></tr>
+          <tr><td>TTFT (median, n=10)</td><td><strong>192 ms</strong></td><td><a href="#">claudedocs/bench/2026-05-06-latency-bench.json</a></td></tr>
+          <tr><td>TTFT improvement (PR-Λ)</td><td>4.6 s → 192 ms (<strong>24×</strong>)</td><td><a href="#">PR #32</a></td></tr>
+          <tr><td>Per-turn user-facing</td><td>~2 s</td><td>decode + STT endpoint + TTS prep</td></tr>
+          <tr><td>Network egress at runtime</td><td>0 bytes</td><td>entitlements + Charles proxy log</td></tr>
+          <tr><td>Tests</td><td>65 / 65 passing</td><td><code class="inline">make engine-test</code></td></tr>
+        </table>
+
+        <h2 id="hackathon">Hackathon submission</h2>
+        <p>This repo is the canonical artifact for <a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">The Gemma 4 Good Hackathon</a>. The hosted Kaggle preview at <a href="https://two-weeks-team.github.io/he-was-socrates/">two-weeks-team.github.io/he-was-socrates</a> is a reference implementation of the README — judges should treat the repo as source of truth.</p>
+        <table>
+          <tr><th>Rubric axis</th><th>Evidence in this repo</th></tr>
+          <tr><td>Impact / Education (primary)</td><td><a href="#">SystemPrompt.swift</a> · <a href="#">function_call_contract.yaml</a> § <code class="inline">defer_to_human</code></td></tr>
+          <tr><td>Technical execution (secondary)</td><td><a href="#">PR #32 PR-Λ</a> · <a href="#">claudedocs/bench/</a> · <a href="#">PR #33 Preflight</a></td></tr>
+          <tr><td>Constrained environments</td><td><a href="#">HeWasSocrates.entitlements</a> · App Sandbox + 0 byte egress</td></tr>
+          <tr><td>Function calling</td><td>4-function dispatch · <a href="#">FunctionCallOrchestrator.swift</a></td></tr>
+          <tr><td>Long context (256K)</td><td><code class="inline">surface_past_wonder</code> over <code class="inline">WonderingLog</code> (Phase 4 wiring; current: stub for surfacing logic)</td></tr>
+          <tr><td>Configurable thinking mode</td><td><code class="inline">Phase.thinking</code> soft pulse on bust · <a href="#">EngineCoordinator.swift</a></td></tr>
+        </table>
+
+        <h2>Contributing</h2>
+        <p>See <a href="#">CONTRIBUTING.md</a>. TL;DR: feature branches only, Conventional Commits with scopes from <code class="inline">{engine, viseme, audio, gemma, app, scripts, ci, docs, spec}</code>, run <code class="inline">make ci-local</code> before pushing, PRs merge with <code class="inline">gh pr merge --merge</code> (squash forbidden — history is preserved).</p>
+        <p>Open issues are labeled <code class="inline">good-first-issue</code> for asset-pipeline determinism and <code class="inline">help-wanted</code> for additional viseme phoneme markers. <a href="#">View open issues →</a></p>
+
+        <h2>License</h2>
+        <p>Code under <a href="#">Apache-2.0</a>. Content (Korean system prompt, halftone aesthetic, 16 viseme PNGs, README copy) under <a href="#">CC-BY-4.0</a>. Gemma 4 weights subject to <a href="#">Google DeepMind's Gemma Terms of Use</a>.</p>
+        <p class="muted"><strong>Attribution:</strong> Gemma 4 — Google DeepMind. MLX / mlx-swift-lm — Apple ML team. Korean 단정한 평어체 system prompt — Two-Weeks-Team (verbatim, frozen invariant).</p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- sidebar -->
+  <aside class="sidebar">
+    <div class="side-section">
+      <div class="side-h">About <span class="gear">⚙</span></div>
+      <p style="color:var(--fg-muted);margin:6px 0;">100% on-device Korean Socratic bust on macOS. Gemma 4 E4B 4-bit MLX. The abstention mechanic is the product.</p>
+      <p style="color:var(--fg-muted);margin:8px 0;font-size:12px;">⚲ <a href="https://two-weeks-team.github.io/he-was-socrates/">two-weeks-team.github.io/he-was-socrates</a></p>
+      <div class="topics">
+        <span class="topic">gemma-4</span>
+        <span class="topic">on-device</span>
+        <span class="topic">korean</span>
+        <span class="topic">mlx</span>
+        <span class="topic">socratic</span>
+        <span class="topic">education</span>
+        <span class="topic">macos</span>
+        <span class="topic">privacy-first</span>
+        <span class="topic">function-calling</span>
+      </div>
+      <div style="margin-top:12px;color:var(--fg-muted);font-size:12px;line-height:1.8;">
+        <div>⚖ Apache-2.0 + CC-BY-4.0</div>
+        <div>★ 812 stars</div>
+        <div>👁 12 watching</div>
+        <div>⑂ 47 forks</div>
+        <div>📋 Submitted to Gemma 4 Good Hackathon</div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-h">Releases <span style="color:var(--fg-dim);">3</span></div>
+      <div class="release-tag">🏷 v0.4.0-pr-lambda</div>
+      <div class="release-meta">Latest · yesterday</div>
+      <div style="color:var(--fg-muted);font-size:12px;margin-top:6px;">PR-Λ disk-mediated KV cache reuse · TTFT 4.6 s → 192 ms (24×)</div>
+      <div style="margin-top:10px;color:var(--fg-muted);font-size:12px;">+ 2 releases</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-h">Packages</div>
+      <div style="color:var(--fg-muted);font-size:12px;">No packages published</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-h">Used by <span style="color:var(--fg-dim);">0</span></div>
+      <div style="color:var(--fg-muted);font-size:12px;">Be the first — fork and ship.</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-h">Contributors <span style="color:var(--fg-dim);">5</span></div>
+      <div class="contributors">
+        <span class="avatar" style="background:oklch(60% 0.080 30);color:oklch(15% 0 0);">AK</span>
+        <span class="avatar" style="background:oklch(62% 0.090 145);color:oklch(15% 0 0);">SH</span>
+        <span class="avatar" style="background:oklch(60% 0.090 240);color:oklch(98% 0 0);">JM</span>
+        <span class="avatar" style="background:oklch(62% 0.090 295);color:oklch(98% 0 0);">YK</span>
+        <span class="avatar" style="background:oklch(70% 0.130 85);color:oklch(15% 0 0);">CL</span>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-h">Languages</div>
+      <div style="height:8px;border-radius:999px;overflow:hidden;display:flex;margin:6px 0 10px;">
+        <span style="background:oklch(70% 0.110 25);width:74%;"></span>
+        <span style="background:oklch(70% 0.130 85);width:18%;"></span>
+        <span style="background:oklch(72% 0.110 240);width:5%;"></span>
+        <span style="background:oklch(60% 0.012 270);width:3%;"></span>
+      </div>
+      <div style="color:var(--fg-muted);font-size:12px;line-height:1.8;">
+        <div>● Swift &nbsp; 74.2%</div>
+        <div>● Python &nbsp; 18.1%</div>
+        <div>● YAML &nbsp; 4.7%</div>
+        <div>● Other &nbsp; 3.0%</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>

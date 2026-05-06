@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>P08 · The Slack-Native — He Was Socrates</title>
+<style>
+  :root{
+    --bg: oklch(0.18 0.02 280);
+    --slack-sidebar: oklch(0.22 0.04 285);
+    --slack-sidebar-active: oklch(0.55 0.18 250);
+    --slack-pane: oklch(0.99 0.005 270);
+    --slack-pane-ink: oklch(0.18 0.02 280);
+    --slack-muted: oklch(0.55 0.01 270);
+    --slack-divider: oklch(0.92 0.005 270);
+    --slack-hover: oklch(0.97 0.005 270);
+    --slack-accent: oklch(0.55 0.18 250);
+    --bot-tag: oklch(0.92 0.04 250);
+    --bot-tag-ink: oklch(0.35 0.12 250);
+    --defer: oklch(0.55 0.16 30);
+    --defer-bg: oklch(0.97 0.03 30);
+    --escape: oklch(0.50 0.15 250);
+    --code-bg: oklch(0.96 0.005 270);
+    --code-ink: oklch(0.30 0.04 280);
+    --thread-bar: oklch(0.85 0.04 250);
+    --window-shadow: 0 30px 60px oklch(0 0 0 / 0.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--slack-pane-ink);
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .stage-label{
+    color: oklch(0.85 0.02 270);
+    font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    margin-bottom: 14px; opacity: 0.7;
+  }
+  .slack-window{
+    width: 100%; max-width: 1180px;
+    background: var(--slack-pane);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: var(--window-shadow);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 36px 1fr;
+  }
+  .titlebar{
+    grid-column: 1 / -1;
+    background: oklch(0.20 0.03 285);
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px;
+  }
+  .traffic{display:flex;gap:6px}
+  .traffic span{width:11px;height:11px;border-radius:50%;display:block}
+  .traffic span:nth-child(1){background:oklch(0.65 0.20 25)}
+  .traffic span:nth-child(2){background:oklch(0.78 0.16 80)}
+  .traffic span:nth-child(3){background:oklch(0.70 0.16 145)}
+  .titlebar .ws{
+    color: oklch(0.92 0.01 270);
+    font-size: 12px; margin-left: 14px; font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .titlebar .ws span{color: oklch(0.70 0.01 270); font-weight: 400; margin-left: 8px}
+
+  .sidebar{
+    background: var(--slack-sidebar);
+    color: oklch(0.85 0.01 270);
+    padding: 14px 0;
+    font-size: 13px;
+  }
+  .sidebar .ws-name{
+    padding: 0 14px 10px;
+    font-weight: 700; font-size: 14px; color: oklch(0.96 0.01 270);
+    border-bottom: 1px solid oklch(0.30 0.04 285);
+    margin-bottom: 10px;
+    display:flex; justify-content: space-between; align-items: center;
+  }
+  .sidebar .ws-name .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: oklch(0.70 0.16 145);
+  }
+  .sidebar .group{
+    padding: 8px 14px 4px;
+    font-size: 11px; letter-spacing: 0.04em;
+    color: oklch(0.65 0.01 270); text-transform: lowercase;
+  }
+  .sidebar ul{list-style:none;margin:0;padding:0}
+  .sidebar li{
+    padding: 4px 14px;
+    display: flex; align-items: center; gap: 8px;
+    cursor: default;
+  }
+  .sidebar li.active{
+    background: var(--slack-sidebar-active);
+    color: oklch(1 0 0);
+    font-weight: 600;
+  }
+  .sidebar li .hash{opacity: 0.7; font-weight: 400}
+  .sidebar li .badge{
+    margin-left:auto; background: oklch(0.65 0.20 25); color: white;
+    font-size: 10px; padding: 1px 6px; border-radius: 8px;
+  }
+
+  .main{
+    display: grid;
+    grid-template-rows: 56px 1fr 64px;
+    overflow: hidden;
+    background: var(--slack-pane);
+  }
+  .channel-header{
+    border-bottom: 1px solid var(--slack-divider);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 18px;
+  }
+  .channel-header h2{
+    margin:0; font-size: 16px; font-weight: 700;
+    display:flex; align-items: center; gap: 6px;
+  }
+  .channel-header h2 .hash{color: var(--slack-muted); font-weight: 400}
+  .channel-header .meta{
+    color: var(--slack-muted); font-size: 12px;
+    border-left: 1px solid var(--slack-divider);
+    padding-left: 14px;
+  }
+  .channel-header .pinned{
+    margin-left:auto; color: var(--slack-muted); font-size: 12px;
+    display:flex; gap: 14px;
+  }
+
+  .feed{
+    overflow-y: auto;
+    padding: 12px 0 4px;
+  }
+  .day-divider{
+    display:flex; align-items:center; gap:8px;
+    color: var(--slack-muted); font-size: 11px;
+    margin: 8px 18px;
+  }
+  .day-divider::before, .day-divider::after{
+    content:""; flex:1; border-top: 1px solid var(--slack-divider);
+  }
+
+  .msg{
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 10px;
+    padding: 6px 18px;
+  }
+  .msg:hover{background: var(--slack-hover)}
+  .avatar{
+    width: 36px; height: 36px; border-radius: 6px;
+    background: oklch(0.85 0.02 270);
+    display:flex; align-items:center; justify-content:center;
+    font-weight: 700; color: oklch(0.30 0.04 270);
+    font-size: 13px;
+  }
+  .avatar.bot{
+    background: oklch(0.18 0.02 280);
+    color: oklch(0.95 0.01 270);
+  }
+  .avatar.bot svg{width: 24px; height: 24px}
+  .name-row{display:flex; align-items: baseline; gap: 6px}
+  .name{font-weight: 700; color: var(--slack-pane-ink); font-size: 14px}
+  .bot-tag{
+    background: var(--bot-tag); color: var(--bot-tag-ink);
+    font-size: 10px; padding: 1px 5px; border-radius: 3px;
+    font-weight: 700; letter-spacing: 0.04em;
+  }
+  .ts{color: var(--slack-muted); font-size: 11px}
+  .body{font-size: 14px; line-height: 1.5; color: var(--slack-pane-ink); margin-top: 2px}
+  .body .slash{
+    background: var(--code-bg); color: var(--code-ink);
+    padding: 1px 6px; border-radius: 3px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    border: 1px solid var(--slack-divider);
+  }
+
+  .bot-card{
+    border-left: 3px solid var(--slack-accent);
+    background: oklch(0.99 0.005 250);
+    padding: 10px 14px;
+    margin-top: 4px;
+    border-radius: 0 6px 6px 0;
+  }
+  .bot-card.defer{
+    border-left-color: var(--defer);
+    background: var(--defer-bg);
+  }
+  .bot-card .ko{
+    font-size: 14.5px; line-height: 1.7; color: var(--slack-pane-ink);
+  }
+  .bot-card .ko .em{ font-weight: 700 }
+  .bot-card .meta-row{
+    margin-top: 8px;
+    display:flex; gap: 12px; align-items: center;
+    font-size: 11px; color: var(--slack-muted);
+  }
+  .bot-card .meta-row .pill{
+    background: oklch(0.94 0.02 270); padding: 2px 8px; border-radius: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px;
+  }
+  .bot-card .meta-row .pill.fc{color: oklch(0.40 0.12 250)}
+  .bot-card .meta-row .pill.defer{color: var(--defer); background: oklch(0.95 0.04 30)}
+  .escape-link{
+    display:inline-flex; align-items:center; gap:6px;
+    margin-top: 8px;
+    background: white; border: 1px solid var(--slack-divider);
+    padding: 8px 12px; border-radius: 6px;
+    color: var(--escape); font-weight: 600; font-size: 13px;
+    text-decoration: none;
+  }
+  .escape-link::after{content:"↗"; font-size: 11px; opacity: 0.7}
+
+  .reactions{
+    display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .reaction{
+    display:inline-flex; align-items:center; gap: 4px;
+    background: oklch(0.96 0.02 250);
+    border: 1px solid oklch(0.88 0.04 250);
+    border-radius: 12px; padding: 1px 8px;
+    font-size: 12px; color: oklch(0.30 0.10 250);
+  }
+  .reaction .emoji{font-size: 13px}
+  .reaction .count{font-weight: 600}
+
+  .composer{
+    border-top: 1px solid var(--slack-divider);
+    padding: 10px 18px;
+    background: var(--slack-pane);
+    display:flex; flex-direction: column; gap: 6px;
+  }
+  .composer-box{
+    border: 1px solid oklch(0.85 0.01 270);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--slack-muted);
+    font-size: 13px;
+    display:flex; align-items:center; gap: 8px;
+  }
+  .composer-box .placeholder{flex:1}
+  .composer-hint{color: var(--slack-muted); font-size: 11px}
+  .composer-hint code{
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--code-bg); padding: 1px 4px; border-radius: 3px;
+    font-size: 11px;
+  }
+
+  /* App Home overlay */
+  .home-tab{
+    margin: 28px auto 0;
+    max-width: 720px; width: 100%;
+    background: var(--slack-pane);
+    border-radius: 10px;
+    box-shadow: var(--window-shadow);
+    overflow: hidden;
+    color: var(--slack-pane-ink);
+  }
+  .home-tab-bar{
+    display:flex; gap: 0; border-bottom: 1px solid var(--slack-divider);
+    padding: 0 16px; background: oklch(0.98 0.005 270);
+  }
+  .home-tab-bar .tab{
+    padding: 12px 16px; font-size: 13px; color: var(--slack-muted);
+    border-bottom: 2px solid transparent;
+  }
+  .home-tab-bar .tab.active{
+    color: var(--slack-pane-ink); font-weight: 700;
+    border-bottom-color: var(--slack-accent);
+  }
+  .home-body{padding: 22px 24px}
+  .home-body h3{margin: 0 0 4px; font-size: 18px}
+  .home-body .sub{color: var(--slack-muted); font-size: 12px; margin-bottom: 18px}
+  .row{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-top: 1px solid var(--slack-divider);
+  }
+  .row .label{font-size: 13.5px; font-weight: 600}
+  .row .desc{font-size: 12px; color: var(--slack-muted); margin-top: 2px}
+  .toggle{
+    display:inline-flex; background: oklch(0.94 0.005 270);
+    border-radius: 16px; padding: 2px; font-size: 11.5px;
+    border: 1px solid var(--slack-divider);
+  }
+  .toggle span{
+    padding: 4px 12px; border-radius: 14px; cursor: default;
+    color: var(--slack-muted); font-weight: 600; letter-spacing: 0.04em;
+  }
+  .toggle span.on{background: var(--slack-pane-ink); color: oklch(0.98 0.01 270)}
+  .switch{
+    width: 36px; height: 20px; background: var(--slack-accent);
+    border-radius: 10px; position: relative; flex-shrink: 0;
+  }
+  .switch::after{
+    content:""; position: absolute; top: 2px; right: 2px;
+    width: 16px; height: 16px; background: white; border-radius: 50%;
+  }
+  .privacy{
+    margin-top: 16px; padding: 14px;
+    background: oklch(0.97 0.01 270); border-radius: 8px;
+    border-left: 3px solid var(--slack-pane-ink);
+    font-size: 12.5px; line-height: 1.6;
+  }
+  .privacy strong{display:block; margin-bottom: 4px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase}
+  .privacy code{
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px; background: oklch(0.92 0.01 270);
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  .footer-note{
+    color: oklch(0.70 0.02 270); font-size: 11px;
+    margin-top: 18px; text-align: center; max-width: 720px;
+  }
+  .footer-note code{
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: oklch(0.25 0.03 285); color: oklch(0.85 0.02 270);
+    padding: 1px 5px; border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage-label">P08 · The Slack-Native — Slack screenshot mockup</div>
+
+<div class="slack-window">
+  <div class="titlebar">
+    <div class="traffic"><span></span><span></span><span></span></div>
+    <div class="ws">Two-Weeks-Team <span>· #two-weeks-team · 7 members</span></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="ws-name">Two-Weeks-Team <span class="dot" aria-hidden="true"></span></div>
+    <div class="group">Channels</div>
+    <ul>
+      <li><span class="hash">#</span> general</li>
+      <li class="active"><span class="hash">#</span> two-weeks-team <span class="badge">2</span></li>
+      <li><span class="hash">#</span> hackathon-gemma</li>
+      <li><span class="hash">#</span> spec-and-locks</li>
+      <li><span class="hash">#</span> bench-results</li>
+    </ul>
+    <div class="group">Apps</div>
+    <ul>
+      <li>◉ Socrates</li>
+      <li>○ GitHub</li>
+    </ul>
+    <div class="group">Direct messages</div>
+    <ul>
+      <li>● jisoo</li>
+      <li>● minho</li>
+      <li>○ jay</li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <header class="channel-header">
+      <h2><span class="hash">#</span> two-weeks-team</h2>
+      <div class="meta">Where the hackathon submission gets argued</div>
+      <div class="pinned"><span>📌 3</span><span>👥 7</span></div>
+    </header>
+
+    <section class="feed">
+      <div class="day-divider">Today · May 7, 2026</div>
+
+      <!-- Message 1: slash command from jisoo -->
+      <article class="msg">
+        <div class="avatar">JS</div>
+        <div>
+          <div class="name-row">
+            <span class="name">jisoo</span>
+            <span class="ts">10:14 AM</span>
+          </div>
+          <div class="body">
+            <span class="slash">/socrates 시간이 부족하다는 게 어떤 의미야?</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Bot reply: ask_back -->
+      <article class="msg">
+        <div class="avatar bot" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="9" r="4.2" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M5 20c0-3.3 3.1-5.6 7-5.6S19 16.7 19 20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="10.5" cy="9" r="0.6" fill="currentColor"/>
+            <circle cx="13.5" cy="9" r="0.6" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <div class="name-row">
+            <span class="name">Socrates</span>
+            <span class="bot-tag">APP</span>
+            <span class="ts">10:14 AM</span>
+          </div>
+          <div class="bot-card">
+            <div class="ko">
+              부족하다고 느끼는 건 <span class="em">실제 분량</span>인가, 아니면 <span class="em">쓰는 방식</span>인가. 어제 하루를 떠올려 봐 — 가장 길게 머문 일이 무엇이었는지.
+            </div>
+            <div class="meta-row">
+              <span class="pill fc">fn: ask_back</span>
+              <span class="pill">mode: socratic</span>
+              <span>· relayed from local daemon ·</span>
+              <span>192 ms TTFT</span>
+            </div>
+          </div>
+          <div class="reactions">
+            <span class="reaction"><span class="emoji">🤔</span><span class="count">3</span></span>
+            <span class="reaction"><span class="emoji">👍</span><span class="count">2</span></span>
+            <span class="reaction"><span class="emoji">💬</span><span class="count">1</span></span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Message 2: slash command from minho -->
+      <article class="msg">
+        <div class="avatar">MH</div>
+        <div>
+          <div class="name-row">
+            <span class="name">minho</span>
+            <span class="ts">10:21 AM</span>
+          </div>
+          <div class="body">
+            <span class="slash">/socrates 가슴이 두근거려, 무슨 병이야?</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Bot reply: defer_to_human -->
+      <article class="msg">
+        <div class="avatar bot" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="9" r="4.2" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M5 20c0-3.3 3.1-5.6 7-5.6S19 16.7 19 20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="10.5" cy="9" r="0.6" fill="currentColor"/>
+            <circle cx="13.5" cy="9" r="0.6" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <div class="name-row">
+            <span class="name">Socrates</span>
+            <span class="bot-tag">APP</span>
+            <span class="ts">10:21 AM</span>
+          </div>
+          <div class="bot-card defer">
+            <div class="ko">
+              ⊘ 이 질문은 내가 대답할 자리가 아니야. 몸의 증상은 <span class="em">의사</span>에게 물어. 나는 옆에서 같이 생각해 줄 수는 있지만, 진단은 못 해.
+            </div>
+            <a class="escape-link" href="#">이건 의사에게 — 가까운 진료실 찾기</a>
+            <div class="meta-row">
+              <span class="pill defer">fn: defer_to_human</span>
+              <span class="pill">topic: medical</span>
+              <span>· abstention is the product ·</span>
+            </div>
+          </div>
+          <div class="reactions">
+            <span class="reaction"><span class="emoji">⊘</span><span class="count">5</span></span>
+            <span class="reaction"><span class="emoji">🙏</span><span class="count">2</span></span>
+            <span class="reaction"><span class="emoji">🤝</span><span class="count">1</span></span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Threaded reply preview -->
+      <article class="msg">
+        <div class="avatar">JY</div>
+        <div>
+          <div class="name-row">
+            <span class="name">jay</span>
+            <span class="ts">10:23 AM</span>
+          </div>
+          <div class="body">
+            우리 봇이 모른다고 답하는 거 진짜 좋다. 평어체도 좋고.
+          </div>
+          <div class="reactions">
+            <span class="reaction"><span class="emoji">💯</span><span class="count">4</span></span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="composer">
+      <div class="composer-box">
+        <span>＋</span>
+        <span class="placeholder">Message #two-weeks-team</span>
+        <span>Aa</span><span>@</span><span>:smile:</span>
+      </div>
+      <div class="composer-hint">
+        Try <code>/socrates &lt;질문&gt;</code> — Korean prompts route to your local daemon. Slack relays only; the model never runs in Slack's cloud.
+      </div>
+    </footer>
+  </main>
+</div>
+
+<!-- App Home tab preview -->
+<section class="home-tab" aria-label="Socrates app home tab">
+  <div class="home-tab-bar">
+    <div class="tab">Messages</div>
+    <div class="tab active">Home</div>
+    <div class="tab">About</div>
+  </div>
+  <div class="home-body">
+    <h3>Socrates · App Home</h3>
+    <div class="sub">Settings for /socrates in Two-Weeks-Team</div>
+
+    <div class="row">
+      <div>
+        <div class="label">Locale</div>
+        <div class="desc">Bot replies use 단정한 평어체 in ko; assertive plain English in en.</div>
+      </div>
+      <div class="toggle" role="group">
+        <span class="on">ko</span><span>en</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="label">Surface past wonderings</div>
+        <div class="desc">Allow the daemon to recall prior threads from your local wondering log.</div>
+      </div>
+      <div class="switch" aria-hidden="true"></div>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="label">Defer-to-human escape link</div>
+        <div class="desc">Show "이건 의사에게 / 변호사에게" CTA on medical · legal · financial · welfare · insurance · emergency.</div>
+      </div>
+      <div class="switch" aria-hidden="true"></div>
+    </div>
+
+    <div class="privacy">
+      <strong>Privacy</strong>
+      This Slack bot relays only — your prompts run on the user's Mac via the local <code>/socrates</code> daemon (Gemma 4 E4B 4-bit MLX, on-device). Slack receives the prompt to forward it to your machine and renders the daemon's reply. No model weights or wondering-log entries cross the network. Inference traces are not stored by the bot. To go fully offline, run the macOS app directly — the bot is a convenience layer, not the source of truth.
+    </div>
+  </div>
+</section>
+
+<div class="footer-note">
+  P08 · The Slack-Native — where work happens. Bot is relay-only · <code>fn: ask_back · defer_to_human · mode_classify · surface_past_wonder</code>
+</div>
+
+</body>
+</html>

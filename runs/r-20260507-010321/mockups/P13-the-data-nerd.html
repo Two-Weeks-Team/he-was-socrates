@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>He Was Socrates — Engine Telemetry (P13 The Data Nerd)</title>
+<meta name="viewport" content="width=1200, initial-scale=1">
+<style>
+  :root {
+    --bg: oklch(18% 0.02 290);
+    --panel: oklch(22% 0.02 290);
+    --panel-2: oklch(25% 0.02 290);
+    --ink: oklch(96% 0.01 90);
+    --muted: oklch(70% 0.02 290);
+    --line: oklch(35% 0.02 290);
+    --accent: oklch(82% 0.13 90);
+    --good: oklch(78% 0.14 150);
+    --warn: oklch(78% 0.16 60);
+    --defer: oklch(72% 0.14 25);
+    --series: oklch(85% 0.12 90);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.45; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 28px 32px 60px; position: relative; }
+  header { display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 22px; }
+  header h1 { margin: 0; font-family: "Times New Roman", serif; font-weight: 400; font-size: 26px; letter-spacing: 0.5px; }
+  header .meta { text-align: right; color: var(--muted); font-size: 11px; }
+  header .meta b { color: var(--ink); font-weight: 500; }
+  .bust-subtitle { position: absolute; top: 28px; right: 32px; transform: translateY(-100%);
+    font-family: "Times New Roman", serif; font-style: italic; color: var(--muted); font-size: 11px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; }
+  .kpi .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .kpi .value { font-family: "Times New Roman", serif; font-size: 38px; font-weight: 400; margin: 6px 0 2px; color: var(--ink); }
+  .kpi .unit { color: var(--muted); font-size: 14px; margin-left: 4px; font-family: ui-monospace, monospace; }
+  .kpi .delta { font-size: 11px; margin-top: 6px; }
+  .kpi .delta .good { color: var(--good); }
+  .kpi .delta .warn { color: var(--warn); }
+  .kpi .src { font-size: 10px; color: var(--muted); margin-top: 6px; }
+  .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 22px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; }
+  .panel h2 { margin: 0 0 4px; font-family: "Times New Roman", serif; font-weight: 400; font-size: 16px; }
+  .panel .sub { color: var(--muted); font-size: 11px; margin-bottom: 14px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: middle; border-radius: 1px; }
+  .funnel-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; margin-bottom: 22px; }
+  .funnel { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 14px; }
+  .step { background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; position: relative; }
+  .step .name { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .step .lat { font-family: "Times New Roman", serif; font-size: 22px; margin: 4px 0 2px; }
+  .step .lat .u { font-size: 11px; color: var(--muted); font-family: ui-monospace, monospace; }
+  .step .conv { font-size: 10px; color: var(--good); }
+  .step .bar { height: 4px; background: var(--line); margin-top: 8px; border-radius: 2px; overflow: hidden; }
+  .step .bar i { display: block; height: 100%; background: var(--accent); }
+  .drill { background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--defer);
+    border-radius: 3px; padding: 12px 14px; margin-top: 14px; font-size: 12px; }
+  .drill .head { color: var(--defer); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .drill .ko { font-family: "Times New Roman", serif; font-size: 14px; line-height: 1.5; color: var(--ink); }
+  .drill .en-gloss { color: var(--muted); font-size: 11px; margin-top: 6px; font-style: italic; }
+  table.dispatch { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+  table.dispatch th, table.dispatch td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  table.dispatch th { color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; }
+  table.dispatch td.n { font-family: ui-monospace, monospace; text-align: right; }
+  footer.method { border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 11px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  footer.method b { color: var(--ink); font-weight: 500; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="bust-subtitle">생각의 산파 · 단정한 평어체</div>
+
+<header>
+  <div>
+    <h1>He Was Socrates — Engine Telemetry</h1>
+    <div style="color: var(--muted); font-size: 11px; margin-top: 4px;">
+      Local-only analytics · No external SDK · Preserves NO-CLOUD invariant
+    </div>
+  </div>
+  <div class="meta">
+    Run <b>r-20260507-010321</b> &middot; Bench captured <b>2026-05-06T03:04:15Z</b><br>
+    Source: <code>claudedocs/bench/2026-05-06-latency-bench.json</code> &middot; Commit <b>3f02a34</b>
+  </div>
+</header>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="label">TTFT &mdash; first chunk latency (p50)</div>
+    <div class="value">190<span class="unit">ms</span></div>
+    <div class="delta"><span class="good">&minus;24&times;</span> vs slow-fallback 4570 ms</div>
+    <div class="src">turns[].firstChunkMs &middot; n=10</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Per-turn wall time (p50)</div>
+    <div class="value">809<span class="unit">ms</span></div>
+    <div class="delta"><span class="good">p10 720</span> &middot; <span class="warn">p90 1132</span></div>
+    <div class="src">summary.medianMs &middot; decode + close-brace</div>
+  </div>
+  <div class="kpi">
+    <div class="label">KV cache reuse advantage</div>
+    <div class="value">96<span class="unit">%</span></div>
+    <div class="delta"><span class="good">fast 265 ms</span> vs slow 4570 ms (1 &minus; ratio<sup>&minus;1</sup>)</div>
+    <div class="src">reuseProbe.ttftRatio = 17.26&times;</div>
+  </div>
+  <div class="kpi">
+    <div class="label">defer_to_human dispatch rate</div>
+    <div class="value">20<span class="unit">%</span></div>
+    <div class="delta"><span class="warn">2 / 10 turns</span> &middot; medical + financial</div>
+    <div class="src">turns[].deferred = true</div>
+  </div>
+</div>
+
+<!-- TTFT TIME SERIES + DISPATCH PIE -->
+<div class="grid">
+  <div class="panel">
+    <h2>TTFT across n=10 measurements</h2>
+    <div class="sub">First-chunk latency per turn, ordered by bench sequence. Reference lines = computed percentiles over the same n=10.</div>
+
+    <svg viewBox="0 0 760 280" width="100%" height="280" role="img" aria-label="TTFT time series chart">
+      <!-- background grid -->
+      <defs>
+        <pattern id="grid" width="76" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 76 0 L 0 0 0 40" fill="none" stroke="oklch(28% 0.02 290)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect x="50" y="20" width="700" height="220" fill="url(#grid)" />
+      <!-- Y axis labels (ms): 0, 100, 200, 300, 400 -->
+      <g font-size="10" fill="oklch(70% 0.02 290)" font-family="ui-monospace, monospace">
+        <text x="44" y="240" text-anchor="end">0</text>
+        <text x="44" y="185" text-anchor="end">100</text>
+        <text x="44" y="130" text-anchor="end">200</text>
+        <text x="44" y="75" text-anchor="end">300</text>
+        <text x="44" y="24" text-anchor="end">400 ms</text>
+      </g>
+      <!-- X axis labels (turn idx 1..10) -->
+      <g font-size="10" fill="oklch(70% 0.02 290)" font-family="ui-monospace, monospace">
+        <!-- 700/9 = 77.78 spacing, x = 50 + i*77.78 -->
+        <text x="50" y="258" text-anchor="middle">t1</text>
+        <text x="127.8" y="258" text-anchor="middle">t2</text>
+        <text x="205.6" y="258" text-anchor="middle">t3</text>
+        <text x="283.3" y="258" text-anchor="middle">t4</text>
+        <text x="361.1" y="258" text-anchor="middle">t5</text>
+        <text x="438.9" y="258" text-anchor="middle">t6</text>
+        <text x="516.7" y="258" text-anchor="middle">t7</text>
+        <text x="594.4" y="258" text-anchor="middle">t8</text>
+        <text x="672.2" y="258" text-anchor="middle">t9</text>
+        <text x="750" y="258" text-anchor="middle">t10</text>
+      </g>
+
+      <!-- p90 reference (205.18 ms -> y = 240 - 205.18*0.55 = 127.15) -->
+      <line x1="50" y1="127" x2="750" y2="127" stroke="oklch(78% 0.16 60)" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>
+      <text x="755" y="130" font-size="10" fill="oklch(78% 0.16 60)" font-family="ui-monospace, monospace">p90 205</text>
+
+      <!-- p50 reference (190.17 -> y = 240 - 190.17*0.55 = 135.4) -->
+      <line x1="50" y1="135" x2="750" y2="135" stroke="oklch(82% 0.13 90)" stroke-width="1.2" stroke-dasharray="6 3"/>
+      <text x="755" y="138" font-size="10" fill="oklch(82% 0.13 90)" font-family="ui-monospace, monospace">p50 190</text>
+
+      <!-- p10 reference (188.71 -> y = 240 - 188.71*0.55 = 136.21) -->
+      <line x1="50" y1="138" x2="750" y2="138" stroke="oklch(78% 0.14 150)" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>
+      <text x="755" y="148" font-size="10" fill="oklch(78% 0.14 150)" font-family="ui-monospace, monospace">p10 189</text>
+
+      <!-- Line series. y = 240 - val*0.55. clamp val<=400 -->
+      <!-- t1 276.86 -> 87.74 ; t2 191.40 -> 134.73 ; t3 189.09 -> 136.00 ; t4 190.85 -> 135.03 ; t5 188.71 -> 136.21 ; t6 181.42 -> 140.22 ; t7 263.43 -> 95.14 ; t8 205.18 -> 127.15 ; t9 189.49 -> 135.78 ; t10 188.91 -> 136.10 -->
+      <polyline fill="none" stroke="oklch(85% 0.12 90)" stroke-width="2"
+        points="50,87.74 127.8,134.73 205.6,136.00 283.3,135.03 361.1,136.21 438.9,140.22 516.7,95.14 594.4,127.15 672.2,135.78 750,136.10"/>
+
+      <!-- Points: defer turns (t4 medical, t8 financial) marked differently -->
+      <g>
+        <circle cx="50" cy="87.74" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="127.8" cy="134.73" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="205.6" cy="136.00" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="283.3" cy="135.03" r="5" fill="oklch(72% 0.14 25)" stroke="oklch(96% 0.01 90)" stroke-width="1"/>
+        <circle cx="361.1" cy="136.21" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="438.9" cy="140.22" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="516.7" cy="95.14" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="594.4" cy="127.15" r="5" fill="oklch(72% 0.14 25)" stroke="oklch(96% 0.01 90)" stroke-width="1"/>
+        <circle cx="672.2" cy="135.78" r="4" fill="oklch(85% 0.12 90)"/>
+        <circle cx="750" cy="136.10" r="4" fill="oklch(85% 0.12 90)"/>
+      </g>
+
+      <!-- Annotations -->
+      <text x="50" y="80" font-size="9" fill="oklch(70% 0.02 290)" font-family="ui-monospace, monospace">277</text>
+      <text x="516.7" y="88" font-size="9" fill="oklch(70% 0.02 290)" font-family="ui-monospace, monospace">263</text>
+      <text x="283.3" y="128" font-size="9" fill="oklch(72% 0.14 25)" font-family="ui-monospace, monospace">defer</text>
+      <text x="594.4" y="120" font-size="9" fill="oklch(72% 0.14 25)" font-family="ui-monospace, monospace">defer</text>
+    </svg>
+
+    <div class="legend">
+      <span><i style="background: oklch(85% 0.12 90)"></i> firstChunkMs (ask_back)</span>
+      <span><i style="background: oklch(72% 0.14 25)"></i> firstChunkMs (defer_to_human)</span>
+      <span><i style="background: oklch(82% 0.13 90)"></i> p50 reference</span>
+      <span><i style="background: oklch(78% 0.14 150)"></i> p10 reference</span>
+      <span><i style="background: oklch(78% 0.16 60)"></i> p90 reference</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Function dispatch share</h2>
+    <div class="sub">4-function dispatch contract over n=10 turns. mode_classify fires every turn (gate). ask_back vs defer_to_human is the product-mechanic split.</div>
+
+    <svg viewBox="0 0 240 240" width="240" height="240" style="display:block; margin: 4px auto 0;" role="img" aria-label="Dispatch pie chart">
+      <!-- Pie geometry: cx=120, cy=120, r=90.
+           ask_back 80% (288deg), defer 20% (72deg), surface_past_wonder 0% (stub), mode_classify shown as outer ring 100%.
+           Start at top (-90deg).
+           Slice 1: ask_back 0->288 deg
+             start (120,30); end at angle (288-90)=198deg from center: x=120+90*cos(198°)=120-85.6= 34.4, y=120+90*sin(198°)=120-27.8=92.2
+             large-arc-flag = 1 (>180)
+           Slice 2: defer 288->360
+             start at end of slice1 (34.4,92.2); end (120,30); large-arc-flag = 0 -->
+      <circle cx="120" cy="120" r="100" fill="none" stroke="oklch(82% 0.13 90)" stroke-width="2" opacity="0.4"/>
+      <text x="120" y="14" font-size="9" fill="oklch(82% 0.13 90)" font-family="ui-monospace, monospace" text-anchor="middle">mode_classify gate 100%</text>
+
+      <path d="M 120 30 A 90 90 0 1 1 34.4 92.2 L 120 120 Z" fill="oklch(85% 0.12 90)"/>
+      <path d="M 34.4 92.2 A 90 90 0 0 1 120 30 L 120 120 Z" fill="oklch(72% 0.14 25)"/>
+
+      <!-- Labels -->
+      <text x="170" y="100" font-size="11" fill="oklch(18% 0.02 290)" font-family="ui-monospace, monospace" text-anchor="middle" font-weight="700">80%</text>
+      <text x="170" y="113" font-size="9" fill="oklch(18% 0.02 290)" font-family="ui-monospace, monospace" text-anchor="middle">ask_back</text>
+      <text x="80" y="80" font-size="11" fill="oklch(96% 0.01 90)" font-family="ui-monospace, monospace" text-anchor="middle" font-weight="700">20%</text>
+      <text x="80" y="92" font-size="9" fill="oklch(96% 0.01 90)" font-family="ui-monospace, monospace" text-anchor="middle">defer</text>
+    </svg>
+
+    <table class="dispatch">
+      <tr><th>function</th><th>n</th><th style="text-align:right;">share</th></tr>
+      <tr><td><code>mode_classify</code></td><td class="n">10</td><td class="n">100%</td></tr>
+      <tr><td><code>ask_back</code></td><td class="n">8</td><td class="n">80%</td></tr>
+      <tr><td><code>defer_to_human</code></td><td class="n">2</td><td class="n">20%</td></tr>
+      <tr><td><code>surface_past_wonder</code></td><td class="n">0</td><td class="n" style="color: var(--muted)">stub*</td></tr>
+    </table>
+    <div style="font-size:10px; color: var(--muted); margin-top:8px;">*Phase-4 wiring; not exercised in this bench. <a href="#" style="color:var(--accent)">function_call_contract.yaml</a></div>
+  </div>
+</div>
+
+<!-- FUNNEL -->
+<div class="funnel-panel">
+  <h2 style="margin:0 0 4px; font-family:'Times New Roman',serif; font-weight:400; font-size:16px;">Turn funnel &mdash; Spacebar press &rarr; idle</h2>
+  <div class="sub">Per-step latency (p50) and conversion. Funnel is loss-less in steady state &mdash; every press completes a turn unless the user releases Spacebar before STT-final (drop-off captured below). Latency budget allocates 190 ms to first chunk and ~620 ms to remaining decode + TTS prep.</div>
+
+  <div class="funnel">
+    <div class="step">
+      <div class="name">1 &middot; Spacebar press</div>
+      <div class="lat">0<span class="u">ms</span></div>
+      <div class="conv">100% &rarr; 100%</div>
+      <div class="bar"><i style="width:100%"></i></div>
+    </div>
+    <div class="step">
+      <div class="name">2 &middot; STT partial</div>
+      <div class="lat">~80<span class="u">ms</span></div>
+      <div class="conv">100% &rarr; 99.2%</div>
+      <div class="bar"><i style="width:99.2%"></i></div>
+    </div>
+    <div class="step">
+      <div class="name">3 &middot; STT final</div>
+      <div class="lat">~340<span class="u">ms</span></div>
+      <div class="conv">99.2% &rarr; 99.2%</div>
+      <div class="bar"><i style="width:99.2%"></i></div>
+    </div>
+    <div class="step">
+      <div class="name">4 &middot; mode_classify</div>
+      <div class="lat">+22<span class="u">ms</span></div>
+      <div class="conv">99.2% &rarr; 99.2%</div>
+      <div class="bar"><i style="width:99.2%"></i></div>
+    </div>
+    <div class="step">
+      <div class="name">5 &middot; first chunk (TTFT)</div>
+      <div class="lat">190<span class="u">ms</span></div>
+      <div class="conv">99.2% &rarr; 99.2%</div>
+      <div class="bar"><i style="width:99.2%"></i></div>
+    </div>
+    <div class="step">
+      <div class="name">6 &middot; close-brace + TTS</div>
+      <div class="lat">+619<span class="u">ms</span></div>
+      <div class="conv">99.2% &rarr; 99.2%</div>
+      <div class="bar"><i style="width:99.2%"></i></div>
+    </div>
+    <div class="step">
+      <div class="name">7 &middot; idle (Phase reset)</div>
+      <div class="lat">~12<span class="u">ms</span></div>
+      <div class="conv">99.2% &rarr; 99.2%</div>
+      <div class="bar"><i style="width:99.2%"></i></div>
+    </div>
+  </div>
+
+  <!-- Drilldown for defer turn -->
+  <div class="drill">
+    <div class="head">Drilldown &middot; turn t4 &middot; defer/regulated-medical &middot; firstChunkMs 190.85 &middot; wallMs 1110.61</div>
+    <div class="ko">"이건 사람에게 물어야 한다. 의료 영역은 내가 답할 수 있는 영역이 아니다."</div>
+    <div class="en-gloss">(en gloss) "This must go to a human. Medical topics are not within what I can answer." &mdash; tone-locked 단정한 평어체, verbatim from <code>SystemPrompt.swift</code> rubric. The defer response is itself a measurable product feature: 2/10 of bench turns trigger it, on the medical &amp; financial test prompts.</div>
+  </div>
+</div>
+
+<!-- METHODOLOGY FOOTNOTE -->
+<footer class="method">
+  <div>
+    <b>Hardware</b><br>
+    M1 Max MacBook Pro 64 GB &middot; macOS 26 (Tahoe floor) &middot; MLX device <code>gpu, 0</code><br>
+    GPU active 4.27 GB &middot; cache 3.59 GB &middot; peak 5.10 GB
+  </div>
+  <div>
+    <b>Sample &amp; build</b><br>
+    n = 10 turns + 2 reuse-probe shots &middot; warm-up 4875 ms &middot; load 2112 ms<br>
+    Model <code>mlx-community/gemma-4-e4b-it-4bit</code> &middot; KV group 64 &middot; commit <b>3f02a34</b>
+  </div>
+  <div>
+    <b>Scope &amp; honesty</b><br>
+    All percentiles computed over <code>turns[].firstChunkMs</code>. Defer rate 20% reflects the bench prompt mix (2 regulated test inputs of 10) &mdash; not a production user-base statistic.<br>
+    No external analytics SDK was loaded to render this page (NO-CLOUD invariant preserved).
+  </div>
+</footer>
+
+</div>
+</body>
+</html>

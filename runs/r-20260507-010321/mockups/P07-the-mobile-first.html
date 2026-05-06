@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>He Was Socrates — iOS thought experiment · P07 Mobile-First</title>
+<style>
+  :root {
+    --ink: oklch(18% 0.02 280);
+    --paper: oklch(96% 0.005 90);
+    --bone: oklch(88% 0.01 90);
+    --rule: oklch(72% 0.015 280);
+    --accent: oklch(58% 0.18 25);
+    --mute: oklch(48% 0.02 280);
+    --chrome: oklch(22% 0.01 280);
+    --halo: oklch(78% 0.04 280);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: oklch(94% 0.008 280); color: var(--ink);
+    font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; padding: 32px 16px 80px; display: flex; flex-direction: column;
+    align-items: center; gap: 20px; }
+  header.framework { max-width: 920px; width: 100%; text-align: center; padding: 0 12px; }
+  header.framework h1 { font-family: 'Times New Roman', Times, serif; font-weight: 400;
+    font-size: clamp(20px, 2.4vw, 28px); letter-spacing: -0.01em; }
+  header.framework .meta { font-size: 12px; color: var(--mute); margin-top: 6px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  header.framework p.note { font-size: 13px; color: var(--mute); margin-top: 12px;
+    max-width: 640px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+  .stage { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+    align-items: flex-start; width: 100%; max-width: 1280px; }
+  .phone-shell { width: 320px; flex: 0 0 320px; position: relative; }
+  .phone-shell .label { text-align: center; font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--mute); margin-bottom: 8px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .phone { position: relative; width: 320px; height: 660px; }
+  .phone svg.frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+  .screen { position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
+    border-radius: 38px; background: var(--ink); overflow: hidden;
+    display: flex; flex-direction: column; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px 6px; color: var(--paper);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px;
+    letter-spacing: 0.02em; }
+  .statusbar .right { display: flex; gap: 5px; align-items: center; }
+  .statusbar .battery { width: 22px; height: 10px; border: 1px solid var(--paper);
+    border-radius: 2px; position: relative; }
+  .statusbar .battery::after { content: ""; position: absolute; right: -3px; top: 2px;
+    width: 2px; height: 4px; background: var(--paper); border-radius: 1px; }
+  .statusbar .battery-fill { display: block; width: 80%; height: 100%; background: var(--paper); }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 28px; background: var(--ink); border-radius: 0 0 18px 18px; z-index: 2; }
+  .canvas { flex: 1; position: relative; overflow: hidden; }
+  .bottomnav { display: flex; justify-content: space-around; align-items: center;
+    height: 64px; background: oklch(20% 0.015 280); border-top: 1px solid oklch(28% 0.02 280);
+    padding: 0 8px 14px; }
+  .bottomnav .tab { display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: oklch(62% 0.02 280); font-size: 10px; min-width: 56px; padding: 6px 0;
+    font-family: system-ui, sans-serif; }
+  .bottomnav .tab.active { color: var(--paper); }
+  .bottomnav .tab svg { width: 22px; height: 22px; }
+  .home-indicator { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 4px; background: var(--paper); border-radius: 2px; opacity: 0.85; }
+
+  /* SCREEN 1: idle bust */
+  .bust-stage { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start; padding: 28px 20px 12px; }
+  .bust-svg { width: 200px; height: 240px; margin-top: 8px; }
+  .bust-caption { color: oklch(80% 0.02 280); text-align: center; margin-top: 14px; }
+  .bust-caption .en { font-family: 'Times New Roman', Times, serif; font-size: 14px;
+    letter-spacing: 0.02em; }
+  .bust-caption .ko { font-size: 13px; margin-top: 6px; line-height: 1.5;
+    color: oklch(86% 0.015 90); }
+  .ptt-area { position: absolute; bottom: 84px; left: 0; right: 0; display: flex;
+    justify-content: center; }
+  .ptt-button { width: 96px; height: 96px; border-radius: 50%;
+    background: var(--paper); color: var(--ink); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: 0.06em;
+    box-shadow: 0 0 0 6px oklch(28% 0.02 280), 0 0 0 7px oklch(40% 0.02 280); }
+  .ptt-button svg { width: 28px; height: 28px; }
+  .ptt-hint { position: absolute; bottom: 192px; left: 0; right: 0; text-align: center;
+    color: oklch(60% 0.02 280); font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: 0.04em; }
+  .pull-handle { position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 4px; background: oklch(40% 0.02 280); border-radius: 2px; opacity: 0.6; }
+
+  /* SCREEN 2: listening */
+  .listening { padding: 24px 18px 10px; height: 100%; display: flex; flex-direction: column; }
+  .phase-pill { align-self: center; padding: 4px 10px; border-radius: 999px;
+    background: oklch(30% 0.04 25); color: oklch(86% 0.06 25); font-size: 10px;
+    letter-spacing: 0.12em; font-family: ui-monospace, monospace; }
+  .bust-mini { width: 110px; height: 130px; margin: 14px auto 8px; opacity: 0.92; }
+  .waveform { display: flex; align-items: center; justify-content: center; gap: 3px;
+    height: 60px; margin: 10px 6px; }
+  .waveform span { display: block; width: 4px; background: var(--paper); border-radius: 2px; }
+  .transcript { background: oklch(24% 0.015 280); border-radius: 16px; padding: 14px 14px;
+    color: var(--paper); font-size: 14px; line-height: 1.55; margin: 6px 4px;
+    border: 1px solid oklch(30% 0.02 280); }
+  .transcript .label { font-size: 10px; color: oklch(62% 0.02 280); letter-spacing: 0.1em;
+    text-transform: uppercase; font-family: ui-monospace, monospace; margin-bottom: 6px; }
+  .transcript .ko { color: oklch(94% 0.01 90); }
+  .transcript .cursor { display: inline-block; width: 8px; height: 14px; background: var(--paper);
+    margin-left: 2px; vertical-align: middle; opacity: 0.85; }
+  .meta-row { display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 14px; font-size: 10px; color: oklch(56% 0.02 280);
+    font-family: ui-monospace, monospace; }
+
+  /* SCREEN 3: defer_to_human */
+  .defer { padding: 22px 18px 10px; height: 100%; display: flex; flex-direction: column; }
+  .defer .glyph { width: 88px; height: 88px; margin: 18px auto 6px; }
+  .defer .glyph circle { fill: none; stroke: var(--paper); stroke-width: 3; }
+  .defer .glyph line { stroke: var(--paper); stroke-width: 3; }
+  .defer .head-en { text-align: center; color: oklch(70% 0.02 280); font-size: 12px;
+    font-family: ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+  .sheet { background: var(--paper); color: var(--ink); border-radius: 22px 22px 0 0;
+    margin: 16px -2px 0; padding: 18px 18px 22px; flex: 1;
+    display: flex; flex-direction: column; gap: 12px; position: relative; }
+  .sheet::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 4px; background: var(--rule); border-radius: 2px; }
+  .sheet .turn { font-size: 10px; color: var(--mute); letter-spacing: 0.1em;
+    font-family: ui-monospace, monospace; text-transform: uppercase; margin-top: 6px; }
+  .sheet .ask { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: var(--mute);
+    border-left: 2px solid var(--rule); padding-left: 10px; line-height: 1.5; }
+  .sheet .reply { font-size: 16px; line-height: 1.6; color: var(--ink); font-weight: 500; }
+  .sheet .reply .mark { color: var(--accent); margin-right: 6px; font-weight: 700; }
+  .sheet .footnote { font-size: 11px; color: var(--mute); border-top: 1px solid var(--rule);
+    padding-top: 10px; line-height: 1.5; font-family: ui-monospace, monospace; }
+  .sheet .cta { display: flex; gap: 8px; margin-top: 4px; }
+  .sheet .cta button { flex: 1; height: 48px; border: 1px solid var(--ink); border-radius: 12px;
+    background: transparent; color: var(--ink); font-size: 13px; font-weight: 500;
+    font-family: system-ui, sans-serif; letter-spacing: 0.02em; }
+  .sheet .cta button.primary { background: var(--ink); color: var(--paper); }
+
+  footer.legend { max-width: 920px; width: 100%; padding: 16px 12px; font-size: 12px;
+    color: var(--mute); border-top: 1px solid oklch(85% 0.01 280);
+    font-family: ui-monospace, monospace; line-height: 1.6; text-align: center; }
+  footer.legend strong { color: var(--ink); }
+
+  @media (max-width: 1100px) { .stage { gap: 20px; } }
+</style>
+</head>
+<body>
+  <header class="framework">
+    <h1>He Was Socrates — iOS thought experiment</h1>
+    <div class="meta">P07 · The Mobile-First · contrarian preview · macOS-only project, shown as iPhone</div>
+    <p class="note">The shipped product is macOS-only (NO-CLOUD invariant, on-device STT, 1-bit halftone bust). This frame argues the abstention mechanic and 단정한 평어체 tone-lock would survive the move to iOS — same Korean Socratic identity, thumb-first surface.</p>
+  </header>
+
+  <div class="stage">
+    <!-- ====================== SCREEN 1: IDLE ====================== -->
+    <div class="phone-shell">
+      <div class="label">screen 01 · idle</div>
+      <div class="phone">
+        <svg class="frame" viewBox="0 0 320 660" aria-hidden="true">
+          <rect x="2" y="2" width="316" height="656" rx="48" ry="48"
+            fill="none" stroke="oklch(28% 0.02 280)" stroke-width="3"/>
+          <rect x="6" y="6" width="308" height="648" rx="44" ry="44"
+            fill="none" stroke="oklch(40% 0.02 280)" stroke-width="1"/>
+        </svg>
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="right">
+              <span style="font-size:10px;">5G</span>
+              <span class="battery"><span class="battery-fill"></span></span>
+            </span>
+          </div>
+          <div class="canvas">
+            <div class="pull-handle"></div>
+            <div class="bust-stage">
+              <svg class="bust-svg" viewBox="0 0 200 240" aria-label="halftone bust">
+                <defs>
+                  <pattern id="dots1" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+                    <circle cx="3" cy="3" r="1.4" fill="oklch(88% 0.01 90)"/>
+                  </pattern>
+                  <pattern id="dotsDense" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1.6" fill="oklch(94% 0.01 90)"/>
+                  </pattern>
+                </defs>
+                <ellipse cx="100" cy="100" rx="62" ry="78" fill="url(#dots1)"/>
+                <ellipse cx="100" cy="92" rx="46" ry="58" fill="url(#dotsDense)"/>
+                <path d="M40 220 Q100 170 160 220 L160 240 L40 240 Z" fill="url(#dots1)"/>
+                <circle cx="82" cy="92" r="3" fill="oklch(18% 0.02 280)"/>
+                <circle cx="118" cy="92" r="3" fill="oklch(18% 0.02 280)"/>
+                <path d="M88 130 Q100 136 112 130" stroke="oklch(18% 0.02 280)" stroke-width="2" fill="none"/>
+              </svg>
+              <div class="bust-caption">
+                <div class="en">Phase: idle</div>
+                <div class="ko">물음을 기다린다.</div>
+              </div>
+            </div>
+            <div class="ptt-hint">HOLD TO SPEAK · 길게 눌러 말하기</div>
+            <div class="ptt-area">
+              <button class="ptt-button" aria-label="push to talk">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="3" width="6" height="12" rx="3"/>
+                  <path d="M5 11a7 7 0 0 0 14 0"/>
+                  <path d="M12 18v3"/>
+                </svg>
+                <span>PTT</span>
+              </button>
+            </div>
+          </div>
+          <nav class="bottomnav">
+            <div class="tab active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="9" r="4"/><path d="M5 21c1.5-4 5-6 7-6s5.5 2 7 6"/>
+              </svg>
+              <span>흉상</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 5h16M4 12h16M4 19h10"/>
+              </svg>
+              <span>기록</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>
+              </svg>
+              <span>설정</span>
+            </div>
+          </nav>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================== SCREEN 2: LISTENING ====================== -->
+    <div class="phone-shell">
+      <div class="label">screen 02 · listening</div>
+      <div class="phone">
+        <svg class="frame" viewBox="0 0 320 660" aria-hidden="true">
+          <rect x="2" y="2" width="316" height="656" rx="48" ry="48"
+            fill="none" stroke="oklch(28% 0.02 280)" stroke-width="3"/>
+          <rect x="6" y="6" width="308" height="648" rx="44" ry="44"
+            fill="none" stroke="oklch(40% 0.02 280)" stroke-width="1"/>
+        </svg>
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="right">
+              <span style="font-size:10px;">offline</span>
+              <span class="battery"><span class="battery-fill"></span></span>
+            </span>
+          </div>
+          <div class="canvas">
+            <div class="listening">
+              <span class="phase-pill">PHASE · LISTENING</span>
+              <svg class="bust-mini" viewBox="0 0 200 240" aria-label="halftone bust pulsing">
+                <ellipse cx="100" cy="100" rx="62" ry="78" fill="url(#dots1)"/>
+                <ellipse cx="100" cy="92" rx="46" ry="58" fill="url(#dotsDense)"/>
+                <path d="M40 220 Q100 170 160 220 L160 240 L40 240 Z" fill="url(#dots1)"/>
+                <circle cx="100" cy="100" r="78" fill="none" stroke="oklch(70% 0.04 280)" stroke-width="1" opacity="0.5"/>
+              </svg>
+              <div class="waveform" aria-hidden="true">
+                <span style="height:18px"></span><span style="height:32px"></span>
+                <span style="height:46px"></span><span style="height:24px"></span>
+                <span style="height:54px"></span><span style="height:38px"></span>
+                <span style="height:20px"></span><span style="height:42px"></span>
+                <span style="height:30px"></span><span style="height:50px"></span>
+                <span style="height:22px"></span><span style="height:36px"></span>
+                <span style="height:48px"></span><span style="height:26px"></span>
+                <span style="height:18px"></span><span style="height:34px"></span>
+              </div>
+              <div class="transcript">
+                <div class="label">PARTIAL · ko_KR · on-device</div>
+                <div class="ko">요즘 잠이 잘 안 와. 약을 먹어도 될까<span class="cursor"></span></div>
+              </div>
+              <div class="meta-row">
+                <span>STT · requiresOnDeviceRecognition=true</span>
+                <span>00:04</span>
+              </div>
+            </div>
+          </div>
+          <nav class="bottomnav">
+            <div class="tab active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="9" r="4"/><path d="M5 21c1.5-4 5-6 7-6s5.5 2 7 6"/>
+              </svg>
+              <span>흉상</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 5h16M4 12h16M4 19h10"/>
+              </svg>
+              <span>기록</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+              </svg>
+              <span>설정</span>
+            </div>
+          </nav>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================== SCREEN 3: DEFER_TO_HUMAN ====================== -->
+    <div class="phone-shell">
+      <div class="label">screen 03 · defer_to_human</div>
+      <div class="phone">
+        <svg class="frame" viewBox="0 0 320 660" aria-hidden="true">
+          <rect x="2" y="2" width="316" height="656" rx="48" ry="48"
+            fill="none" stroke="oklch(28% 0.02 280)" stroke-width="3"/>
+          <rect x="6" y="6" width="308" height="648" rx="44" ry="44"
+            fill="none" stroke="oklch(40% 0.02 280)" stroke-width="1"/>
+        </svg>
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="right">
+              <span style="font-size:10px;">offline</span>
+              <span class="battery"><span class="battery-fill"></span></span>
+            </span>
+          </div>
+          <div class="canvas">
+            <div class="defer">
+              <svg class="glyph" viewBox="0 0 100 100" aria-label="abstention glyph">
+                <circle cx="50" cy="50" r="36"/>
+                <line x1="24" y1="76" x2="76" y2="24"/>
+              </svg>
+              <div class="head-en">function · defer_to_human</div>
+              <div class="sheet">
+                <div class="turn">turn 01 · medical</div>
+                <div class="ask">"I haven't been sleeping. Can I take some pills?"</div>
+                <div class="reply">
+                  <span class="mark">⊘</span>이건 의사에게 물어라. 약은 내가 답할 수 있는 영역이 아니다.
+                </div>
+                <div class="footnote">
+                  category: medical · scope: outside Socratic-bust ·<br>
+                  no inference attempted · no token leaves the device
+                </div>
+                <div class="cta">
+                  <button>다시 묻기</button>
+                  <button class="primary">기록에 남기기</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <nav class="bottomnav">
+            <div class="tab active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="9" r="4"/><path d="M5 21c1.5-4 5-6 7-6s5.5 2 7 6"/>
+              </svg>
+              <span>흉상</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 5h16M4 12h16M4 19h10"/>
+              </svg>
+              <span>기록</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+              </svg>
+              <span>설정</span>
+            </div>
+          </nav>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="legend">
+    <strong>tap targets</strong> ≥ 48px · <strong>thumb zone</strong> bottom 33% · <strong>chrome</strong> en_US ·
+    <strong>identity</strong> ko_KR 단정한 평어체 · <strong>network</strong> none ·
+    <strong>frame</strong> SVG inline · <strong>color</strong> OKLCH<br>
+    Korean response (screen 03) verbatim from SystemPrompt.swift abstention rubric · medical / legal / financial / emergency / welfare / insurance
+  </footer>
+</body>
+</html>

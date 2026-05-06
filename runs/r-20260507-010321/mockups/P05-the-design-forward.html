@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>He Was Socrates — Idle Frame</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --ink: oklch(0.12 0.012 280);
+    --ink-deep: oklch(0.07 0.008 280);
+    --bone: oklch(0.92 0.022 85);
+    --bone-soft: oklch(0.86 0.020 85 / 0.78);
+    --bone-faint: oklch(0.86 0.020 85 / 0.32);
+    --bone-trace: oklch(0.86 0.020 85 / 0.14);
+    --pulse: oklch(0.94 0.030 85 / 0.55);
+    --rule: oklch(0.86 0.020 85 / 0.18);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--ink-deep);
+    color: var(--bone);
+    font-family: "Times New Roman", "Nanum Myeongjo", system-ui, -apple-system, serif;
+    font-feature-settings: "liga" 1, "kern" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 48px 80px;
+  }
+  .frame-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bone-soft);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+  .frame-meta .left span { color: var(--bone-faint); margin-right: 10px; }
+  .frame-meta .right { color: var(--bone-faint); }
+  /* ── The macOS app frame ── */
+  .stage {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: var(--ink);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 oklch(0.86 0.020 85 / 0.06) inset,
+      0 0 0 1px oklch(0.86 0.020 85 / 0.08),
+      0 60px 120px -40px oklch(0 0 0 / 0.6),
+      0 30px 60px -30px oklch(0 0 0 / 0.5);
+  }
+  .titlebar {
+    position: absolute; inset: 0 0 auto 0;
+    height: 36px;
+    display: flex; align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    z-index: 3;
+  }
+  .titlebar .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: oklch(0.86 0.020 85 / 0.18);
+    border: 0.5px solid oklch(0.86 0.020 85 / 0.10);
+  }
+  .titlebar .title {
+    margin-left: auto; margin-right: auto;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--bone-faint);
+    text-transform: uppercase;
+  }
+  .titlebar .title em { font-style: normal; color: var(--bone-soft); }
+  /* hero stage */
+  .canvas {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    align-items: center;
+    justify-items: center;
+    padding: 64px 48px 56px;
+  }
+  .bust-wrap {
+    position: relative;
+    width: min(48vmin, 460px);
+    aspect-ratio: 1 / 1.18;
+    display: grid; place-items: center;
+  }
+  .bust-wrap svg { width: 100%; height: 100%; display: block; }
+  /* soft pulse — Phase.thinking hint, very subtle */
+  .pulse {
+    position: absolute;
+    inset: -8% -6% -4% -6%;
+    border-radius: 50% / 46%;
+    background: radial-gradient(closest-side, var(--pulse) 0%, transparent 72%);
+    opacity: 0.0;
+    filter: blur(10px);
+    animation: breathe 5.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.10; transform: scale(0.985); }
+    50%      { opacity: 0.34; transform: scale(1.025); }
+  }
+  /* status overlay */
+  .status {
+    position: absolute;
+    top: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 2;
+  }
+  .status .glyph {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--bone-soft);
+  }
+  .status .glyph::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--bone);
+    box-shadow: 0 0 14px var(--bone);
+    animation: blink 2.6s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.7); }
+  }
+  /* lower text block */
+  .legend {
+    text-align: center;
+    z-index: 2;
+  }
+  .legend h1 {
+    font-weight: 400;
+    font-size: clamp(28px, 3.6vw, 44px);
+    letter-spacing: 0.04em;
+    margin: 0 0 6px;
+    color: var(--bone);
+  }
+  .legend h1 em { font-style: italic; color: var(--bone-soft); }
+  .legend .sub {
+    font-family: "Nanum Myeongjo", "Times New Roman", serif;
+    font-size: clamp(15px, 1.5vw, 19px);
+    letter-spacing: 0.02em;
+    color: var(--bone-soft);
+    margin: 0 0 18px;
+  }
+  .legend .prompt {
+    display: inline-flex; align-items: baseline; gap: 16px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--bone-faint);
+  }
+  .legend .prompt kbd {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10px;
+    padding: 4px 9px;
+    border: 1px solid oklch(0.86 0.020 85 / 0.30);
+    border-radius: 4px;
+    background: oklch(0.86 0.020 85 / 0.04);
+    color: var(--bone-soft);
+    letter-spacing: 0.18em;
+  }
+  /* corner markers */
+  .corner {
+    position: absolute;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--bone-faint);
+    z-index: 2;
+  }
+  .corner.tl { top: 56px; left: 28px; }
+  .corner.tr { top: 56px; right: 28px; text-align: right; }
+  .corner.bl { bottom: 24px; left: 28px; }
+  .corner.br { bottom: 24px; right: 28px; text-align: right; }
+  .corner small { display: block; color: var(--bone-trace); margin-top: 4px; letter-spacing: 0.12em; }
+  /* below-frame caption */
+  .caption {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: start;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    color: var(--bone-soft);
+    letter-spacing: 0.04em;
+    line-height: 1.65;
+  }
+  .caption .lbl {
+    color: var(--bone-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+  }
+  .caption .body { color: var(--bone-soft); }
+  .caption .body em { font-family: "Times New Roman", serif; font-style: italic; color: var(--bone); }
+  .caption .meta { color: var(--bone-faint); text-align: right; }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="frame-meta">
+      <div class="left">
+        <span>P05 / The Design-Forward</span>
+        <span>Idle Frame · Pre-utterance</span>
+      </div>
+      <div class="right">macOS app · not a webpage</div>
+    </div>
+
+    <section class="stage" aria-label="He Was Socrates — first launch idle screen">
+      <div class="titlebar" aria-hidden="true">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="title">He Was Socrates &nbsp;·&nbsp; <em>Idle</em></span>
+      </div>
+
+      <div class="corner tl">
+        Phase
+        <small>idle → listening</small>
+      </div>
+      <div class="corner tr">
+        On-Device
+        <small>airplane mode ok</small>
+      </div>
+
+      <div class="canvas">
+        <div class="status" aria-live="polite">
+          <span class="glyph">흉상 깨우는 중</span>
+        </div>
+
+        <div class="bust-wrap" aria-label="1-bit halftone bust of Socrates">
+          <span class="pulse" aria-hidden="true"></span>
+          <!-- Inline halftone bust SVG (deterministic, monochrome bone-on-ink) -->
+          <svg viewBox="0 0 460 542" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bust">
+            <defs>
+              <pattern id="halftone" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+                <circle cx="3" cy="3" r="1.4" fill="oklch(0.92 0.022 85)"/>
+              </pattern>
+              <pattern id="halftone-light" x="0" y="0" width="7" height="7" patternUnits="userSpaceOnUse">
+                <circle cx="3.5" cy="3.5" r="0.9" fill="oklch(0.92 0.022 85)"/>
+              </pattern>
+              <pattern id="halftone-trace" x="0" y="0" width="9" height="9" patternUnits="userSpaceOnUse">
+                <circle cx="4.5" cy="4.5" r="0.55" fill="oklch(0.92 0.022 85)"/>
+              </pattern>
+              <radialGradient id="rim" cx="50%" cy="44%" r="58%">
+                <stop offset="60%" stop-color="oklch(0.92 0.022 85)" stop-opacity="0"/>
+                <stop offset="100%" stop-color="oklch(0.07 0.008 280)" stop-opacity="0.92"/>
+              </radialGradient>
+              <clipPath id="bustClip">
+                <path d="M230 60
+                         C 152 60, 110 132, 116 210
+                         C 118 244, 130 268, 124 296
+                         C 116 332, 90 348, 74 384
+                         C 56 426, 64 472, 110 498
+                         L 350 498
+                         C 396 472, 404 426, 386 384
+                         C 370 348, 344 332, 336 296
+                         C 330 268, 342 244, 344 210
+                         C 350 132, 308 60, 230 60 Z"/>
+              </clipPath>
+            </defs>
+
+            <!-- shoulder & robe — light halftone -->
+            <path d="M40 510 C 110 446, 168 426, 230 426 C 292 426, 350 446, 420 510 L 420 542 L 40 542 Z"
+                  fill="url(#halftone-trace)"/>
+
+            <!-- silhouette filled with halftone -->
+            <g clip-path="url(#bustClip)">
+              <rect x="0" y="0" width="460" height="542" fill="url(#halftone)"/>
+              <!-- shaded mid-tones -->
+              <ellipse cx="180" cy="240" rx="58" ry="84" fill="url(#halftone-light)" opacity="0.55"/>
+              <ellipse cx="298" cy="244" rx="50" ry="78" fill="url(#halftone-light)" opacity="0.45"/>
+              <!-- vignette toward edge -->
+              <rect x="0" y="0" width="460" height="542" fill="url(#rim)"/>
+            </g>
+
+            <!-- contour line — bone stroke -->
+            <path d="M230 60
+                     C 152 60, 110 132, 116 210
+                     C 118 244, 130 268, 124 296
+                     C 116 332, 90 348, 74 384
+                     C 56 426, 64 472, 110 498"
+                  fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1.2" stroke-opacity="0.55"/>
+            <path d="M230 60
+                     C 308 60, 350 132, 344 210
+                     C 342 244, 330 268, 336 296
+                     C 344 332, 370 348, 386 384
+                     C 404 426, 396 472, 350 498"
+                  fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1.2" stroke-opacity="0.55"/>
+
+            <!-- hair / brow ridge — subtle texture lines -->
+            <g stroke="oklch(0.92 0.022 85)" stroke-opacity="0.42" fill="none" stroke-linecap="round">
+              <path d="M150 138 C 178 110, 220 96, 230 96"/>
+              <path d="M310 138 C 282 110, 240 96, 230 96"/>
+              <path d="M138 178 C 168 158, 196 152, 218 156"/>
+              <path d="M322 178 C 292 158, 264 152, 242 156"/>
+            </g>
+
+            <!-- eye sockets — recessed, halftone-darker by being negative space + tiny dot -->
+            <g>
+              <path d="M168 232 Q 196 218, 222 232" fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1.4" stroke-opacity="0.78"/>
+              <path d="M238 232 Q 264 218, 292 232" fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1.4" stroke-opacity="0.78"/>
+              <circle cx="195" cy="240" r="2.2" fill="oklch(0.92 0.022 85)" opacity="0.85"/>
+              <circle cx="265" cy="240" r="2.2" fill="oklch(0.92 0.022 85)" opacity="0.85"/>
+            </g>
+
+            <!-- nose -->
+            <path d="M230 248 C 224 280, 220 308, 216 322 Q 230 332, 244 322 C 240 308, 236 280, 230 248"
+                  fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1.2" stroke-opacity="0.55"/>
+
+            <!-- mouth — viseme V0 closed, ≥2-frame hold per spec -->
+            <path d="M204 360 Q 230 366, 256 360" fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1.6" stroke-opacity="0.75"/>
+
+            <!-- beard mass — denser halftone underchin -->
+            <path d="M180 374 C 184 414, 200 442, 230 446 C 260 442, 276 414, 280 374
+                     C 270 388, 250 396, 230 396 C 210 396, 190 388, 180 374 Z"
+                  fill="url(#halftone)" opacity="0.85"/>
+            <path d="M180 374 C 184 414, 200 442, 230 446 C 260 442, 276 414, 280 374"
+                  fill="none" stroke="oklch(0.92 0.022 85)" stroke-width="1" stroke-opacity="0.5"/>
+
+            <!-- robe fold lines -->
+            <g stroke="oklch(0.92 0.022 85)" stroke-opacity="0.32" fill="none">
+              <path d="M118 484 C 150 460, 196 446, 230 446"/>
+              <path d="M342 484 C 310 460, 264 446, 230 446"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="legend">
+          <h1>He was <em>Socrates</em>.</h1>
+          <p class="sub">너의 물음은 무엇인가</p>
+          <p class="prompt">
+            <kbd>Space</kbd>
+            <span>Press &amp; hold to wonder aloud</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="corner bl">
+        Gemma 4 E4B
+        <small>4-bit MLX · loaded</small>
+      </div>
+      <div class="corner br">
+        Tone Lock
+        <small>단정한 평어체</small>
+      </div>
+    </section>
+
+    <section class="caption" aria-label="frame legend">
+      <div class="lbl">What this is</div>
+      <div class="body">
+        The actual <em>first-launch idle frame</em> of the macOS app. No buttons, no chrome — the bust <em>is</em> the pitch. The soft pulse is <em>Phase.thinking</em> rendered as breath; status reads <em>흉상 깨우는 중</em> while weights warm in the MLX cache. When you press Space, it transitions to <em>Press Space — 누르고 말하라</em>. Korean lives only on identity surfaces; the rest of the OS speaks English.
+      </div>
+      <div class="meta">
+        bone <span style="color:var(--bone)">●</span> oklch(.92 .022 85)<br>
+        ink <span style="color:oklch(0.30 0.012 280)">●</span> oklch(.07 .008 280)<br>
+        viseme V0 · idle hold
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "id": "P07",
+  "advocate": "The Mobile-First",
+  "framing": "Judges read Kaggle on phones in coffee lines. The preview must survive a thumb. Show He Was Socrates as if it shipped to iOS — single-column, bottom-thumb CTA, 48px taps — to argue the abstention mechanic + Korean 평어체 tone scale beyond macOS.",
+  "target_persona": "Kaggle / Google DeepMind judge skim-reading the entry on iPhone during a commute or between sessions; second pass on desktop. Mobile is the first 5-second decision surface.",
+  "primary_surface": "iPhone-shaped centered device frame (rounded SVG outline, 9:41 status bar, battery glyph). Inside: portrait single-column scroll showing 3 stacked screens — (1) idle bust + thumb-bottom push-to-talk, (2) listening with waveform + Korean partial transcript, (3) defer_to_human ⊘ response in 평어체. Bottom nav: 흉상 / 기록 / 설정. Every tap target ≥48px; gesture cues (pull-to-refresh hint, bottom sheet handle).",
+  "opus_4_7_capability": "Cross-platform reframing — Opus 4.7 reasons through how a macOS-only invariant set (NO-CLOUD, on-device STT, Korean 평어체, 1-bit halftone) projects onto iOS UI primitives without leaking the abstention mechanic into a chat-bubble answering machine. Capability: holding the load-bearing constraints stable while changing the surface.",
+  "mvp_scope": "Single self-contained HTML rendering one iPhone frame with 3 vertically-stacked screen states (idle / listening / defer). No JS required; CSS-only. Korean copy verbatim from SystemPrompt.swift abstention rubric; English chrome (status bar, debug labels, captions).",
+  "one_liner_pitch": "If a Kaggle judge swipes past on an iPhone, the abstention mechanic still has to land — so here is He Was Socrates as if it shipped to iOS, thumb-first.",
+  "spec_alignment_notes": "primary_surface=Kaggle preview HTML → reframed as phone-frame mockup arguing iOS-portability of macOS-only invariants. Korean surfaces (defer response, partial transcript, bust subtitle) verbatim per language_policy.korean_surfaces. NO-CLOUD invariant respected (no network references in chrome). The contrarian twist (macOS-only project shown as iOS) is explicitly part of the persona brief, not a spec violation — argues scalability of the abstention mechanic. All other fields followed spec verbatim."
+}

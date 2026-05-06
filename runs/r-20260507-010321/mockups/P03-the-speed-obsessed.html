@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>He was Socrates.</title>
+<style>
+  :root {
+    --ink:    oklch(0.16 0.02 280);
+    --paper:  oklch(0.97 0.005 90);
+    --rule:   oklch(0.78 0.01 280);
+    --mute:   oklch(0.45 0.01 280);
+    --accent: oklch(0.62 0.18 28);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- HERO (above the fold) ---- */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+    align-items: center;
+    text-align: center;
+    padding: 32px 24px;
+  }
+  .top {
+    align-self: start;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .center { display: grid; gap: 28px; justify-items: center; }
+  .bust {
+    width: clamp(160px, 28vw, 240px);
+    height: clamp(160px, 28vw, 240px);
+    display: block;
+  }
+  h1 {
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: 400;
+    font-size: clamp(40px, 7vw, 72px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .ko {
+    font-size: clamp(15px, 1.6vw, 18px);
+    color: var(--mute);
+    letter-spacing: 0.02em;
+  }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 28px;
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    border-radius: 2px;
+    transition: transform 0.12s ease, background 0.12s ease;
+    border: 1px solid var(--ink);
+  }
+  .cta:hover, .cta:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    outline: none;
+  }
+  .cta .arrow { font-family: 'Times New Roman', Times, serif; font-size: 20px; }
+  .cta-meta {
+    font-size: 12px;
+    color: var(--mute);
+    letter-spacing: 0.04em;
+  }
+  .scroll-hint {
+    align-self: end;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* ---- BELOW THE FOLD: 3 brutal sections ---- */
+  .below { padding: 96px 0 64px; }
+  .row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 24px;
+    padding: 36px 0;
+    border-top: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .row:last-of-type { border-bottom: 1px solid var(--rule); }
+  .num {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 32px;
+    color: var(--mute);
+    font-style: italic;
+  }
+  .row p {
+    font-size: clamp(20px, 2.4vw, 26px);
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+  }
+  .row p em {
+    font-style: italic;
+    font-family: 'Times New Roman', Times, serif;
+  }
+
+  footer {
+    padding: 48px 0 64px;
+    font-size: 12px;
+    color: var(--mute);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    letter-spacing: 0.04em;
+  }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 480px) {
+    .top { flex-direction: column; gap: 6px; align-items: center; }
+    .row { grid-template-columns: 40px 1fr; gap: 16px; }
+    .num { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="top wrap">
+    <span>He Was Socrates</span>
+    <span>The Gemma 4 Good Hackathon</span>
+  </div>
+
+  <div class="center">
+    <!-- 1-bit halftone bust, inline SVG, deterministic dot pattern -->
+    <svg class="bust" viewBox="0 0 240 240" aria-label="Halftone Socrates bust" role="img">
+      <defs>
+        <radialGradient id="mask" cx="50%" cy="42%" r="58%">
+          <stop offset="0%"   stop-color="#000" stop-opacity="1" />
+          <stop offset="55%"  stop-color="#000" stop-opacity="0.85" />
+          <stop offset="78%"  stop-color="#000" stop-opacity="0.35" />
+          <stop offset="100%" stop-color="#000" stop-opacity="0" />
+        </radialGradient>
+        <pattern id="dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1.6" fill="#000" />
+        </pattern>
+        <mask id="bustMask">
+          <!-- Approximate Socratic bust silhouette (head + beard + shoulders) -->
+          <path fill="url(#mask)" d="
+            M120 28
+            C150 28 170 50 172 82
+            C176 96 178 112 174 126
+            C172 140 168 152 162 162
+            C160 172 162 184 168 196
+            C176 208 196 214 214 220
+            L214 240 L26 240 L26 220
+            C44 214 64 208 72 196
+            C78 184 80 172 78 162
+            C72 152 68 140 66 126
+            C62 112 64 96 68 82
+            C70 50 90 28 120 28 Z" />
+        </mask>
+      </defs>
+      <rect width="240" height="240" fill="url(#dots)" mask="url(#bustMask)" />
+      <!-- Eye sockets hint (subtractive) -->
+      <ellipse cx="104" cy="92" rx="5" ry="3" fill="oklch(0.97 0.005 90)" opacity="0.85" />
+      <ellipse cx="138" cy="92" rx="5" ry="3" fill="oklch(0.97 0.005 90)" opacity="0.85" />
+    </svg>
+
+    <h1>He was Socrates.</h1>
+    <div class="ko" lang="ko">너의 물음은 무엇인가</div>
+
+    <a class="cta" href="https://github.com/Two-Weeks-Team/he-was-socrates/releases/latest/download/HeWasSocrates.dmg" download>
+      Download .dmg
+      <span class="arrow">→</span>
+    </a>
+    <div class="cta-meta">4 GB &middot; macOS 26+ &middot; Apple Silicon</div>
+  </div>
+
+  <div class="scroll-hint wrap">Scroll &mdash; three things, then it&rsquo;s yours</div>
+</section>
+
+<section class="below wrap">
+
+  <div class="row">
+    <div class="num">i.</div>
+    <p>Zero bytes leave the device. <em>No network entitlement, on-device STT, airplane-mode compatible.</em></p>
+  </div>
+
+  <div class="row">
+    <div class="num">ii.</div>
+    <p>Abstention is the product. <em>For medical, legal, financial, emergency &mdash; it defers to a human, on purpose.</em></p>
+  </div>
+
+  <div class="row">
+    <div class="num">iii.</div>
+    <p>한국어 단정한 평어체. <em>Neither 존댓말 nor friendly &mdash; the tone is locked, verbatim, in the system prompt.</em></p>
+  </div>
+
+</section>
+
+<footer class="wrap">
+  <span>Apache-2.0 &middot; weights CC-BY-4.0</span>
+  <span>
+    <a href="https://github.com/Two-Weeks-Team/he-was-socrates">GitHub</a>
+    &nbsp;&middot;&nbsp;
+    <a href="https://www.kaggle.com/competitions/the-gemma-4-good-hackathon">Kaggle entry</a>
+  </span>
+</footer>
+
+</body>
+</html>

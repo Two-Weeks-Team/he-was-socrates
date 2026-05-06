@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>He Was Socrates — Workspace · Two-Weeks-Team</title>
+<style>
+  :root {
+    --ink: oklch(0.18 0.02 285);
+    --ink-2: oklch(0.24 0.02 285);
+    --ink-3: oklch(0.30 0.02 285);
+    --paper: oklch(0.96 0.01 95);
+    --muted: oklch(0.62 0.01 285);
+    --line: oklch(0.32 0.015 285);
+    --accent: oklch(0.78 0.13 85);
+    --ok: oklch(0.72 0.14 145);
+    --warn: oklch(0.70 0.14 55);
+    --danger: oklch(0.65 0.18 25);
+    --bot: oklch(0.85 0.02 95);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .app { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+  .topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 18px; background: var(--ink-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .org { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .org-logo {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: var(--paper); color: var(--ink);
+    display: grid; place-items: center; font-size: 10px; font-weight: 800;
+  }
+  .ws-name { font-size: 12px; color: var(--muted); }
+  .ws-name b { color: var(--paper); font-weight: 600; }
+  .nav { display: flex; gap: 2px; margin-left: 18px; }
+  .nav a {
+    padding: 6px 10px; font-size: 12px; color: var(--muted);
+    border-radius: 5px; text-decoration: none;
+  }
+  .nav a.active { background: var(--ink-3); color: var(--paper); }
+  .members { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .avatars { display: flex; }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--ink-3); color: var(--paper);
+    display: grid; place-items: center; font-size: 10px; font-weight: 700;
+    border: 2px solid var(--ink-2); margin-left: -6px;
+    position: relative;
+  }
+  .avatar:first-child { margin-left: 0; }
+  .avatar.ks { background: oklch(0.72 0.14 30); color: var(--ink); }
+  .avatar.jh { background: oklch(0.70 0.13 200); color: var(--ink); }
+  .avatar.mk { background: oklch(0.74 0.14 290); color: var(--ink); }
+  .avatar.bot { background: var(--paper); color: var(--ink); }
+  .avatar .dot {
+    position: absolute; bottom: -1px; right: -1px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ok); border: 2px solid var(--ink-2);
+  }
+  .avatar .dot.away { background: var(--muted); }
+  .invite-btn {
+    background: transparent; color: var(--paper);
+    border: 1px solid var(--line); padding: 5px 10px;
+    border-radius: 5px; font-size: 11px; cursor: pointer;
+  }
+
+  .body { display: grid; grid-template-columns: 220px 1fr 320px; overflow: hidden; }
+  .sidebar {
+    background: var(--ink-2); border-right: 1px solid var(--line);
+    padding: 14px 10px; overflow-y: auto;
+  }
+  .side-h {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); padding: 10px 8px 4px;
+  }
+  .side-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 5px;
+    color: var(--paper); font-size: 12px; cursor: pointer;
+  }
+  .side-item:hover { background: var(--ink-3); }
+  .side-item.active { background: var(--ink-3); }
+  .side-item .icon { width: 14px; opacity: 0.7; }
+  .side-item .count { margin-left: auto; font-size: 10px; color: var(--muted); }
+  .role-pill {
+    font-size: 9px; padding: 1px 5px; border-radius: 3px;
+    background: var(--ink-3); color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .member-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; font-size: 11px; }
+  .member-row .avatar { width: 18px; height: 18px; font-size: 8px; border-width: 1px; }
+  .member-row .name { flex: 1; }
+
+  .main { overflow-y: auto; padding: 0; }
+  .notice {
+    margin: 14px 18px 0;
+    background: var(--ink-2); border: 1px solid var(--accent);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px; border-radius: 6px;
+    display: flex; align-items: center; gap: 12px; font-size: 12px;
+  }
+  .notice .ico { color: var(--accent); font-weight: 800; }
+  .notice .review { margin-left: auto; color: var(--accent); cursor: pointer; }
+
+  .channel-h {
+    padding: 16px 18px 10px; border-bottom: 1px solid var(--line);
+    margin-top: 14px;
+  }
+  .channel-h h2 { font-size: 16px; font-weight: 600; }
+  .channel-h .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .feed { padding: 8px 0; }
+  .entry {
+    padding: 12px 18px; border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  }
+  .entry:hover { background: oklch(0.20 0.02 285); }
+  .entry .a-col .avatar { width: 32px; height: 32px; font-size: 11px; border-width: 0; }
+  .entry .b-col { min-width: 0; }
+  .entry-head {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .entry-head .who { font-weight: 600; font-size: 13px; }
+  .entry-head .when { font-size: 11px; color: var(--muted); }
+  .entry-head .tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 10px;
+    background: var(--ink-3); color: var(--muted);
+    border: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .entry-head .tag.shared { background: oklch(0.30 0.05 145); color: var(--ok); border-color: var(--ok); }
+  .entry-head .tag.defer { background: oklch(0.30 0.05 25); color: var(--danger); border-color: var(--danger); }
+  .ko {
+    font-size: 14px; color: var(--paper);
+    padding: 6px 10px; background: var(--ink-2);
+    border-left: 2px solid var(--line); border-radius: 0 4px 4px 0;
+    margin: 4px 0 6px;
+  }
+  .entry .resp {
+    font-size: 13px; color: oklch(0.88 0.02 95);
+    padding: 6px 10px; background: oklch(0.22 0.02 285);
+    border-left: 2px solid var(--bot); border-radius: 0 4px 4px 0;
+    margin-top: 6px; line-height: 1.55;
+  }
+  .resp .src { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .meta-row {
+    display: flex; align-items: center; gap: 14px; margin-top: 8px;
+    font-size: 11px; color: var(--muted);
+  }
+  .meta-row .react {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 7px; border-radius: 11px;
+    background: var(--ink-3); border: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .meta-row .react.on { background: oklch(0.30 0.06 200); border-color: oklch(0.55 0.13 200); color: var(--paper); }
+  .meta-row .add-thread {
+    margin-left: auto; color: var(--accent);
+    background: transparent; border: 1px dashed var(--line);
+    padding: 3px 9px; border-radius: 4px; font-size: 11px; cursor: pointer;
+  }
+
+  .mention { color: var(--accent); font-weight: 600; }
+  .activity {
+    padding: 10px 18px; font-size: 12px; color: var(--muted);
+    border-bottom: 1px solid var(--line);
+  }
+  .activity .mention { color: var(--accent); }
+
+  .composer {
+    padding: 12px 18px 18px; border-top: 1px solid var(--line);
+    background: var(--ink-2);
+  }
+  .composer textarea {
+    width: 100%; height: 56px; resize: none;
+    background: var(--ink-3); color: var(--paper);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 9px 12px; font-family: inherit; font-size: 13px;
+  }
+  .composer-row {
+    display: flex; align-items: center; gap: 10px; margin-top: 8px;
+    font-size: 11px; color: var(--muted);
+  }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+  }
+  .switch {
+    width: 26px; height: 14px; background: var(--ink-3);
+    border-radius: 8px; border: 1px solid var(--line);
+    position: relative;
+  }
+  .switch::after {
+    content: ""; position: absolute;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--muted); top: 1px; left: 1px;
+    transition: 0.2s;
+  }
+  .switch.on { background: oklch(0.40 0.10 145); border-color: var(--ok); }
+  .switch.on::after { background: var(--ok); left: 13px; }
+  .send-btn {
+    margin-left: auto;
+    background: var(--paper); color: var(--ink);
+    border: 0; padding: 6px 14px; border-radius: 5px;
+    font-weight: 600; font-size: 12px; cursor: pointer;
+  }
+
+  /* Right rail */
+  .rail { background: var(--ink-2); border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; }
+  .rail h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; }
+  .bust {
+    background: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px;
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 14px;
+  }
+  .bust-svg {
+    width: 96px; height: 96px;
+    background: var(--ink-3); border-radius: 50%;
+    margin-bottom: 8px;
+  }
+  .bust b { font-family: "Times New Roman", serif; font-size: 15px; }
+  .bust .role { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .bust .ko-sub { font-size: 11px; color: oklch(0.78 0.02 95); margin-top: 6px; text-align: center; line-height: 1.4; }
+  .bust .badge {
+    margin-top: 10px; font-size: 9px; padding: 2px 7px;
+    border-radius: 3px; background: var(--ink-3);
+    color: var(--accent); border: 1px solid var(--accent);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .privacy {
+    background: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 12px; margin-bottom: 14px;
+  }
+  .privacy h4 { font-size: 12px; margin-bottom: 8px; }
+  .privacy .row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 0; font-size: 11px;
+  }
+  .privacy .row .label { color: var(--paper); }
+  .privacy .row .desc { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .privacy .note { font-size: 10px; color: var(--muted); margin-top: 8px; line-height: 1.4; padding-top: 8px; border-top: 1px solid var(--line); }
+
+  .ml { margin-bottom: 14px; }
+  .ml h4 { font-size: 12px; margin-bottom: 8px; }
+  .ml .item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0; font-size: 11px;
+  }
+  .ml .item .avatar { width: 18px; height: 18px; font-size: 8px; border-width: 0; }
+  .ml .item .nm { flex: 1; }
+  .ml .item .role-pill { font-size: 9px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="org">
+      <div class="org-logo">2W</div>
+      <div>
+        <div>Two-Weeks-Team</div>
+        <div class="ws-name"><b>he-was-socrates</b> · workspace</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="active" href="#">Wondering</a>
+      <a href="#">Threads</a>
+      <a href="#">Members</a>
+      <a href="#">Settings</a>
+    </nav>
+    <div class="members">
+      <span style="font-size:11px;color:var(--muted);">3 online</span>
+      <div class="avatars">
+        <div class="avatar ks" title="Sejun Kim · Owner">KS<div class="dot"></div></div>
+        <div class="avatar jh" title="Jihye Han · Editor">JH<div class="dot"></div></div>
+        <div class="avatar mk" title="Minkyu Park · Viewer">MK<div class="dot"></div></div>
+        <div class="avatar bot" title="Socrates · non-human member">
+          <svg viewBox="0 0 20 20" width="14" height="14"><circle cx="10" cy="8" r="4" fill="oklch(0.18 0.02 285)"/><rect x="5" y="11" width="10" height="6" rx="2" fill="oklch(0.18 0.02 285)"/></svg>
+        </div>
+      </div>
+      <button class="invite-btn">+ Invite</button>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <aside class="sidebar">
+      <div class="side-h">Channels</div>
+      <div class="side-item active"><span class="icon">#</span> shared-wonderings <span class="count">12</span></div>
+      <div class="side-item"><span class="icon">#</span> defer-to-human-log <span class="count">3</span></div>
+      <div class="side-item"><span class="icon">#</span> H1-hero-review <span class="count">26</span></div>
+      <div class="side-item"><span class="icon">#</span> spec-deltas <span class="count">2</span></div>
+
+      <div class="side-h" style="margin-top:14px;">Members (4)</div>
+      <div class="member-row">
+        <div class="avatar ks">KS</div><span class="name">Sejun Kim</span><span class="role-pill">Owner</span>
+      </div>
+      <div class="member-row">
+        <div class="avatar jh">JH</div><span class="name">Jihye Han</span><span class="role-pill">Editor</span>
+      </div>
+      <div class="member-row">
+        <div class="avatar mk">MK</div><span class="name">Minkyu Park</span><span class="role-pill">Viewer</span>
+      </div>
+      <div class="member-row">
+        <div class="avatar bot">
+          <svg viewBox="0 0 20 20" width="10" height="10"><circle cx="10" cy="8" r="4" fill="oklch(0.18 0.02 285)"/><rect x="5" y="11" width="10" height="6" rx="2" fill="oklch(0.18 0.02 285)"/></svg>
+        </div>
+        <span class="name">Socrates</span><span class="role-pill">non-human</span>
+      </div>
+
+      <div class="side-h" style="margin-top:14px;">Shared resources</div>
+      <div class="side-item"><span class="icon">▤</span> function_call_contract.yaml</div>
+      <div class="side-item"><span class="icon">▤</span> SystemPrompt.swift</div>
+      <div class="side-item"><span class="icon">▤</span> latency-bench.json</div>
+    </aside>
+
+    <main class="main">
+
+      <div class="notice">
+        <span class="ico">●</span>
+        <span><b>3 new wonderings</b> shared in workspace by JH and MK</span>
+        <span class="review">Review them →</span>
+      </div>
+
+      <div class="channel-h">
+        <h2># shared-wonderings</h2>
+        <div class="sub">Opt-in shared wondering log — only entries you explicitly toggle to share appear here. All inference stays on each member's device.</div>
+      </div>
+
+      <div class="activity">
+        <span class="mention">@SeJun</span> shared an entry · <span class="mention">@Jihye</span> reacted · 2 min ago
+      </div>
+
+      <div class="feed">
+
+        <article class="entry">
+          <div class="a-col"><div class="avatar ks">KS</div></div>
+          <div class="b-col">
+            <div class="entry-head">
+              <span class="who">Sejun Kim</span>
+              <span class="when">today · 09:14</span>
+              <span class="tag shared">shared</span>
+              <span class="tag">ask_back</span>
+            </div>
+            <div class="ko">정의(正義)란 강자의 이익이라 했는데, 그게 정말 모든 시대에 통하는 정의인가?</div>
+            <div class="resp">
+              그 정의가 통한다면, 약자가 강자에 동의할 때와 동의하지 않을 때, 둘 다를 같은 이름으로 부를 수 있는가?
+              <div class="src">— Socrates · ask_back · on-device · 192 ms</div>
+            </div>
+            <div class="meta-row">
+              <span class="react on">↑ 2</span>
+              <span class="react">◎ 1</span>
+              <span class="react">✎ reply</span>
+              <button class="add-thread">+ Add to thread</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="a-col"><div class="avatar jh">JH</div></div>
+          <div class="b-col">
+            <div class="entry-head">
+              <span class="who">Jihye Han</span>
+              <span class="when">today · 10:02</span>
+              <span class="tag shared">shared</span>
+              <span class="tag defer">defer_to_human</span>
+            </div>
+            <div class="ko">밤마다 가슴이 답답한데, 이게 큰 병의 신호일까?</div>
+            <div class="resp">
+              ⊘ 의료 판단은 내 몫이 아니다. 의사에게 물어라.
+              <div class="src">— Socrates · defer_to_human · medical · on-device</div>
+            </div>
+            <div class="meta-row">
+              <span class="react">↑ 1</span>
+              <span class="react on">⊘ 3</span>
+              <span class="react">✎ reply</span>
+              <button class="add-thread">+ Add to thread</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="a-col"><div class="avatar mk">MK</div></div>
+          <div class="b-col">
+            <div class="entry-head">
+              <span class="who">Minkyu Park</span>
+              <span class="when">today · 10:38</span>
+              <span class="tag shared">shared</span>
+              <span class="tag">surface_past_wonder</span>
+            </div>
+            <div class="ko">작년에 내가 던진 '우정'에 대한 물음들, 지금 보면 어떤 결로 이어지지?</div>
+            <div class="resp">
+              네가 작년 4월에 물었던 것은 우정이 이익에 기대는가였고, 가을엔 우정이 약함을 견디는가였다. 두 물음을 하나로 묶으면 너는 무엇을 묻고 있는가?
+              <div class="src">— Socrates · surface_past_wonder · 256K context · on-device</div>
+            </div>
+            <div class="meta-row">
+              <span class="react on">↑ 4</span>
+              <span class="react">◎ 2</span>
+              <span class="react on" style="background:oklch(0.30 0.06 85);border-color:var(--accent);color:var(--accent);">★ 1</span>
+              <button class="add-thread">+ Add to thread</button>
+            </div>
+          </div>
+        </article>
+
+        <div class="activity">
+          <span class="mention">@Minkyu</span> mentioned <span class="mention">@SeJun</span>: "이거 H1 hero 후보 아닌가?" · 1 min ago
+        </div>
+
+      </div>
+
+      <div class="composer">
+        <textarea placeholder="Write a wondering, or @mention a teammate…  (Enter to send · Shift+Enter for newline)">@SeJun  </textarea>
+        <div class="composer-row">
+          <span class="toggle">
+            <span class="switch"></span>
+            <span>Share to workspace <b style="color:var(--muted);">(default OFF · ⊘ private)</b></span>
+          </span>
+          <span style="color:var(--muted);">· role: Owner · on-device · NO-CLOUD</span>
+          <button class="send-btn">Send</button>
+        </div>
+      </div>
+
+    </main>
+
+    <aside class="rail">
+      <h3>Workspace member · Socrates</h3>
+      <div class="bust">
+        <svg class="bust-svg" viewBox="0 0 96 96">
+          <defs>
+            <pattern id="ht" width="3" height="3" patternUnits="userSpaceOnUse">
+              <circle cx="1.5" cy="1.5" r="0.9" fill="oklch(0.96 0.01 95)"/>
+            </pattern>
+          </defs>
+          <rect width="96" height="96" fill="oklch(0.18 0.02 285)"/>
+          <ellipse cx="48" cy="40" rx="22" ry="26" fill="url(#ht)" opacity="0.92"/>
+          <rect x="26" y="62" width="44" height="30" fill="url(#ht)" opacity="0.85"/>
+          <rect x="42" y="46" width="12" height="2" fill="oklch(0.18 0.02 285)"/>
+        </svg>
+        <b>He Was Socrates</b>
+        <div class="role">non-human member · bust avatar</div>
+        <div class="ko-sub">묻는 자만이 배운다.<br>물음을 다오, 답은 네 안에 있다.</div>
+        <div class="badge">on-device · gemma 4 e4b</div>
+      </div>
+
+      <div class="privacy">
+        <h4>Privacy &amp; consent</h4>
+        <div class="row">
+          <div>
+            <div class="label">Share my wondering log</div>
+            <div class="desc">Default OFF · per-entry opt-in</div>
+          </div>
+          <span class="switch"></span>
+        </div>
+        <div class="row">
+          <div>
+            <div class="label">Allow @mention from team</div>
+            <div class="desc">Activity feed only</div>
+          </div>
+          <span class="switch on"></span>
+        </div>
+        <div class="row">
+          <div>
+            <div class="label">Cross-device sync</div>
+            <div class="desc">Disabled · NO-CLOUD invariant</div>
+          </div>
+          <span class="switch" style="opacity:0.4;"></span>
+        </div>
+        <div class="note">
+          Inference, STT, and the wondering log itself never leave each member's Mac. The "shared" feed mirrors only entries you explicitly toggle to share — workspace is a coordination surface, not a data pipeline.
+        </div>
+      </div>
+
+      <div class="ml">
+        <h4>Roles in this workspace</h4>
+        <div class="item"><div class="avatar ks">KS</div><span class="nm">Sejun Kim</span><span class="role-pill">Owner</span></div>
+        <div class="item"><div class="avatar jh">JH</div><span class="nm">Jihye Han</span><span class="role-pill">Editor</span></div>
+        <div class="item"><div class="avatar mk">MK</div><span class="nm">Minkyu Park</span><span class="role-pill">Viewer</span></div>
+        <div class="item">
+          <div class="avatar bot">
+            <svg viewBox="0 0 20 20" width="10" height="10"><circle cx="10" cy="8" r="4" fill="oklch(0.18 0.02 285)"/><rect x="5" y="11" width="10" height="6" rx="2" fill="oklch(0.18 0.02 285)"/></svg>
+          </div>
+          <span class="nm">Socrates</span><span class="role-pill" style="border-color:var(--accent);color:var(--accent);">non-human</span>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+</body>
+</html>

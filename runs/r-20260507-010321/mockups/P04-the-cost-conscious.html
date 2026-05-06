@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>P04 · The Cost-Conscious — He Was Socrates Cost Ledger</title>
+<style>
+  :root{
+    --ink: oklch(18% 0.02 280);
+    --paper: oklch(96% 0.01 90);
+    --grid: oklch(80% 0.01 90);
+    --accent-zero: oklch(58% 0.16 150);
+    --accent-cloud: oklch(58% 0.20 25);
+    --muted: oklch(45% 0.01 280);
+    --rule: oklch(30% 0.01 280);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font:14px/1.45 ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;}
+  .page{max-width:1080px;margin:0 auto;padding:32px 28px 56px;}
+  h1{font:600 22px/1.2 system-ui,-apple-system,sans-serif;margin:0 0 4px;letter-spacing:-0.01em;}
+  h2{font:600 14px/1.2 system-ui,-apple-system,sans-serif;margin:24px 0 10px;
+    text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+  .sub{color:var(--muted);font-size:12px;margin:0 0 20px}
+  .header-row{display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--rule);padding-bottom:12px;margin-bottom:18px;}
+  .total-pill{font:600 13px/1 system-ui,sans-serif;padding:8px 12px;
+    border:1.5px solid var(--accent-zero);color:var(--accent-zero);border-radius:2px;}
+  /* Dashed wireframe boxes */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;}
+  .box{position:relative;border:1.5px dashed var(--rule);background:transparent;
+    padding:14px 14px 16px;min-height:110px;}
+  .box .lbl{font:600 11px/1.2 system-ui,sans-serif;text-transform:uppercase;
+    letter-spacing:0.06em;color:var(--muted);}
+  .box .name{font:600 16px/1.2 system-ui,sans-serif;margin:6px 0 4px;color:var(--ink);}
+  .box .desc{font-size:11.5px;color:var(--muted);line-height:1.4;}
+  .box .src{font-size:10.5px;color:var(--muted);margin-top:8px;opacity:0.85}
+  /* Cost sticker */
+  .sticker{position:absolute;top:-10px;right:-8px;
+    background:var(--paper);border:1.5px solid var(--accent-zero);
+    color:var(--accent-zero);font:700 12px/1 system-ui,sans-serif;
+    padding:6px 9px;border-radius:2px;letter-spacing:0.02em;
+    transform:rotate(-2deg);}
+  .sticker.cloud{border-color:var(--accent-cloud);color:var(--accent-cloud);transform:rotate(2deg);}
+  /* SVG bust placeholder */
+  .bust-art{width:100%;height:62px;margin-top:6px}
+  /* Spans */
+  .c-12{grid-column:span 12}.c-8{grid-column:span 8}.c-6{grid-column:span 6}
+  .c-5{grid-column:span 5}.c-4{grid-column:span 4}.c-3{grid-column:span 3}
+  .c-7{grid-column:span 7}
+  /* Bill panel */
+  .ledger{border:1.5px solid var(--rule);padding:0;margin-top:6px;}
+  .ledger .row{display:grid;grid-template-columns:28px 1fr 110px 110px;
+    gap:0;padding:8px 12px;border-bottom:1px dashed var(--rule);
+    font-size:12.5px;align-items:center;}
+  .ledger .row:last-child{border-bottom:none}
+  .ledger .row.head{background:transparent;font:600 11px/1 system-ui,sans-serif;
+    text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);
+    border-bottom:1.5px solid var(--rule);}
+  .ledger .row.total{background:transparent;font:700 14px/1 system-ui,sans-serif;
+    border-top:1.5px solid var(--rule);border-bottom:none;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .zero{color:var(--accent-zero);font-weight:700}
+  .cloud{color:var(--accent-cloud);font-weight:700}
+  .strike{text-decoration:line-through;opacity:0.6}
+  /* Comparison */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .compare .col{border:1.5px dashed var(--rule);padding:14px;}
+  .compare .col h3{font:600 13px/1.2 system-ui,sans-serif;margin:0 0 10px;
+    text-transform:uppercase;letter-spacing:0.06em;}
+  .compare .col.local h3{color:var(--accent-zero)}
+  .compare .col.cloud-col h3{color:var(--accent-cloud)}
+  .big-num{font:700 28px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;
+    margin:6px 0 2px;letter-spacing:-0.02em;}
+  .big-num.zero{color:var(--accent-zero)}
+  .big-num.cloud{color:var(--accent-cloud)}
+  .annot{font-size:11px;color:var(--muted);margin-top:4px;}
+  .footnote{margin-top:24px;padding-top:12px;border-top:1px solid var(--rule);
+    font-size:11px;color:var(--muted);line-height:1.5;}
+  .meta{font-size:10.5px;color:var(--muted);margin-top:2px;}
+  /* Tiny gauge */
+  .gauge{display:flex;gap:2px;margin-top:8px;}
+  .gauge i{display:block;height:6px;flex:1;background:var(--accent-zero);opacity:0.18}
+  .gauge i.on{opacity:0.95}
+  .arrow{font:700 18px/1 system-ui,sans-serif;color:var(--muted);text-align:center;
+    align-self:center;padding:4px 0;}
+  .scale-note{font-size:10.5px;color:var(--muted);text-align:right;margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-row">
+    <div>
+      <h1>He Was Socrates · Monthly Operating Cost Ledger</h1>
+      <p class="sub">P04 The Cost-Conscious wireframe · 7 components · self-host · static-first · zero recurring SaaS</p>
+      <p class="meta">run r-20260507-010321 · spec lock e5dfadf2c8…314c5 · NO-CLOUD invariant #1</p>
+    </div>
+    <div class="total-pill">RECURRING TOTAL · $0.00 / month</div>
+  </div>
+
+  <h2>Component Bill of Materials</h2>
+  <div class="grid">
+
+    <div class="box c-6">
+      <span class="sticker">$0 · local</span>
+      <div class="lbl">01 · Surface</div>
+      <div class="name">Bust UI (SwiftUI)</div>
+      <div class="desc">apps/macos/HeWasSocrates · 1-bit halftone PNG swap, 16 visemes, 30 fps tick. No paid design SaaS, no Figma seat at runtime.</div>
+      <svg class="bust-art" viewBox="0 0 240 60" aria-hidden="true">
+        <defs><pattern id="dot" width="3" height="3" patternUnits="userSpaceOnUse">
+          <circle cx="1.5" cy="1.5" r="0.7" fill="oklch(30% 0.01 280)"/></pattern></defs>
+        <rect x="0" y="0" width="240" height="60" fill="none" stroke="oklch(30% 0.01 280)" stroke-dasharray="2 3"/>
+        <ellipse cx="120" cy="34" rx="28" ry="22" fill="url(#dot)"/>
+        <rect x="106" y="32" width="28" height="3" fill="oklch(96% 0.01 90)"/>
+      </svg>
+      <div class="src">src: Sources/HeWasSocratesApp.swift · ContentView.swift</div>
+    </div>
+
+    <div class="box c-6">
+      <span class="sticker">$0 · one-time</span>
+      <div class="lbl">02 · Model weights</div>
+      <div class="name">Gemma 4 E4B 4-bit MLX (3.97 GB)</div>
+      <div class="desc">Pulled once via OS-mediated MLX cache from HuggingFace mirror (mlx-community/gemma-4-e4b-it-4bit). Zero monthly hosting fee; weights live on user's disk.</div>
+      <div class="gauge" aria-label="one-time download">
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="src">src: LLMRegistry.gemma4_e4b_it_4bit · sanctioned egress per CLAUDE.md inv#1</div>
+    </div>
+
+    <div class="box c-4">
+      <span class="sticker">$0 · user GPU</span>
+      <div class="lbl">03 · Inference</div>
+      <div class="name">MLX runtime</div>
+      <div class="desc">mlx-swift-lm on Apple Silicon. TTFT 192 ms median (n=10, M1 Max, PR-Λ verify-2). User pays the electricity, not the API.</div>
+      <div class="src">src: claudedocs/bench/2026-05-06-latency-bench.json</div>
+    </div>
+
+    <div class="box c-4">
+      <span class="sticker">$0 · Apple SDK</span>
+      <div class="lbl">04 · STT</div>
+      <div class="name">Speech.framework</div>
+      <div class="desc">SFSpeechRecognizer with requiresOnDeviceRecognition = true. macOS 26 SpeechAnalyzer + AssetInventory (PR #33). No Whisper API metering.</div>
+      <div class="src">src: AudioInputManager.swift · Preflight.swift</div>
+    </div>
+
+    <div class="box c-4">
+      <span class="sticker">$0 · Apple SDK</span>
+      <div class="lbl">05 · TTS</div>
+      <div class="name">AVSpeechSynthesizer</div>
+      <div class="desc">Yuna (ko) / Samantha (en), premium → enhanced → default chain. No ElevenLabs subscription, no per-character billing.</div>
+      <div class="src">src: TTSManager.swift</div>
+    </div>
+
+    <div class="box c-6">
+      <span class="sticker">$0 · local DB</span>
+      <div class="lbl">06 · Persistence</div>
+      <div class="name">Wondering Log (Core Data on SQLite)</div>
+      <div class="desc">SHA-256 fingerprint dedup, deterministic JSON export. No managed Postgres, no Pinecone vector DB seat, no Supabase project. The disk is the database.</div>
+      <div class="src">src: WonderingLog.swift · Core Data store</div>
+    </div>
+
+    <div class="box c-6">
+      <span class="sticker">$0 · GitHub free</span>
+      <div class="lbl">07 · Distribution</div>
+      <div class="name">GitHub Pages + Releases</div>
+      <div class="desc">Two-Weeks-Team org, public repo. Gallery + hero preview at /docs. Zero CDN bill, zero Vercel Pro seat, zero domain renewal if .github.io is used.</div>
+      <div class="src">src: idea.json §3 General · public Pages URL</div>
+    </div>
+
+  </div>
+
+  <h2>Monthly Bill · He Was Socrates (self-host)</h2>
+  <div class="ledger" role="table" aria-label="Monthly bill">
+    <div class="row head"><div></div><div>Line item</div><div class="num">Unit</div><div class="num">Monthly</div></div>
+    <div class="row"><div>01</div><div>Bust UI hosting (compiled into .app)</div><div class="num">—</div><div class="num zero">$0.00</div></div>
+    <div class="row"><div>02</div><div>Gemma 4 weights storage (user's disk)</div><div class="num">3.97 GB</div><div class="num zero">$0.00</div></div>
+    <div class="row"><div>03</div><div>Inference compute (user's GPU)</div><div class="num">~192 ms TTFT</div><div class="num zero">$0.00</div></div>
+    <div class="row"><div>04</div><div>STT minutes (Apple Speech.framework)</div><div class="num">unmetered</div><div class="num zero">$0.00</div></div>
+    <div class="row"><div>05</div><div>TTS characters (AVSpeech, Yuna ko)</div><div class="num">unmetered</div><div class="num zero">$0.00</div></div>
+    <div class="row"><div>06</div><div>Wondering log storage (Core Data)</div><div class="num">local</div><div class="num zero">$0.00</div></div>
+    <div class="row"><div>07</div><div>Static gallery hosting (GitHub Pages)</div><div class="num">100 GB/mo soft</div><div class="num zero">$0.00</div></div>
+    <div class="row total"><div></div><div>Recurring monthly total</div><div class="num">—</div><div class="num zero">$0.00</div></div>
+  </div>
+  <div class="scale-note">Scales with users at the same rate it scales with zero users: $0 · ∂cost/∂user = 0.</div>
+
+  <h2>Cloud-Equivalent Counterfactual · 5,000-seat school district · 9-month year</h2>
+  <div class="compare">
+    <div class="col local">
+      <h3>He Was Socrates (this stack)</h3>
+      <div class="big-num zero">$0 / mo</div>
+      <div class="annot">Recurring SaaS spend: zero. One-time per device: 3.97 GB download, ~10 min on home broadband. Per-student marginal cost: $0.00.</div>
+    </div>
+    <div class="col cloud-col">
+      <h3>Cloud-equivalent build</h3>
+      <div class="big-num cloud">~$5,403 / mo</div>
+      <div class="annot">Estimated for 5,000 students × ~30 turns/week × 4 weeks. See itemization below.</div>
+    </div>
+  </div>
+
+  <div class="ledger" style="margin-top:14px" role="table" aria-label="Cloud equivalent itemization">
+    <div class="row head"><div></div><div>Cloud line item</div><div class="num">Unit price</div><div class="num">Monthly</div></div>
+    <div class="row"><div>A</div><div>GPT-4o inference (Socratic dialogue, ~600M tok/mo)</div><div class="num">$0.0050 / 1K in</div><div class="num cloud">~$3,000.00</div></div>
+    <div class="row"><div>B</div><div>ElevenLabs TTS (Korean voice, Creator tier × 9 seats)</div><div class="num">$22 / seat</div><div class="num cloud">~$198.00</div></div>
+    <div class="row"><div>C</div><div>Whisper API STT (audio minutes)</div><div class="num">$0.006 / min</div><div class="num cloud">~$1,800.00</div></div>
+    <div class="row"><div>D</div><div>Pinecone vector DB (wondering log embeddings, Standard)</div><div class="num">$70 base + usage</div><div class="num cloud">~$285.00</div></div>
+    <div class="row"><div>E</div><div>Vercel Pro (preview + admin)</div><div class="num">$20 / seat × 6</div><div class="num cloud">~$120.00</div></div>
+    <div class="row total"><div></div><div>Cloud-equivalent recurring total</div><div class="num">—</div><div class="num cloud">~$5,403.00</div></div>
+  </div>
+  <div class="scale-note">∂cost/∂user ≈ $1.08 / student / month · linear with usage · indefinite recurrence</div>
+
+  <h2>Delta · why this stack wins on the ledger</h2>
+  <div class="grid">
+    <div class="box c-4">
+      <span class="sticker">−$5,403</span>
+      <div class="lbl">Δ Monthly</div>
+      <div class="name">Recurring savings</div>
+      <div class="desc">Cloud build − this build = $5,403 − $0 = <strong>$5,403 / mo avoided</strong>. Over a 9-month school year: ~$48,627 per district per year not spent on SaaS.</div>
+    </div>
+    <div class="box c-4">
+      <span class="sticker">$0 vendor lock-in</span>
+      <div class="lbl">Δ Risk</div>
+      <div class="name">Zero vendor exposure</div>
+      <div class="desc">No API keys to rotate. No price-hike letters. No deprecation notices. The bill cannot go up because there is no bill.</div>
+    </div>
+    <div class="box c-4">
+      <span class="sticker">$0 egress</span>
+      <div class="lbl">Δ Privacy bill</div>
+      <div class="name">No data-egress fees, no DPA</div>
+      <div class="desc">NO-CLOUD invariant means student utterances never leave the Mac, so the procurement officer also avoids the unbudgeted line item: legal review of a third-party data-processing agreement.</div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Sources · CLAUDE.md absolute invariant #1 (no network.client / network.server) · HeWasSocrates.entitlements · claudedocs/bench/2026-05-06-latency-bench.json (PR-Λ TTFT 192 ms n=10) · function_call_contract.yaml · idea.json §3 General (GitHub Pages publication target). Cloud unit prices are public list rates as of 2026-05-07; treat the ~$5,403 figure as a representative counterfactual, not a binding quote. All metrics on this page resolve to a commit, bench file, or vendor pricing page — zero unsourced numbers per spec success criterion #2.
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "id": "P08",
+  "advocate": "The Slack-Native",
+  "framing": "He Was Socrates lives where teamwork already happens — a Slack-mediated Socratic interlocutor where the macOS daemon answers via slash commands. The bot is a thin relay; inference still runs on the user's Mac, preserving NO-CLOUD.",
+  "target_persona": "Two-Weeks-Team org members who think in #channels — bilingual (ko/en) hackathon collaborators who want to consult Socrates mid-thread without context-switching to a separate macOS app window.",
+  "primary_surface": "Slack bot (slash commands /socrates + unfurl + App Home). Web dashboard is auxiliary — only for opt-in usage reports. Inference always traverses the local /socrates daemon on the user's Mac.",
+  "opus_4_7_capability": "Native function calling in tight, low-latency dispatch — mode_classify routes the slash command, ask_back returns a 평어체 Socratic question, defer_to_human emits ⊘ with an escape-hatch link. Function-call discipline keeps the bot from drifting into chatbot mode.",
+  "mvp_scope": "4-day demo: one Slack workspace, one slash command (/socrates), two response paths (ask_back + defer_to_human), App Home tab with locale toggle and privacy disclosure. No auth, no DB, no analytics — relay-only.",
+  "one_liner_pitch": "Socrates as a slash command — 평어체 questions in your team channel, abstention with an escape hatch, all inference on the user's Mac.",
+  "spec_alignment_notes": "primary_surface override: spec listed Kaggle preview HTML as artifact A; this advocate reframes the demo surface as Slack-native per P08 charter. Tone-lock (단정한 평어체), defer_to_human mechanic, NO-CLOUD invariant, and 4-function dispatch are preserved verbatim. Korean limited to user prompts + bot replies; Slack chrome stays English. Inferred default: bot is relay-only — the actual model never runs in Slack's cloud."
+}

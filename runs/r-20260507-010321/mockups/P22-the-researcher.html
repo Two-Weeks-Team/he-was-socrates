@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Maieutic Abstention — A Korean Socratic LLM Surface with Locked Refusal Channels</title>
+<style>
+  :root{
+    --paper: oklch(97% 0.012 85);
+    --ink:   oklch(18% 0.02 280);
+    --rule:  oklch(40% 0.02 280);
+    --muted: oklch(45% 0.02 280);
+    --accent:oklch(38% 0.10 25);
+    --bar:   oklch(28% 0.04 280);
+    --bar2:  oklch(55% 0.10 25);
+    --code:  oklch(94% 0.012 85);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:oklch(92% 0.012 85);color:var(--ink);
+    font-family: "Times New Roman", Times, Georgia, serif;}
+  .paper{max-width: 880px; margin: 32px auto 64px; background: var(--paper);
+    padding: 56px 72px 72px; box-shadow: 0 1px 0 oklch(85% 0.012 85), 0 8px 28px oklch(20% 0.02 280 / 0.10);}
+  h1.title{font-size: 26px; line-height:1.2; margin:0 0 6px; font-weight:600; letter-spacing:-0.005em;}
+  .subtitle{font-style: italic; color: var(--muted); margin: 0 0 18px; font-size: 14px;}
+  .authors{font-size: 13px; line-height:1.5; margin: 0 0 4px;}
+  .affil{font-size: 11px; color: var(--muted); line-height:1.4; margin: 0 0 22px;}
+  .meta{font-size: 11px; color: var(--muted); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 6px 0; display:flex; justify-content:space-between; margin: 0 0 24px; font-family: ui-monospace, "JetBrains Mono", Menlo, monospace;}
+  h2{font-size: 15px; margin: 26px 0 8px; font-weight:600; letter-spacing:0.02em; text-transform: uppercase;}
+  h3{font-size: 13px; margin: 18px 0 6px; font-weight:600; font-style: italic;}
+  p, li{font-size: 13.2px; line-height: 1.55; margin: 0 0 10px; text-align: justify; hyphens:auto;}
+  .abstract{border-left: 2px solid var(--rule); padding: 4px 14px; margin: 0 0 10px; font-size: 12.6px;}
+  .abstract b{font-variant: small-caps; letter-spacing:0.04em;}
+  code, pre, .mono{font-family: ui-monospace, "JetBrains Mono", Menlo, monospace; font-size: 11.6px;}
+  pre{background: var(--code); border: 1px solid oklch(88% 0.012 85); padding: 10px 12px; overflow:auto;
+    line-height:1.45; white-space: pre; margin: 8px 0 12px;}
+  table{border-collapse: collapse; width:100%; margin: 8px 0 12px; font-size: 12px;}
+  th,td{border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 6px 8px; text-align:left; vertical-align: top;}
+  th{font-weight:600; background: oklch(94% 0.012 85);}
+  .figure{margin: 14px 0 18px; padding: 10px 12px 14px; background: oklch(95% 0.012 85);
+    border: 1px solid oklch(88% 0.012 85);}
+  .figure svg{display:block; width:100%; height:auto;}
+  .caption{font-size: 11.4px; color: var(--muted); margin-top: 6px; line-height:1.45;}
+  .caption b{color: var(--ink); font-weight:600;}
+  .refs{font-size: 11.5px; line-height:1.5;}
+  .refs ol{padding-left: 22px; margin:6px 0 0;}
+  .refs li{margin-bottom: 4px; text-align:left;}
+  a{color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent);}
+  a:hover{border-bottom-style: solid;}
+  .bibtex{margin-top: 18px;}
+  .bibtex pre{background: oklch(20% 0.02 280); color: oklch(94% 0.012 85); border-color: oklch(30% 0.02 280);}
+  .ko{font-family: "Apple SD Gothic Neo", "Noto Serif KR", system-ui, sans-serif;}
+  .pull{display:flex; gap:14px; margin: 10px 0 14px;}
+  .pull > div{flex:1; border:1px solid oklch(88% 0.012 85); background: oklch(95% 0.012 85);
+    padding:8px 10px;}
+  .pull h4{margin:0 0 4px; font-size:11px; text-transform: uppercase; letter-spacing:0.04em; color:var(--muted);}
+  .pull .v{font-family: ui-monospace, "JetBrains Mono", Menlo, monospace; font-size: 16px; font-weight:600;}
+  sup.cite{font-size: 10.5px; color: var(--accent); padding: 0 1px;}
+  hr.rule{border:0; border-top: 1px solid var(--rule); margin: 26px 0 14px;}
+  .smallcaps{font-variant: small-caps; letter-spacing:0.06em;}
+  .twocol{column-count: 1;}
+  @media (min-width: 760px){.twocol{column-count:1;}}
+</style>
+</head>
+<body>
+<article class="paper">
+
+<h1 class="title">Maieutic Abstention: A Korean Socratic LLM Surface with Locked Refusal Channels</h1>
+<p class="subtitle">A reproducibility-oriented system description and on-device latency report</p>
+<p class="authors">Anonymous Authors<sup>†</sup></p>
+<p class="affil"><sup>†</sup> ORCID placeholder · Two-Weeks-Team · correspondence: <a href="https://github.com/Two-Weeks-Team/he-was-socrates">github.com/Two-Weeks-Team/he-was-socrates</a></p>
+<div class="meta">
+  <span>Preprint · 2026-05-07</span>
+  <span>Run r-20260507-010321</span>
+  <span>Lock SHA e5dfadf2c8…314c5</span>
+</div>
+
+<h2>Abstract</h2>
+<p class="abstract"><b>Background.</b> Most conversational LLM demonstrations optimize for the answering rate. We instead study a system in which structured refusal — <i>defer_to_human</i> — is treated as a load-bearing product mechanic, not a fallback. <b>System.</b> We describe an on-device Korean Socratic interlocutor running Gemma 4 E4B 4-bit MLX <sup class="cite">[1]</sup> on Apple Silicon, dispatched through four function calls: <code>mode_classify</code>, <code>surface_past_wonder</code>, <code>ask_back</code>, <code>defer_to_human</code> <sup class="cite">[2]</sup>. The Korean tone is locked verbatim to <span class="ko">단정한 평어체</span> in the system prompt <sup class="cite">[3]</sup>. The macOS App Sandbox is configured without <code>network.client</code> or <code>network.server</code> entitlements <sup class="cite">[4]</sup>; STT is constrained to <code>requiresOnDeviceRecognition = true</code>. <b>Results.</b> First-token latency was measured on M1 Max (n=10): median ≈ 190 ms (p10 181 ms, p90 263 ms) for the fast path with reused KV state, vs. 4569 ms on the slow fallback (PR-Λ disk-mediated KV cache reuse, ratio ≈ 17.3×) <sup class="cite">[5]</sup>. <b>Limitations.</b> Multi-year recall via <i>surface_past_wonder</i> is implemented as a stub; macOS 26 floor; single-host measurement on M1 Max MBP 64 GB. <b>Contribution.</b> A reproducible artifact that frames safety abstention as a measurable surface, with all numerical claims resolving to commits, bench JSON, or source files.</p>
+
+<hr class="rule">
+
+<h2>1. Introduction</h2>
+<p>The dominant evaluation lens for conversational LLMs rewards higher answering rates; refusal is typically treated as a degradation mode. We argue this is a category error in domains where unsafe answers are costlier than absent answers — medical, legal, financial, emergency, welfare, and insurance topics in particular. We describe a deployed system in which the refusal channel is part of the public function-call contract, dispatched by the model itself rather than enforced by a post-hoc filter <sup class="cite">[2,6]</sup>.</p>
+<p>The system is also constrained: zero outbound network egress is permitted at runtime <sup class="cite">[4,7]</sup>, the Korean prompt is verbatim-locked <sup class="cite">[3]</sup>, and the visual surface is restricted to a deterministic 1-bit halftone pipeline whose manifest is SHA-256 verified in CI <sup class="cite">[8]</sup>. We report system structure (§2), measured first-token latency (§3), explicit limitations (§4), and discussion (§5).</p>
+
+<h2>2. Method</h2>
+<h3>2.1 Function-call dispatch</h3>
+<p>The model emits exactly one of four function calls per turn. The contract is <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/runs/2026-05-05-spec/spec/function_call_contract.yaml">function_call_contract.yaml</a>:</p>
+<table>
+  <thead><tr><th>Function</th><th>Role</th><th>Returned shape</th><th>Refusal channel</th></tr></thead>
+  <tbody>
+    <tr><td><code>mode_classify</code></td><td>Classify user turn into <code>Mode</code></td><td>enum tag</td><td>—</td></tr>
+    <tr><td><code>surface_past_wonder</code></td><td>Retrieve prior log entries (256K context)</td><td>compressed recall</td><td>—</td></tr>
+    <tr><td><code>ask_back</code></td><td>Return a Socratic question</td><td>Korean 평어체 string</td><td>—</td></tr>
+    <tr><td><code>defer_to_human</code></td><td>Hand-off for regulated domains</td><td>⊘ + 평어체 reason</td><td>load-bearing</td></tr>
+  </tbody>
+</table>
+
+<h3>2.2 Tone lock (verbatim system prompt excerpt)</h3>
+<pre class="ko">너는 소크라테스다. 단정한 평어체로 말한다.
+존댓말도, 친근한 반말도 쓰지 않는다.
+답을 주지 않는다. 더 좋은 질문을 돌려준다.
+의료 · 법률 · 금융 · 응급 · 복지 · 보험은 사람에게 위임한다.</pre>
+<p class="caption"><b>Excerpt.</b> Verbatim from <code>Sources/SocraticEngine/Gemma/SystemPrompt.swift</code> <sup class="cite">[3]</sup>; embedded at compile time and treated as a frozen invariant.</p>
+
+<h3>2.3 Example: <code>defer_to_human</code> on a regulated medical query</h3>
+<pre>USER (en):  "Should I stop taking my prescribed beta-blocker
+             before flying tomorrow?"
+DISPATCH:   defer_to_human(domain="medical")
+RESPONSE (<span class="ko">평어체</span>):</pre>
+<p class="ko" style="margin-left:14px; border-left:2px solid var(--accent); padding-left:10px;">⊘ 이건 사람에게 물어야 한다. 처방을 낸 의사에게 직접 확인한다. 나는 답하지 않는다.</p>
+<p class="caption"><b>Behavior.</b> The refusal is emitted by the model through the function-call contract, not appended by a regex filter. Bench label <code>defer/regulated-medical</code>; firstChunkMs = 190.85, deferred = true <sup class="cite">[5]</sup>.</p>
+
+<h3>2.4 Runtime constraints</h3>
+<p>The macOS App Sandbox entitlements file <sup class="cite">[4]</sup> declares neither <code>com.apple.security.network.client</code> nor <code>com.apple.security.network.server</code>. STT uses <code>SFSpeechRecognizer</code> with <code>requiresOnDeviceRecognition = true</code> <sup class="cite">[7]</sup>; on macOS 26 the path migrates to <code>SpeechAnalyzer</code> with <code>AssetInventory</code>-mediated bilingual model download <sup class="cite">[9,10]</sup>. The only sanctioned network operation across the binary is the OS-mediated MLX cache fetch of <code>mlx-community/gemma-4-e4b-it-4bit</code> on first launch <sup class="cite">[1]</sup>.</p>
+
+<h2>3. Results</h2>
+<div class="pull">
+  <div><h4>TTFT median</h4><div class="v">≈ 190 ms</div></div>
+  <div><h4>p10 / p90</h4><div class="v">181 / 263 ms</div></div>
+  <div><h4>fast / slow ratio</h4><div class="v">17.3×</div></div>
+  <div><h4>n</h4><div class="v">10</div></div>
+</div>
+
+<div class="figure">
+  <svg viewBox="0 0 760 260" role="img" aria-label="firstChunkMs per turn, n=10">
+    <defs>
+      <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="oklch(55% 0.10 25)" stroke-width="2"/>
+      </pattern>
+    </defs>
+    <!-- axes -->
+    <line x1="56" y1="20" x2="56" y2="220" stroke="oklch(40% 0.02 280)" stroke-width="1"/>
+    <line x1="56" y1="220" x2="740" y2="220" stroke="oklch(40% 0.02 280)" stroke-width="1"/>
+    <!-- y ticks at 0, 100, 200, 300 ms (scale: 200ms axis height = 200px → 1ms = 0.5px) -->
+    <g font-family="ui-monospace,Menlo,monospace" font-size="10" fill="oklch(45% 0.02 280)">
+      <text x="50" y="223" text-anchor="end">0</text>
+      <text x="50" y="173" text-anchor="end">100</text>
+      <text x="50" y="123" text-anchor="end">200</text>
+      <text x="50" y="73" text-anchor="end">300</text>
+      <text x="20" y="120" transform="rotate(-90,20,120)" text-anchor="middle">firstChunkMs</text>
+    </g>
+    <!-- median line at 190 → y=220-95=125 -->
+    <line x1="56" y1="125" x2="740" y2="125" stroke="oklch(38% 0.10 25)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="744" y="128" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="oklch(38% 0.10 25)">p50 ≈ 190</text>
+    <!-- p90 at 263 → y=220-131.5≈88.5 -->
+    <line x1="56" y1="88" x2="740" y2="88" stroke="oklch(55% 0.10 25)" stroke-width="0.5" stroke-dasharray="2 3"/>
+    <text x="744" y="91" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="oklch(55% 0.10 25)">p90 ≈ 263</text>
+    <!-- p10 at 181 → y=220-90.5≈129.5 -->
+    <!-- bars -->
+    <g>
+      <!-- turn 1: 276.86 ask-back/curious-adult-1 -->
+      <rect x="80"  y="82"  width="48" height="138" fill="oklch(28% 0.04 280)"/>
+      <!-- turn 2: 191.40 ask-back/stuck-thinker-1 -->
+      <rect x="146" y="124" width="48" height="96"  fill="oklch(28% 0.04 280)"/>
+      <!-- turn 3: 189.09 ask-back/curious-adult-2 -->
+      <rect x="212" y="125" width="48" height="95"  fill="oklch(28% 0.04 280)"/>
+      <!-- turn 4: 190.85 defer/regulated-medical (hatched) -->
+      <rect x="278" y="125" width="48" height="95"  fill="url(#hatch)" stroke="oklch(38% 0.10 25)" stroke-width="0.5"/>
+      <!-- turn 5: 188.71 ask-back/curious-adult-3 -->
+      <rect x="344" y="126" width="48" height="94"  fill="oklch(28% 0.04 280)"/>
+      <!-- turn 6: 181.42 ask-back/stuck-thinker-2 -->
+      <rect x="410" y="129" width="48" height="91"  fill="oklch(28% 0.04 280)"/>
+      <!-- turn 7: 263.43 ask-back/curious-adult-4 -->
+      <rect x="476" y="89"  width="48" height="131" fill="oklch(28% 0.04 280)"/>
+      <!-- turn 8: 205.18 defer/regulated-financial (hatched) -->
+      <rect x="542" y="118" width="48" height="102" fill="url(#hatch)" stroke="oklch(38% 0.10 25)" stroke-width="0.5"/>
+      <!-- turn 9: 189.49 ask-back/curious-adult-5 -->
+      <rect x="608" y="125" width="48" height="95"  fill="oklch(28% 0.04 280)"/>
+      <!-- turn 10: 188.91 ask-back/stuck-thinker-3 -->
+      <rect x="674" y="126" width="48" height="94"  fill="oklch(28% 0.04 280)"/>
+    </g>
+    <!-- x labels -->
+    <g font-family="ui-monospace,Menlo,monospace" font-size="9" fill="oklch(45% 0.02 280)">
+      <text x="104" y="236" text-anchor="middle">t1</text>
+      <text x="170" y="236" text-anchor="middle">t2</text>
+      <text x="236" y="236" text-anchor="middle">t3</text>
+      <text x="302" y="236" text-anchor="middle">t4*</text>
+      <text x="368" y="236" text-anchor="middle">t5</text>
+      <text x="434" y="236" text-anchor="middle">t6</text>
+      <text x="500" y="236" text-anchor="middle">t7</text>
+      <text x="566" y="236" text-anchor="middle">t8*</text>
+      <text x="632" y="236" text-anchor="middle">t9</text>
+      <text x="698" y="236" text-anchor="middle">t10</text>
+      <text x="400" y="252" text-anchor="middle">turn index (* = defer_to_human)</text>
+    </g>
+    <!-- legend -->
+    <g font-family="ui-monospace,Menlo,monospace" font-size="9">
+      <rect x="60" y="6" width="10" height="10" fill="oklch(28% 0.04 280)"/>
+      <text x="74" y="15" fill="oklch(18% 0.02 280)">ask_back</text>
+      <rect x="140" y="6" width="10" height="10" fill="url(#hatch)" stroke="oklch(38% 0.10 25)" stroke-width="0.5"/>
+      <text x="154" y="15" fill="oklch(18% 0.02 280)">defer_to_human</text>
+    </g>
+  </svg>
+  <p class="caption"><b>Figure 1.</b> Per-turn first-chunk latency (firstChunkMs) for n=10 utterances on the fast path with reused KV state. Two turns dispatch <code>defer_to_human</code> (hatched). Median ≈ 190 ms; p10 = 181 ms; p90 = 263 ms. Source: <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/claudedocs/bench/2026-05-06-latency-bench.json"><code>claudedocs/bench/2026-05-06-latency-bench.json</code></a> <sup class="cite">[5]</sup>.</p>
+</div>
+
+<h3>3.1 Fast-path vs. slow-fallback (PR-Λ reuse probe)</h3>
+<p>The reuse probe re-issues the same Korean utterance (<span class="ko">"왜 사람들은 자신과 다른 의견을 가진 사람을 미워하게 될까?"</span>) twice. Fast-path (KV state present): firstChunkMs = 264.7, wallMs = 798.3. Slow-fallback (cold KV): firstChunkMs = 4569.5, wallMs = 5113.8. Reported <code>ttftRatio</code> = 17.26 <sup class="cite">[5]</sup>. Wall-clock per turn aggregated over n=10: median 808.6 ms, mean 884.1 ms, max 1190.4 ms.</p>
+
+<h3>3.2 Refusal channel does not penalize latency</h3>
+<p>The two <code>defer_to_human</code> turns (medical, financial) measure firstChunkMs of 190.85 and 205.18 ms — within the central mass of the ask_back distribution. We interpret this as evidence that the refusal channel is dispatched by the model on equal footing with answering channels, not gated by a slower post-process.</p>
+
+<h2>4. Limitations</h2>
+<ul>
+  <li><b>Multi-year recall is designed-for, not as-shipped.</b> <code>surface_past_wonder</code> currently consumes a stubbed wondering-log adapter; the 256K-context retrieval logic is wired but the persistence integration is Phase 4 work <sup class="cite">[2,6]</sup>. Claims about multi-year inquiry continuity should be read prospectively.</li>
+  <li><b>Single-host measurement.</b> All latencies were measured on one MacBook Pro M1 Max, 64 GB RAM, macOS 26, with the binary built under <code>SWIFT_STRICT_CONCURRENCY = complete</code>. Cross-host variance is not characterized in this report <sup class="cite">[5]</sup>.</li>
+  <li><b>macOS 26 floor.</b> The shipped <code>AssetInventory</code> bilingual STT path requires macOS 26 (SPEC iter6) <sup class="cite">[10]</sup>; older OSes are out of scope.</li>
+  <li><b>Korean tone evaluation is qualitative.</b> The verbatim 평어체 lock is a design constraint, not a measured outcome; we do not report a Korean register-classification benchmark in this artifact.</li>
+  <li><b>No photoreal lip-sync claim.</b> Visemes are a 16-PNG 1-bit halftone swap with ≥2-frame hold and audio-clock sync <sup class="cite">[8,11]</sup>. We make no perceptual-realism claim.</li>
+  <li><b>Threats to determinism.</b> The asset pipeline relies on Pillow ordering and gamma rounding; CI verifies the manifest SHA-256 across two consecutive builds <sup class="cite">[8]</sup>. Pillow upstream drift would require re-pinning.</li>
+</ul>
+
+<h2>5. Discussion</h2>
+<p>Treating <code>defer_to_human</code> as a first-class function call inverts the typical safety-as-postprocess pattern. The bench (§3.2) is consistent with the design claim that refusal is not a degraded path. Combined with the NO-CLOUD invariant — which removes a class of exfiltration risks at the entitlement layer rather than at the policy layer <sup class="cite">[4,7]</sup> — the result is a system whose safety posture can be inspected by reading the entitlements file and the function-call contract, two artifacts that ship with the binary.</p>
+<p>We see the contribution as an engineering pattern, not a model novelty: locked refusal channels + verbatim tone constraints + entitlement-level exfiltration prevention, applied to a small open-weights model <sup class="cite">[1]</sup>. We invite reviewers to reproduce §3 by running <code>make engine-test</code> against the stubbed engine and inspecting <code>claudedocs/bench/2026-05-06-latency-bench.json</code> against their own M-series host <sup class="cite">[12]</sup>.</p>
+
+<hr class="rule">
+
+<h2>References</h2>
+<div class="refs">
+<ol>
+<li>Google DeepMind. <i>Gemma 4 model family.</i> <a href="https://deepmind.google/models/gemma/gemma-4/">deepmind.google/models/gemma/gemma-4/</a>. Variant: <code>mlx-community/gemma-4-e4b-it-4bit</code>, 3.97 GB.</li>
+<li>Two-Weeks-Team. <i>function_call_contract.yaml.</i> <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/runs/2026-05-05-spec/spec/function_call_contract.yaml">runs/2026-05-05-spec/spec/function_call_contract.yaml</a>.</li>
+<li>Two-Weeks-Team. <i>SystemPrompt.swift</i> (Korean 평어체, verbatim, compile-time embedded). <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/Sources/SocraticEngine/Gemma/SystemPrompt.swift">Sources/SocraticEngine/Gemma/SystemPrompt.swift</a>.</li>
+<li>Two-Weeks-Team. <i>HeWasSocrates.entitlements</i> (no <code>network.client</code> / <code>network.server</code>). <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements">apps/macos/HeWasSocrates/.../HeWasSocrates.entitlements</a>.</li>
+<li>Two-Weeks-Team. <i>2026-05-06-latency-bench.json</i> (PR-Λ verify-2, n=10, M1 Max MBP 64 GB). <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/claudedocs/bench/2026-05-06-latency-bench.json">claudedocs/bench/2026-05-06-latency-bench.json</a>.</li>
+<li>Two-Weeks-Team. <i>EngineCoordinator.swift</i> — turn loop and Phase enum. <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/Sources/SocraticEngine/EngineCoordinator.swift">packages/SocraticEngine/Sources/SocraticEngine/EngineCoordinator.swift</a>.</li>
+<li>Apple Developer. <i>SFSpeechRecognizer / requiresOnDeviceRecognition.</i> <a href="https://developer.apple.com/documentation/speech/sfspeechrecognizer">developer.apple.com/documentation/speech/sfspeechrecognizer</a>.</li>
+<li>Two-Weeks-Team. <i>Asset pipeline determinism (manifest SHA-256, CI gate).</i> <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/scripts">scripts/</a> + <code>assets/.build-manifest.json</code>.</li>
+<li>Apple Developer. <i>WWDC25 Session 277 — SpeechAnalyzer.</i> <a href="https://developer.apple.com/videos/play/wwdc2025/277/">developer.apple.com/videos/play/wwdc2025/277/</a>.</li>
+<li>Two-Weeks-Team. <i>SPEC.md.iter6</i> (macOS 26 floor, AssetInventory bilingual). <a href="https://github.com/Two-Weeks-Team/he-was-socrates/tree/main/runs/2026-05-05-spec/spec">runs/2026-05-05-spec/spec/</a>.</li>
+<li>Two-Weeks-Team. <i>SPEC.md.iter5</i> (JamoTimeline fallback for absent Apple phoneme markers). <a href="https://github.com/Two-Weeks-Team/he-was-socrates/tree/main/runs/2026-05-05-spec/spec">runs/2026-05-05-spec/spec/</a>.</li>
+<li>Two-Weeks-Team. <i>Makefile targets</i> (<code>make engine-test</code>, <code>make ci-local</code>). <a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/Makefile">Makefile</a>.</li>
+<li>Apple. <i>MLX framework</i> and <code>mlx-swift-lm</code> bindings. <a href="https://github.com/ml-explore/mlx-swift">github.com/ml-explore/mlx-swift</a>.</li>
+<li>Kaggle × Google DeepMind. <i>The Gemma 4 Good Hackathon.</i> <a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">kaggle.com/competitions/gemma-4-good-hackathon</a>.</li>
+</ol>
+</div>
+
+<div class="bibtex">
+<h2>BibTeX</h2>
+<pre>@misc{hewassocrates2026maieutic,
+  title        = {Maieutic Abstention: A Korean Socratic LLM Surface
+                  with Locked Refusal Channels},
+  author       = {{Two-Weeks-Team}},
+  year         = {2026},
+  month        = {may},
+  howpublished = {Preprint, run r-20260507-010321},
+  note         = {On-device Gemma 4 E4B 4-bit MLX on macOS 26.
+                  TTFT median 190 ms (n=10, M1 Max).
+                  No network entitlement; defer\_to\_human as
+                  load-bearing function call.},
+  url          = {https://github.com/Two-Weeks-Team/he-was-socrates},
+  lockSHA      = {e5dfadf2c8...314c5}
+}</pre>
+</div>
+
+</article>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "id": "P01",
+  "advocate": "The Contrarian",
+  "framing": "Everyone ships a fullscreen macOS bust app with halftone visemes — you ship a terminal-only Socratic CLI. The bust becomes ASCII; the abstention mechanic becomes a unicode glyph (⊘) printed to stdout; judges evaluate by piping demo input through stdin instead of clicking a hero CTA.",
+  "target_persona": "Kaggle/DeepMind judges who triage 200+ submissions via SSH-into-evaluation-VM and prefer `cat demo.log` over watching a 2-minute screen recording — plus the dotfiles-tribe of Korean dev-edu users who already live in tmux.",
+  "primary_surface": "terminal/CLI (`socrates --lang ko` REPL with stdin/stdout transcript; no GUI, no web preview, no Electron)",
+  "opus_4_7_capability": "Native function calling routed through a TTY contract: `mode_classify` → `ask_back`/`defer_to_human` dispatched as named subprocess events printed inline; configurable thinking mode rendered as a single-line spinner; the 4-function dispatch becomes a CLI verb table.",
+  "mvp_scope": "A 4-day buildable Swift CLI that wraps the existing SocraticEngine in `.stub` mode and renders one full Korean Socratic turn — push-to-talk replaced by readline, viseme PNGs replaced by ASCII frames, defer_to_human surfaced as `⊘ defer_to_human(reason=medical)` followed by the verbatim 평어체 response.",
+  "one_liner_pitch": "Everyone ships a halftone-bust GUI; we ship `brew install hewassocrates` — a Korean Socratic REPL that fits in a tmux pane and refuses cloud egress by construction.",
+  "spec_alignment_notes": "spec_alignment_notes: target_persona deliberately reframed away from the spec's primary 'Kaggle judges scrolling an HTML preview' anchor toward 'judges who SSH/cat logs' to honor the contrarian bias (unfashionable surface). primary_surface intentionally violates the spec's primary_artifact_A 'single-file HTML preview' assumption — that is the role of this advocate per the agent definition (primary_surface ≠ Web). All frozen invariants preserved verbatim: NO-CLOUD, defer_to_human load-bearing, 단정한 평어체 verbatim, no photoreal lip-sync (ASCII art is the contrarian-equivalent of 1-bit halftone). Metrics (192 ms TTFT, n=10 M1 Max) cited unchanged from bench/2026-05-06-latency-bench.json."
+}

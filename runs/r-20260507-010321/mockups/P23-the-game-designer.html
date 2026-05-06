@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>HE WAS SOCRATES // SESSION 014</title>
+<style>
+  :root {
+    --ink:        oklch(14% 0.012 285);
+    --ink-2:      oklch(19% 0.014 285);
+    --paper:      oklch(92% 0.008 90);
+    --paper-dim:  oklch(72% 0.010 90);
+    --rule:       oklch(58% 0.012 90);
+    --gold:       oklch(78% 0.092 84);
+    --warn:       oklch(66% 0.108 38);
+    --xp:         oklch(82% 0.014 90);
+    --xp-fill:    oklch(58% 0.012 90);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.45; letter-spacing: 0.02em;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  .stage {
+    position: relative; width: 100%; min-height: 100vh;
+    display: grid; grid-template-rows: 56px 1fr 56px;
+    background:
+      radial-gradient(ellipse at 50% 38%, oklch(22% 0.014 285) 0%, var(--ink) 62%),
+      var(--ink);
+  }
+  /* scanline / film grain via gradients */
+  .stage::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: repeating-linear-gradient(
+      0deg, oklch(0% 0 0 / 0.18) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply; opacity: 0.55;
+  }
+  .stage::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 55%, oklch(0% 0 0 / 0.55) 100%);
+  }
+
+  /* ======================== TOP HUD ======================== */
+  .hud-top {
+    position: relative; z-index: 4;
+    display: grid; grid-template-columns: 280px 1fr 280px;
+    align-items: center; gap: 16px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, oklch(11% 0.010 285) 0%, oklch(15% 0.012 285) 100%);
+    font-family: "Times New Roman", Times, serif; letter-spacing: 0.04em;
+  }
+  .crest {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--paper); text-transform: uppercase;
+  }
+  .crest-mark {
+    width: 22px; height: 22px; border: 1px solid var(--paper);
+    display: grid; place-items: center; font-size: 12px;
+  }
+  .crest-text { font-size: 12px; }
+  .crest-text small { display: block; font-size: 10px; color: var(--paper-dim); letter-spacing: 0.18em; }
+
+  .xp-block { display: flex; flex-direction: column; gap: 4px; }
+  .xp-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: ui-monospace, monospace; font-size: 11px;
+    color: var(--paper-dim); letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .xp-meta b { color: var(--paper); font-weight: 600; letter-spacing: 0.04em; }
+  .xp-bar {
+    position: relative; height: 10px; background: var(--ink-2);
+    border: 1px solid var(--rule); overflow: hidden;
+  }
+  .xp-bar::before {
+    content: ""; position: absolute; inset: 0; width: 64%;
+    background:
+      repeating-linear-gradient(90deg, var(--xp-fill) 0 6px, oklch(50% 0.010 90) 6px 8px);
+  }
+  .xp-bar::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, oklch(100% 0 0 / 0.06) 50%, transparent 100%);
+  }
+  .xp-tier {
+    display: flex; gap: 6px; font-size: 10px; color: var(--paper-dim);
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .xp-tier span:nth-child(2) { color: var(--gold); }
+
+  .session-block {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--paper-dim);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .session-block b { color: var(--paper); }
+  .pulse {
+    display: inline-block; width: 8px; height: 8px;
+    background: var(--gold); border-radius: 50%;
+    animation: pulse 1.6s ease-in-out infinite;
+    margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 0.35; transform: scale(1); }
+    50%     { opacity: 1.00; transform: scale(1.25); }
+  }
+
+  /* ======================== ARENA ======================== */
+  .arena {
+    position: relative; display: grid;
+    grid-template-columns: 220px 1fr 320px;
+    gap: 24px; padding: 28px 28px 20px;
+    align-items: stretch;
+  }
+
+  /* Left rail — Stat sheet */
+  .stat-sheet {
+    display: flex; flex-direction: column; gap: 14px;
+    border: 1px solid var(--rule); padding: 14px;
+    background: oklch(13% 0.010 285 / 0.85);
+    align-self: start;
+  }
+  .panel-title {
+    font-family: "Times New Roman", serif;
+    text-transform: uppercase; letter-spacing: 0.22em;
+    font-size: 11px; color: var(--paper-dim);
+    border-bottom: 1px solid var(--rule); padding-bottom: 6px;
+  }
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11px; letter-spacing: 0.06em;
+  }
+  .stat-row .k { color: var(--paper-dim); text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; }
+  .stat-row .v { color: var(--paper); font-family: ui-monospace, monospace; }
+  .stat-row .v.warn { color: var(--warn); }
+  .stat-row .v.gold { color: var(--gold); }
+
+  .meter { height: 4px; background: var(--ink-2); border: 1px solid var(--rule); position: relative; }
+  .meter > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--xp-fill); display: block; }
+  .meter.defer  > i { width: 13%; background: var(--warn); }
+  .meter.recall > i { width: 60%; }
+  .meter.tone   > i { width: 88%; background: var(--gold); }
+
+  /* Center — Bust */
+  .bust-frame {
+    position: relative; align-self: stretch;
+    border: 1px solid var(--rule);
+    background: oklch(10% 0.008 285 / 0.6);
+    display: grid; grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+  }
+  .reticle {
+    display: flex; justify-content: space-between;
+    padding: 8px 12px; font-size: 10px; color: var(--paper-dim);
+    letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 1px solid var(--rule);
+  }
+  .reticle .pin {
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .reticle .dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; }
+
+  .bust-canvas {
+    position: relative; display: grid; place-items: center;
+    padding: 18px;
+  }
+  .bust-canvas svg {
+    width: min(360px, 86%); height: auto; display: block;
+  }
+  .corners::before, .corners::after,
+  .corners > i, .corners > b {
+    content: ""; position: absolute; width: 16px; height: 16px;
+    border-color: var(--paper); border-style: solid; border-width: 0;
+  }
+  .corners::before { top: 6px; left: 6px;  border-top-width: 1px; border-left-width: 1px; }
+  .corners::after  { top: 6px; right: 6px; border-top-width: 1px; border-right-width: 1px; }
+  .corners > i     { bottom: 6px; left: 6px;  border-bottom-width: 1px; border-left-width: 1px; }
+  .corners > b     { bottom: 6px; right: 6px; border-bottom-width: 1px; border-right-width: 1px; }
+
+  .speech {
+    border-top: 1px solid var(--rule);
+    padding: 14px 18px 16px;
+    background: oklch(11% 0.008 285);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .speech .who {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+  .speech .ko {
+    font-family: "Times New Roman", serif;
+    font-size: 22px; line-height: 1.35; letter-spacing: 0.02em;
+    color: var(--paper);
+  }
+  .speech .meta {
+    font-size: 10px; color: var(--paper-dim);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .speech .meta span + span::before { content: " · "; color: var(--rule); }
+
+  /* Right rail — Achievement + log */
+  .right-rail { display: flex; flex-direction: column; gap: 14px; align-self: start; }
+  .ach {
+    position: relative;
+    border: 1px solid var(--paper);
+    background: linear-gradient(180deg, oklch(18% 0.012 285) 0%, oklch(13% 0.010 285) 100%);
+    padding: 14px 14px 14px 56px;
+    box-shadow: 0 0 0 1px var(--ink) inset, 0 0 0 2px var(--rule) inset;
+  }
+  .ach .glyph {
+    position: absolute; left: 12px; top: 14px;
+    width: 32px; height: 32px;
+    border: 1px solid var(--paper);
+    display: grid; place-items: center;
+    font-family: "Times New Roman", serif; font-size: 18px;
+    color: var(--paper);
+  }
+  .ach .tag {
+    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 4px;
+  }
+  .ach .ttl {
+    font-family: "Times New Roman", serif;
+    font-size: 16px; letter-spacing: 0.02em; color: var(--paper);
+    margin-bottom: 6px;
+  }
+  .ach .ttl em { font-style: normal; color: var(--paper-dim); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.04em; }
+  .ach .desc { font-size: 11px; color: var(--paper-dim); line-height: 1.5; letter-spacing: 0.03em; }
+  .ach .stamp {
+    position: absolute; right: 10px; bottom: 8px;
+    font-size: 9px; color: var(--rule); letter-spacing: 0.18em; text-transform: uppercase;
+  }
+
+  .log {
+    border: 1px solid var(--rule); padding: 12px;
+    background: oklch(13% 0.010 285 / 0.85);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .log .row {
+    display: grid; grid-template-columns: 60px 1fr auto; gap: 8px;
+    font-size: 10px; letter-spacing: 0.06em; align-items: baseline;
+  }
+  .log .t { color: var(--rule); font-family: ui-monospace, monospace; }
+  .log .e { color: var(--paper-dim); }
+  .log .e b { color: var(--paper); font-weight: 600; }
+  .log .x { color: var(--gold); font-family: ui-monospace, monospace; }
+  .log .x.warn { color: var(--warn); }
+
+  /* ======================== BOTTOM HUD ======================== */
+  .hud-bot {
+    position: relative; z-index: 4;
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 16px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--rule);
+    background: linear-gradient(180deg, oklch(15% 0.012 285) 0%, oklch(11% 0.010 285) 100%);
+  }
+  .quest {
+    display: flex; align-items: center; gap: 12px;
+    font-family: "Times New Roman", serif;
+  }
+  .quest .marker {
+    width: 18px; height: 18px; border: 1px solid var(--gold);
+    display: grid; place-items: center; color: var(--gold);
+    font-size: 11px; letter-spacing: 0;
+  }
+  .quest .label {
+    font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold);
+  }
+  .quest .text {
+    font-size: 14px; letter-spacing: 0.04em; color: var(--paper);
+  }
+  .quest .text small {
+    color: var(--paper-dim); font-family: ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.10em; margin-left: 10px;
+  }
+  .keys {
+    display: flex; gap: 10px; font-family: ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+  .keys kbd {
+    border: 1px solid var(--rule); padding: 2px 8px;
+    color: var(--paper); background: var(--ink-2);
+    margin-right: 6px; font-family: inherit; font-size: 10px;
+  }
+
+  /* small util */
+  @media (max-width: 980px) {
+    .arena { grid-template-columns: 1fr; }
+    .hud-top { grid-template-columns: 1fr; gap: 8px; }
+    .session-block { align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+
+    <!-- ============ TOP HUD ============ -->
+    <header class="hud-top">
+      <div class="crest">
+        <div class="crest-mark">⊘</div>
+        <div class="crest-text">
+          He Was Socrates
+          <small>SESSION 014 // ON-DEVICE</small>
+        </div>
+      </div>
+
+      <div class="xp-block" aria-label="Wonder Level Progress">
+        <div class="xp-meta">
+          <span><b>WONDER LV. 14</b> — 247 questions asked</span>
+          <span>1 642 / 2 560 XP</span>
+        </div>
+        <div class="xp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="2560" aria-valuenow="1642"></div>
+        <div class="xp-tier">
+          <span>NOVICE</span><span>● APPRENTICE</span><span>ELENCHUS</span><span>MAIEUTIC</span>
+        </div>
+      </div>
+
+      <div class="session-block">
+        <div><span class="pulse"></span>THINKING · 192 ms TTFT</div>
+        <div><b>NO-CLOUD</b> · 0 B EGRESS</div>
+        <div>BUILD <b>PR-Λ verify-2</b></div>
+      </div>
+    </header>
+
+    <!-- ============ ARENA ============ -->
+    <main class="arena">
+
+      <!-- LEFT — STAT SHEET -->
+      <aside class="stat-sheet" aria-label="Score Sheet">
+        <div class="panel-title">Score Sheet</div>
+
+        <div>
+          <div class="stat-row"><span class="k">Defer rate</span><span class="v warn">13%</span></div>
+          <div class="meter defer" aria-hidden="true"><i></i></div>
+        </div>
+        <div>
+          <div class="stat-row"><span class="k">Recall hits</span><span class="v gold">6 / 10</span></div>
+          <div class="meter recall" aria-hidden="true"><i></i></div>
+        </div>
+        <div>
+          <div class="stat-row"><span class="k">Tone fidelity</span><span class="v">88%</span></div>
+          <div class="meter tone" aria-hidden="true"><i></i></div>
+        </div>
+
+        <div class="panel-title" style="margin-top:6px">Inventory</div>
+        <div class="stat-row"><span class="k">Wonderings retained</span><span class="v">247</span></div>
+        <div class="stat-row"><span class="k">Function dispatch</span><span class="v">4 / 4</span></div>
+        <div class="stat-row"><span class="k">Visemes loaded</span><span class="v">16</span></div>
+        <div class="stat-row"><span class="k">Context window</span><span class="v">256K</span></div>
+
+        <div class="panel-title" style="margin-top:6px">Class</div>
+        <div class="stat-row"><span class="k">Voice</span><span class="v">Yuna · ko_KR</span></div>
+        <div class="stat-row"><span class="k">Tone lock</span><span class="v gold">단정한 평어체</span></div>
+      </aside>
+
+      <!-- CENTER — BUST -->
+      <section class="bust-frame" aria-label="Socratic Bust">
+        <div class="corners"><i></i><b></b></div>
+
+        <div class="reticle">
+          <span class="pin"><span class="dot"></span> TARGET // ELENCHUS</span>
+          <span>FRAME 014 / 256</span>
+        </div>
+
+        <div class="bust-canvas">
+          <!-- 1-bit halftone bust, inline SVG, no external assets -->
+          <svg viewBox="0 0 360 360" role="img" aria-label="1-bit halftone bust of Socrates">
+            <defs>
+              <pattern id="halftone" patternUnits="userSpaceOnUse" width="6" height="6">
+                <rect width="6" height="6" fill="oklch(92% 0.008 90)"/>
+                <circle cx="3" cy="3" r="1.6" fill="oklch(14% 0.012 285)"/>
+              </pattern>
+              <pattern id="halftoneDark" patternUnits="userSpaceOnUse" width="5" height="5">
+                <rect width="5" height="5" fill="oklch(14% 0.012 285)"/>
+                <circle cx="2.5" cy="2.5" r="1.7" fill="oklch(92% 0.008 90)"/>
+              </pattern>
+              <clipPath id="bustClip">
+                <path d="M180 40 C 230 40 258 78 258 130
+                         C 258 156 250 178 240 196
+                         C 270 210 296 240 304 290
+                         L 304 340 L 56 340 L 56 290
+                         C 64 240 90 210 120 196
+                         C 110 178 102 156 102 130
+                         C 102 78 130 40 180 40 Z"/>
+              </clipPath>
+            </defs>
+
+            <!-- background plate -->
+            <rect x="0" y="0" width="360" height="360" fill="oklch(10% 0.008 285)"/>
+
+            <!-- halftone bust -->
+            <g clip-path="url(#bustClip)">
+              <rect x="0" y="0" width="360" height="360" fill="url(#halftone)"/>
+              <!-- shadow side -->
+              <rect x="180" y="0" width="180" height="360" fill="url(#halftoneDark)" opacity="0.85"/>
+              <!-- beard mass -->
+              <ellipse cx="180" cy="220" rx="74" ry="46" fill="url(#halftoneDark)"/>
+              <!-- brow -->
+              <rect x="118" y="118" width="124" height="8" fill="oklch(14% 0.012 285)"/>
+              <!-- eye sockets -->
+              <circle cx="150" cy="142" r="6" fill="oklch(14% 0.012 285)"/>
+              <circle cx="210" cy="142" r="6" fill="oklch(14% 0.012 285)"/>
+              <!-- nose ridge -->
+              <path d="M180 138 L 174 178 L 188 184" stroke="oklch(14% 0.012 285)" stroke-width="2" fill="none"/>
+              <!-- mouth (viseme: SIL/closed-ish) -->
+              <rect x="166" y="200" width="28" height="3" fill="oklch(14% 0.012 285)"/>
+            </g>
+
+            <!-- frame outline -->
+            <path d="M180 40 C 230 40 258 78 258 130
+                     C 258 156 250 178 240 196
+                     C 270 210 296 240 304 290
+                     L 304 340 L 56 340 L 56 290
+                     C 64 240 90 210 120 196
+                     C 110 178 102 156 102 130
+                     C 102 78 130 40 180 40 Z"
+                  fill="none" stroke="oklch(58% 0.012 90)" stroke-width="1"/>
+
+            <!-- pulse aura indicating Phase.thinking -->
+            <circle cx="180" cy="180" r="158" fill="none"
+                    stroke="oklch(78% 0.092 84)" stroke-width="1" stroke-dasharray="2 6" opacity="0.55"/>
+          </svg>
+        </div>
+
+        <div class="speech">
+          <div class="who">SOCRATES // 평어체</div>
+          <div class="ko">너는 왜 묻지 않은 것을 알려고 하는가</div>
+          <div class="meta">
+            <span>VISEME · SIL→AA→IY</span><span>HOLD ≥ 2 fr</span><span>JAMO FALLBACK READY</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT — ACHIEVEMENT + LOG -->
+      <aside class="right-rail">
+        <div class="ach" role="status" aria-live="polite">
+          <div class="glyph">⊘</div>
+          <div class="tag">▲ ACHIEVEMENT UNLOCKED · RARE</div>
+          <div class="ttl">Questioned the Question <em>+120 XP</em></div>
+          <div class="desc">You asked Socrates the same thing twice. This is the point. The bust returns no answer; the wondering is logged on-device.</div>
+          <div class="stamp">14 : 02 : 11 · LOCAL</div>
+        </div>
+
+        <div class="log" aria-label="Turn log">
+          <div class="panel-title">Turn Log</div>
+          <div class="row"><span class="t">14:01</span><span class="e">mode_classify → <b>elenchus</b></span><span class="x">+5</span></div>
+          <div class="row"><span class="t">14:01</span><span class="e">surface_past_wonder · hit #042</span><span class="x">+15</span></div>
+          <div class="row"><span class="t">14:02</span><span class="e">ask_back · <b>Korean 평어체</b></span><span class="x">+20</span></div>
+          <div class="row"><span class="t">14:02</span><span class="e">defer_to_human · <b>medical</b></span><span class="x warn">⊘</span></div>
+          <div class="row"><span class="t">14:02</span><span class="e">wondering_log.write · sha-256 dedup</span><span class="x">+10</span></div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- ============ BOTTOM HUD ============ -->
+    <footer class="hud-bot">
+      <div class="quest">
+        <div class="marker">!</div>
+        <div>
+          <div class="label">▼ ACTIVE QUEST · MAIN</div>
+          <div class="text">Find a question Socrates will not answer.
+            <small>reward: defer_to_human ⊘ · meta-objective</small>
+          </div>
+        </div>
+      </div>
+      <div class="keys">
+        <span><kbd>SPACE</kbd> push-to-talk</span>
+        <span><kbd>ESC</kbd> exit arena</span>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

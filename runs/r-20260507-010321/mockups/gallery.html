@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>He Was Socrates · 26 Advocate Previews · r-20260507-010321</title>
+<style>
+:root { --ink: #0A0A0F; --surface: #131319; --surface-2: rgba(232,224,208,0.025); --border: #2A2A35; --bone: #E8E0D0; --bone-muted: #968D7E; --bone-dim: #5A5468; --accent: #7FE3B5; --accent-dim: #5FBA8C; --vote: #7FE3B5; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--ink); color: var(--bone); font: 13px/1.5 -apple-system, "Inter", system-ui, sans-serif; padding: 24px 28px; }
+h1 { font-family: "Times New Roman", "Noto Serif", serif; font-size: 22px; font-weight: 400; margin-bottom: 4px; letter-spacing: -.01em; }
+.sub { color: var(--bone-muted); font-size: 11px; margin-bottom: 18px; }
+.meta-block { font-family: "JetBrains Mono", "Fira Code", monospace; font-size: 11px; line-height: 1.7; color: var(--accent); margin-bottom: 18px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface); }
+.meta-block .label { color: var(--bone-muted); }
+.meta-block .strong { color: var(--bone); }
+.meta-block a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent-dim); }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; align-items: center; }
+.controls input.search { flex: 0 0 280px; background: var(--ink); border: 1px solid var(--border); color: var(--bone); padding: 6px 10px; border-radius: 2px; font-size: 12px; font-family: inherit; }
+.controls input.search:focus { outline: none; border-color: var(--accent-dim); }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; font-size: 11px; background: transparent; color: var(--bone); border: 1px solid var(--border); border-radius: 2px; cursor: pointer; font-family: "JetBrains Mono", monospace; transition: all .12s; }
+.chip:hover { border-color: var(--bone-muted); }
+.chip.active { border-color: var(--accent); color: var(--accent); background: rgba(127,227,181,0.06); }
+.chip.danger { border-color: var(--bone-dim); color: var(--bone-muted); }
+.chip.danger:hover { border-color: #c95c5c; color: #c95c5c; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 12px 14px; transition: border-color .15s; cursor: pointer; display: flex; flex-direction: column; }
+.card:hover { border-color: var(--bone-muted); }
+.card.voted { border-color: var(--vote); box-shadow: inset 0 0 0 1px var(--vote); }
+.card.hidden { display: none; }
+.card-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-family: "JetBrains Mono", monospace; font-size: 10px; flex-wrap: wrap; }
+.rank-num { color: var(--bone); font-weight: 500; }
+.score { color: var(--accent); }
+.badges { display: inline-flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.rank { font-size: 9px; padding: 1px 4px; border: 1px solid var(--bone-dim); border-radius: 2px; }
+.rank-TP { color: #B8C7E0; border-color: #4A5778; }
+.rank-UP { color: #E0BFC7; border-color: #785A66; }
+.rank-BP { color: #C7E0B8; border-color: #5C7849; }
+.rank-RP { color: #E0CDB8; border-color: #785F45; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--bone); margin-bottom: 8px; letter-spacing: -.005em; }
+.thumb { position: relative; width: 100%; aspect-ratio: 4/3; background: var(--ink); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+.thumb iframe { position: absolute; top: 0; left: 0; width: 500%; height: 500%; transform: scale(0.2); transform-origin: top left; pointer-events: none; border: none; }
+.thumb-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,10,15,0) 60%, rgba(10,10,15,0.4) 100%); pointer-events: none; }
+.card-summary { font-size: 11px; line-height: 1.45; color: var(--bone-muted); margin-bottom: 10px; flex: 1; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.card-actions { display: flex; gap: 6px; }
+.btn { flex: 1; padding: 5px 8px; font-size: 11px; text-align: center; background: transparent; color: var(--bone); border: 1px solid var(--border); border-radius: 2px; cursor: pointer; font-family: "JetBrains Mono", monospace; text-decoration: none; transition: all .12s; }
+.btn:hover { border-color: var(--bone-muted); }
+.card.voted .btn-vote { background: rgba(127,227,181,0.1); color: var(--accent); border-color: var(--accent); }
+.card.voted .btn-vote::after { content: " ✓"; }
+.modal { position: fixed; inset: 0; background: rgba(10,10,15,0.92); display: none; z-index: 100; padding: 24px; }
+.modal.open { display: flex; flex-direction: column; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: var(--bone); }
+.modal-close { background: var(--surface); border: 1px solid var(--border); color: var(--bone); padding: 6px 14px; cursor: pointer; font-family: "JetBrains Mono", monospace; font-size: 12px; border-radius: 2px; }
+.modal-close:hover { border-color: var(--accent); color: var(--accent); }
+.modal-iframe { flex: 1; width: 100%; border: 1px solid var(--border); background: var(--ink); border-radius: 3px; }
+@media print { .controls, .modal { display: none; } }
+</style></head><body>
+<header><h1>He Was Socrates · 26 Advocate Previews</h1>
+<p class="sub">Run <code>r-20260507-010321</code> · Profile: <code>max</code> · Gate H1 team review · Click any card to open fullscreen · Click Vote to mark your pick (saved to localStorage)</p></header>
+<div class="meta-block">
+<span class="label">Stack locked:</span> <span class="strong">Apple Silicon · macOS 26 Tahoe · Gemma 4 E4B 4-bit MLX · Swift 6.1</span>
+<br><span class="label">Persona:</span> Korean learners + Two-Weeks-Team contributors · Killer: AI Hype Fatigue · Sync: 0 byte (NO-CLOUD invariant)
+<br><span class="label">Panel verdicts:</span> <span class="strong">TP-the-ai-native | BP-the-educator | UP-the-design-forward | RP-the-researcher</span>
+<br><span class="label">Top-5 RP-cleared</span> · 6 mitigation riders apply to any pick · See <a href="../mitigations.json">mitigations.json</a>
+</div>
+<div class="controls">
+  <input type="search" class="search" placeholder="filter by slug or framing…" />
+  <button class="chip active" data-filter="all">All 26</button>
+  <button class="chip" data-filter="top5">Top 5</button>
+  <button class="chip" data-filter="tp">TP picks</button>
+  <button class="chip" data-filter="bp">BP picks</button>
+  <button class="chip" data-filter="up">UP picks</button>
+  <button class="chip" data-filter="rp">RP picks</button>
+  <button class="chip danger" id="clear-votes">Clear my votes</button>
+</div>
+<section class="grid">
+<article class="card" data-id="P22-the-researcher" data-slug="the-researcher" data-summary="he was socrates is reframed as a research artifact: a korean socratic llm surface with locked refusal channels (defer_to_human) operating under a no-cloud invariant. the submission is presented as a p read the system as a paper: methods, n=10 ttft distribution, locked refusal channels, named limitations, fourteen citations to commits and bench files — judged  single-page paper artifact (abstract → method → results → limitations → discussion → references → bibtex). inline svg ttft distribution figure with figure n cap" data-top5="1" data-tp="1" data-up="1" data-bp-t5="1" data-rp="1">
+  <div class="card-meta">
+    <span class="rank-num">#1</span>
+    <span class="score">0.90</span>
+    <span class="badges"><span class="rank rank-TP">TP#2</span> <span class="rank rank-UP">UP#3</span> <span class="rank rank-RP">RP#1</span></span>
+  </div>
+  <h3 class="card-title">the-researcher</h3>
+  <div class="thumb">
+    <iframe src="P22-the-researcher.html" loading="lazy" sandbox="allow-same-origin" title="P22-the-researcher"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is reframed as a research artifact: a Korean Socratic LLM surface with locked refusal channels (defer_to_human) operating under a NO-CLOUD invariant. The submission is presented as a p</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P22-the-researcher.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P22-the-researcher">Vote</button>
+  </div>
+</article><article class="card" data-id="P12-the-privacy-hawk" data-slug="the-privacy-hawk" data-summary="he was socrates is not a privacy-friendly app — it is a privacy artifact whose settings screen is the audit. the privacy &amp;amp; data panel itself is the proof: every row names where data lives, who man open the privacy panel and read the receipts: entitlements hash, sqlite path, mlx cache, no outbound arrows. the settings screen is the audit. native macos settings → privacy &amp;amp; data panel inside the app. local-first by default: sqlite at ~/library/containers, mlx cache os-managed, entitlements file" data-top5="1" data-tp-t5="1" data-bp="1" data-rp="1">
+  <div class="card-meta">
+    <span class="rank-num">#2</span>
+    <span class="score">0.60</span>
+    <span class="badges"><span class="rank rank-BP">BP#2</span> <span class="rank rank-RP">RP#2</span></span>
+  </div>
+  <h3 class="card-title">the-privacy-hawk</h3>
+  <div class="thumb">
+    <iframe src="P12-the-privacy-hawk.html" loading="lazy" sandbox="allow-same-origin" title="P12-the-privacy-hawk"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is not a privacy-friendly app — it is a privacy artifact whose Settings screen is the audit. The Privacy &amp; Data panel itself is the proof: every row names where data lives, who man</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P12-the-privacy-hawk.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P12-the-privacy-hawk">Vote</button>
+  </div>
+</article><article class="card" data-id="P05-the-design-forward" data-slug="the-design-forward" data-summary="he was socrates earns its first five seconds with a single composed frame — bust, breath, and a korean question — so that judges feel the abstention mechanic before they read about it. the first frame is the pitch: an ink-black mac screen, a halftone bust breathing under &amp;#x27;너의 물음은 무엇인가&amp;#x27;, and the abstention mechanic implied by every emp the macos app&amp;#x27;s idle launch screen rendered as a single hero plate: 1-bit halftone bust centered on ink-black, soft phase.thinking pulse, status caption &amp;#" data-top5="1" data-up="1">
+  <div class="card-meta">
+    <span class="rank-num">#3</span>
+    <span class="score">0.40</span>
+    <span class="badges"><span class="rank rank-UP">UP#1</span></span>
+  </div>
+  <h3 class="card-title">the-design-forward</h3>
+  <div class="thumb">
+    <iframe src="P05-the-design-forward.html" loading="lazy" sandbox="allow-same-origin" title="P05-the-design-forward"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates earns its first five seconds with a single composed frame — bust, breath, and a Korean question — so that judges feel the abstention mechanic before they read about it.</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P05-the-design-forward.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P05-the-design-forward">Vote</button>
+  </div>
+</article><article class="card" data-id="P14-the-educator" data-slug="the-educator" data-summary="he was socrates is unfamiliar by design — abstention, 평어체, on-device-only. teach the user what makes this different while they meet the bust, lesson by lesson, so the product&amp;#x27;s mechanics become l a bust that teaches you how to talk to it — 4 lessons, inline coachmarks, and a live abstention demo, so the product explains itself. fullscreen bust with a 4-lesson tutorial overlay system: top progress bar (lesson 2 of 4 · 50%), coachmark callouts pinned to bust regions, a &amp;#x27;why this mat" data-top5="1" data-bp="1">
+  <div class="card-meta">
+    <span class="rank-num">#4</span>
+    <span class="score">0.40</span>
+    <span class="badges"><span class="rank rank-BP">BP#1</span></span>
+  </div>
+  <h3 class="card-title">the-educator</h3>
+  <div class="thumb">
+    <iframe src="P14-the-educator.html" loading="lazy" sandbox="allow-same-origin" title="P14-the-educator"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is unfamiliar by design — abstention, 평어체, on-device-only. Teach the user what makes this different while they meet the bust, lesson by lesson, so the product&#x27;s mechanics become l</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P14-the-educator.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P14-the-educator">Vote</button>
+  </div>
+</article><article class="card" data-id="P25-the-ai-native" data-slug="the-ai-native" data-summary="he was socrates is not a chat product, it is a function-call orchestrator with a voice front-end — so the ai-native preview is the developer&amp;#x27;s debug palette: a ⌘k command surface that makes the f ⌘k opens the socratic developer palette — type @socrates and watch the four-function dispatch stream korean tokens with phase telemetry, no chat ui required. floating ⌘k command palette overlay (chat-bubble ui deliberately absent — the project ships voice-only); palette is the only structured surface, plus a streamin" data-top5="1" data-tp="1">
+  <div class="card-meta">
+    <span class="rank-num">#5</span>
+    <span class="score">0.40</span>
+    <span class="badges"><span class="rank rank-TP">TP#1</span></span>
+  </div>
+  <h3 class="card-title">the-ai-native</h3>
+  <div class="thumb">
+    <iframe src="P25-the-ai-native.html" loading="lazy" sandbox="allow-same-origin" title="P25-the-ai-native"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is not a chat product, it is a function-call orchestrator with a voice front-end — so the AI-native preview is the developer&#x27;s debug palette: a ⌘K command surface that makes the f</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P25-the-ai-native.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P25-the-ai-native">Vote</button>
+  </div>
+</article><article class="card" data-id="P18-the-designer" data-slug="the-designer" data-summary="he was socrates is not a product to be described, but a five-act scroll to be experienced. the bust, the question, the silence, the workshop briefly glimpsed, and a colophon — narrative-as-evaluation. a film-poster scroll where the silence ⊘ is the headline, the bust is the lede, and the macos app is the small black room you only briefly see. single-page scroll-snap microsite acting as the public face. five hero-scale sections (≥100vh each) carry the entire impact narrative; the actual macos app appe" data-top5="1" data-up="1">
+  <div class="card-meta">
+    <span class="rank-num">#6</span>
+    <span class="score">0.30</span>
+    <span class="badges"><span class="rank rank-UP">UP#2</span></span>
+  </div>
+  <h3 class="card-title">the-designer</h3>
+  <div class="thumb">
+    <iframe src="P18-the-designer.html" loading="lazy" sandbox="allow-same-origin" title="P18-the-designer"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is not a product to be described, but a five-act scroll to be experienced. The bust, the question, the silence, the workshop briefly glimpsed, and a colophon — narrative-as-evaluation.</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P18-the-designer.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P18-the-designer">Vote</button>
+  </div>
+</article><article class="card" data-id="P13-the-data-nerd" data-slug="the-data-nerd" data-summary="he was socrates is a measurement story: every claim (ttft, defer-rate, cache reuse, on-device egress) is a number with an inspectable source. the preview makes the engine performance legible at a glan every claim becomes a chart: ttft 192ms p50, 96% cache reuse advantage, 20% defer rate — measured on m1 max, n=10, sourced to one bench json. local-only analytics dashboard (no external analytics sdk, all data from claudedocs/bench/2026-05-06-latency-bench.json): 4 kpi cards on top, ttft time-series l" data-top5="1" data-tp="1">
+  <div class="card-meta">
+    <span class="rank-num">#7</span>
+    <span class="score">0.20</span>
+    <span class="badges"><span class="rank rank-TP">TP#3</span></span>
+  </div>
+  <h3 class="card-title">the-data-nerd</h3>
+  <div class="thumb">
+    <iframe src="P13-the-data-nerd.html" loading="lazy" sandbox="allow-same-origin" title="P13-the-data-nerd"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is a measurement story: every claim (TTFT, defer-rate, cache reuse, on-device egress) is a number with an inspectable source. The preview makes the engine performance legible at a glan</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P13-the-data-nerd.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P13-the-data-nerd">Vote</button>
+  </div>
+</article><article class="card" data-id="P15-the-community-builder" data-slug="the-community-builder" data-summary="he was socrates는 1인 on-device 도구이지만, two-weeks-team이 실제로 서로의 wondering을 나누고 평가 의사결정을 하려면 day-1부터 다인용 surface가 필요하다. 평가자에게 보이는 첫 화면을 &amp;#x27;korean socratic 학습자들이 합의·초대·공유하는 워크스페이스&amp;#x27;로 재정의한다. solo on-device socratic bust, but day-1 designed for teams: opt-in shared wondering log, role-based workspace, and socrates as a non-human teammate. 단일 he was socrates workspace에 멤버 avatar / role-based access (owner·editor·viewer) / @mention activity feed / shared wondering log / consent toggle (default off)" data-top5="1" data-bp="1">
+  <div class="card-meta">
+    <span class="rank-num">#8</span>
+    <span class="score">0.20</span>
+    <span class="badges"><span class="rank rank-BP">BP#3</span></span>
+  </div>
+  <h3 class="card-title">the-community-builder</h3>
+  <div class="thumb">
+    <iframe src="P15-the-community-builder.html" loading="lazy" sandbox="allow-same-origin" title="P15-the-community-builder"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates는 1인 on-device 도구이지만, Two-Weeks-Team이 실제로 서로의 wondering을 나누고 평가 의사결정을 하려면 day-1부터 다인용 surface가 필요하다. 평가자에게 보이는 첫 화면을 &#x27;Korean Socratic 학습자들이 합의·초대·공유하는 워크스페이스&#x27;로 재정의한다.</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P15-the-community-builder.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P15-the-community-builder">Vote</button>
+  </div>
+</article><article class="card" data-id="P17-the-enterprise-buyer" data-slug="the-enterprise-buyer" data-summary="an enterprise procurement reviewer treats he was socrates as a school-district vendor evaluation: every standard saas security checkbox (data residency, transit encryption, egress, vendor lock-in) is  the procurement questionnaire that auto-passes itself: zero network egress means the security review is a one-page evidence dump, not a six-week vendor-risk cyc enterprise admin portal mock — overview / security (active) / compliance / audit / procurement tabs. security checklist with auto-pass markers tied to no-cloud " data-top5="1" data-rp="1">
+  <div class="card-meta">
+    <span class="rank-num">#9</span>
+    <span class="score">0.20</span>
+    <span class="badges"><span class="rank rank-RP">RP#3</span></span>
+  </div>
+  <h3 class="card-title">the-enterprise-buyer</h3>
+  <div class="thumb">
+    <iframe src="P17-the-enterprise-buyer.html" loading="lazy" sandbox="allow-same-origin" title="P17-the-enterprise-buyer"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">An enterprise procurement reviewer treats He Was Socrates as a school-district vendor evaluation: every standard SaaS security checkbox (data residency, transit encryption, egress, vendor lock-in) is </p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P17-the-enterprise-buyer.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P17-the-enterprise-buyer">Vote</button>
+  </div>
+</article><article class="card" data-id="P01-the-contrarian" data-slug="the-contrarian" data-summary="everyone ships a fullscreen macos bust app with halftone visemes — you ship a terminal-only socratic cli. the bust becomes ascii; the abstention mechanic becomes a unicode glyph (⊘) printed to stdout; everyone ships a halftone-bust gui; we ship `brew install hewassocrates` — a korean socratic repl that fits in a tmux pane and refuses cloud egress by construct terminal/cli (`socrates --lang ko` repl with stdin/stdout transcript; no gui, no web preview, no electron)" data-top5="0" data-up-t5="1">
+  <div class="card-meta">
+    <span class="rank-num">#10</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-contrarian</h3>
+  <div class="thumb">
+    <iframe src="P01-the-contrarian.html" loading="lazy" sandbox="allow-same-origin" title="P01-the-contrarian"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">Everyone ships a fullscreen macOS bust app with halftone visemes — you ship a terminal-only Socratic CLI. The bust becomes ASCII; the abstention mechanic becomes a unicode glyph (⊘) printed to stdout;</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P01-the-contrarian.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P01-the-contrarian">Vote</button>
+  </div>
+</article><article class="card" data-id="P02-the-ops-veteran" data-slug="the-ops-veteran" data-summary="he was socrates has &amp;#x27;zero ops&amp;#x27; on paper because every byte stays on-device — so the only operator who can see the daemon&amp;#x27;s health is the user. surface that local telemetry as a status b the status board for a daemon whose entire ops surface is your laptop — ttft, kv hit rate, entitlements audit, weight sha all in one local-only screen. operator status board: uptime/latency card grid, alert ledger, audit log table, integrity badge row. cards refresh from local telemetry only — no network egress" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#11</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-ops-veteran</h3>
+  <div class="thumb">
+    <iframe src="P02-the-ops-veteran.html" loading="lazy" sandbox="allow-same-origin" title="P02-the-ops-veteran"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates has &#x27;zero ops&#x27; on paper because every byte stays on-device — so the only operator who can see the daemon&#x27;s health is the user. Surface that local telemetry as a status b</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P02-the-ops-veteran.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P02-the-ops-veteran">Vote</button>
+  </div>
+</article><article class="card" data-id="P03-the-speed-obsessed" data-slug="the-speed-obsessed" data-summary="judges have 5 seconds to decide. skip the explainer page. ship a landing page that takes them from &amp;#x27;what is this?&amp;#x27; to &amp;#x27;downloading&amp;#x27; in one scroll, with one cta. he was socrates — a korean socratic bust that runs on your mac, gives back questions, and refuses to answer what it shouldn&amp;#x27;t. download in one click. single landing page, fold-above hero (halftone bust svg + &amp;#x27;he was socrates.&amp;#x27; + 너의 물음은 무엇인가 + one download .dmg cta). below fold: 3 one-sentence sectio" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#12</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-speed-obsessed</h3>
+  <div class="thumb">
+    <iframe src="P03-the-speed-obsessed.html" loading="lazy" sandbox="allow-same-origin" title="P03-the-speed-obsessed"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">Judges have 5 seconds to decide. Skip the explainer page. Ship a landing page that takes them from &#x27;what is this?&#x27; to &#x27;downloading&#x27; in one scroll, with one CTA.</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P03-the-speed-obsessed.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P03-the-speed-obsessed">Vote</button>
+  </div>
+</article><article class="card" data-id="P04-the-cost-conscious" data-slug="the-cost-conscious" data-summary="he was socrates is not a privacy posture — it is a $0/month operating bill. every component (bust ui, stt, tts, inference, weights, persistence, distribution) sits on a free tier or the user&amp;#x27;s ow a socratic tutor whose monthly bill is $0.00 — every line item is the user&amp;#x27;s own mac, every cloud equivalent costs a school district $5k/mo it does not hav static-first single-file html preview hosted on github pages (two-weeks-team org, $0); cost-ledger wireframe with dashed-box components and per-line $0 stickers" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#13</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-cost-conscious</h3>
+  <div class="thumb">
+    <iframe src="P04-the-cost-conscious.html" loading="lazy" sandbox="allow-same-origin" title="P04-the-cost-conscious"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is not a privacy posture — it is a $0/month operating bill. Every component (bust UI, STT, TTS, inference, weights, persistence, distribution) sits on a free tier or the user&#x27;s ow</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P04-the-cost-conscious.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P04-the-cost-conscious">Vote</button>
+  </div>
+</article><article class="card" data-id="P06-the-spreadsheet-jockey" data-slug="the-spreadsheet-jockey" data-summary="he was socrates의 wondering-log를 excel처럼 sortable·filterable·pivotable한 turn-level 데이터 그리드로 노출. 평가자가 4-function dispatch 분포·ttft 분포·언어 비율을 한 화면에서 검증할 수 있게 한다. wondering-log를 excel급 dense grid로 — 30 turns, 4 functions, 192ms p50 ttft를 sort·filter·pivot으로 직접 검증. sticky-header dense data grid (10 columns × 30+ rows): turn # · date · user question · mode · function · reply excerpt · latency ms · lang · confidence · wonder" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#14</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-spreadsheet-jockey</h3>
+  <div class="thumb">
+    <iframe src="P06-the-spreadsheet-jockey.html" loading="lazy" sandbox="allow-same-origin" title="P06-the-spreadsheet-jockey"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates의 wondering-log를 Excel처럼 sortable·filterable·pivotable한 turn-level 데이터 그리드로 노출. 평가자가 4-function dispatch 분포·TTFT 분포·언어 비율을 한 화면에서 검증할 수 있게 한다.</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P06-the-spreadsheet-jockey.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P06-the-spreadsheet-jockey">Vote</button>
+  </div>
+</article><article class="card" data-id="P07-the-mobile-first" data-slug="the-mobile-first" data-summary="judges read kaggle on phones in coffee lines. the preview must survive a thumb. show he was socrates as if it shipped to ios — single-column, bottom-thumb cta, 48px taps — to argue the abstention mech if a kaggle judge swipes past on an iphone, the abstention mechanic still has to land — so here is he was socrates as if it shipped to ios, thumb-first. iphone-shaped centered device frame (rounded svg outline, 9:41 status bar, battery glyph). inside: portrait single-column scroll showing 3 stacked screens — (1)" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#15</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-mobile-first</h3>
+  <div class="thumb">
+    <iframe src="P07-the-mobile-first.html" loading="lazy" sandbox="allow-same-origin" title="P07-the-mobile-first"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">Judges read Kaggle on phones in coffee lines. The preview must survive a thumb. Show He Was Socrates as if it shipped to iOS — single-column, bottom-thumb CTA, 48px taps — to argue the abstention mech</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P07-the-mobile-first.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P07-the-mobile-first">Vote</button>
+  </div>
+</article><article class="card" data-id="P08-the-slack-native" data-slug="the-slack-native" data-summary="he was socrates lives where teamwork already happens — a slack-mediated socratic interlocutor where the macos daemon answers via slash commands. the bot is a thin relay; inference still runs on the us socrates as a slash command — 평어체 questions in your team channel, abstention with an escape hatch, all inference on the user&amp;#x27;s mac. slack bot (slash commands /socrates + unfurl + app home). web dashboard is auxiliary — only for opt-in usage reports. inference always traverses the local /socr" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#16</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-slack-native</h3>
+  <div class="thumb">
+    <iframe src="P08-the-slack-native.html" loading="lazy" sandbox="allow-same-origin" title="P08-the-slack-native"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates lives where teamwork already happens — a Slack-mediated Socratic interlocutor where the macOS daemon answers via slash commands. The bot is a thin relay; inference still runs on the us</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P08-the-slack-native.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P08-the-slack-native">Vote</button>
+  </div>
+</article><article class="card" data-id="P09-the-cli-devotee" data-slug="the-cli-devotee" data-summary="he was socrates is a developer-first cli: a `socrates` command that gives the korean socratic bust a man-page, exit codes, and a repl — so the abstention mechanic is inspectable from the terminal wher the korean socratic bust as a unix tool — `brew install socrates`, `socrates ask`, exit code 77 when it honestly cannot answer. primary_surface = cli (`socrates` binary distributed via homebrew tap and `npx socrates`); web ui is reserved for a single first-launch `socrates --setup` brows" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#17</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-cli-devotee</h3>
+  <div class="thumb">
+    <iframe src="P09-the-cli-devotee.html" loading="lazy" sandbox="allow-same-origin" title="P09-the-cli-devotee"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is a developer-first CLI: a `socrates` command that gives the Korean Socratic bust a man-page, exit codes, and a REPL — so the abstention mechanic is inspectable from the terminal wher</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P09-the-cli-devotee.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P09-the-cli-devotee">Vote</button>
+  </div>
+</article><article class="card" data-id="P10-the-dreamer" data-slug="the-dreamer" data-summary="by 2031, the hackathon preview is no longer a scrolling page — it is a single ambient surface where the bust recognizes the question you have been carrying for years and asks back, mid-glance, with no 2031: the bust greets you with the question you first asked in 2021 — surface_past_wonder, voice-first, zero bytes ever leaving your mac. 자연어 중심 interface, 예측적 행동, 사용자가 놀랄 ux. — single-frame ambient html (no buttons, no navigation), aurora-soft ai glow behind 1-bit halftone bust, gossamer wonderin" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#18</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-dreamer</h3>
+  <div class="thumb">
+    <iframe src="P10-the-dreamer.html" loading="lazy" sandbox="allow-same-origin" title="P10-the-dreamer"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">By 2031, the hackathon preview is no longer a scrolling page — it is a single ambient surface where the bust recognizes the question you have been carrying for years and asks back, mid-glance, with no</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P10-the-dreamer.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P10-the-dreamer">Vote</button>
+  </div>
+</article><article class="card" data-id="P11-the-pragmatist" data-slug="the-pragmatist" data-summary="he was socrates is a macos native app, not a saas — and the fastest way to prove that is to draw the saas admin dashboard a 2026 evaluator expects and cross out every panel that would normally exist.  the familiar saas dashboard layout with every saas panel crossed out — proving he was socrates needs no billing, team, integrations, or api keys because it runs single-file self-contained html rendered as a classic saas admin layout — left sidebar (workspace / account / platform groups, with bust + wondering log as the " data-top5="0" data-up-t5="1">
+  <div class="card-meta">
+    <span class="rank-num">#19</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-pragmatist</h3>
+  <div class="thumb">
+    <iframe src="P11-the-pragmatist.html" loading="lazy" sandbox="allow-same-origin" title="P11-the-pragmatist"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is a macOS native app, not a SaaS — and the fastest way to prove that is to draw the SaaS admin dashboard a 2026 evaluator expects and cross out every panel that would normally exist. </p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P11-the-pragmatist.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P11-the-pragmatist">Vote</button>
+  </div>
+</article><article class="card" data-id="P16-the-solo-founder" data-slug="the-solo-founder" data-summary="he was socrates is the rare llm project where the operator, the admin, and the user are the same person on the same mac — so the entire control surface collapses into one personal admin panel with no  나 혼자 운영. 한 페이지짜리 personal admin panel — 토글로 끝, 팀 초대 없음, 비용 0원. single-account personal admin panel — owner = admin = user, no role concept. top-level tabs (general · engine · audio · privacy · maintenance) with toggle-first" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#20</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-solo-founder</h3>
+  <div class="thumb">
+    <iframe src="P16-the-solo-founder.html" loading="lazy" sandbox="allow-same-origin" title="P16-the-solo-founder"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is the rare LLM project where the operator, the admin, and the user are the same person on the same Mac — so the entire control surface collapses into one personal admin panel with no </p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P16-the-solo-founder.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P16-the-solo-founder">Vote</button>
+  </div>
+</article><article class="card" data-id="P19-the-embedded" data-slug="the-embedded" data-summary="socraticengine is a swift package — the macos bust .app is one of n consumers, not the product. the product is the package. add three lines to package.swift, write a 10-line consumer, ship a korean socratic engine that never opens a socket — the package is the product, the bust is ju swiftpm-style install-and-go sdk landing. swiftpm dependency line + 10-line minimal swift consumer + full public api surface table (enginecoordinator / phase / " data-top5="0" data-tp-t5="1">
+  <div class="card-meta">
+    <span class="rank-num">#21</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-embedded</h3>
+  <div class="thumb">
+    <iframe src="P19-the-embedded.html" loading="lazy" sandbox="allow-same-origin" title="P19-the-embedded"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">SocraticEngine is a Swift Package — the macOS bust .app is one of N consumers, not the product. The product is the package.</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P19-the-embedded.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P19-the-embedded">Vote</button>
+  </div>
+</article><article class="card" data-id="P20-the-oss-maintainer" data-slug="the-oss-maintainer" data-summary="hackathon judges and oss contributors land on the same surface — github.com/two-weeks-team/he-was-socrates. the readme is the pitch, the install guide, and the hackathon submission appendix in one ren open the repo, read the readme, run three make commands — the bust talks back in 단정한 평어체 with zero bytes leaving your mac. github readme rendered in dark theme (the repo&amp;#x27;s default page), badges row + clone command + contributing link own 70% of ux. hosted kaggle preview = refer" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#22</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-oss-maintainer</h3>
+  <div class="thumb">
+    <iframe src="P20-the-oss-maintainer.html" loading="lazy" sandbox="allow-same-origin" title="P20-the-oss-maintainer"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">Hackathon judges and OSS contributors land on the same surface — github.com/Two-Weeks-Team/he-was-socrates. The README IS the pitch, the install guide, and the hackathon submission appendix in one ren</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P20-the-oss-maintainer.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P20-the-oss-maintainer">Vote</button>
+  </div>
+</article><article class="card" data-id="P21-the-indie-hacker" data-slug="the-indie-hacker" data-summary="an indie-hacker chasing $10k mrr finds he was socrates impossible to monetize: every claude.md invariant (no-cloud, abstention-as-product, korean 평어체 lock, no photoreal) refuses paid-tier gating. the  the indie-hacker pricing page where every tier is $0, every plan is current, and the upgrade cta is replaced by github sponsors — because no invariant survives  indie-hacker saas pricing chrome inverted: 3-tier pricing table (personal / team / school district), every column labeled $0/month, every column carrying an ide" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#23</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-indie-hacker</h3>
+  <div class="thumb">
+    <iframe src="P21-the-indie-hacker.html" loading="lazy" sandbox="allow-same-origin" title="P21-the-indie-hacker"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">An indie-hacker chasing $10k MRR finds He Was Socrates impossible to monetize: every CLAUDE.md invariant (NO-CLOUD, abstention-as-product, Korean 평어체 lock, no photoreal) refuses paid-tier gating. The </p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P21-the-indie-hacker.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P21-the-indie-hacker">Vote</button>
+  </div>
+</article><article class="card" data-id="P23-the-game-designer" data-slug="the-game-designer" data-summary="reframe the hackathon preview as a severe-game hud where socrates is the game master and the player&amp;#x27;s score is measured in honest abstentions, recall hits, and wonderings retained — not answers r socrates as the game master: your score is honest abstentions, your xp is wonderings retained, and the rarest achievement is the question he refuses to answer. single-screen hud overlay: top xp bar (wonder lv. 14 · 247 questions asked · 1642/2560 xp) + tier rail (novice → apprentice ● → elenchus → maieutic), left score" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#24</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-game-designer</h3>
+  <div class="thumb">
+    <iframe src="P23-the-game-designer.html" loading="lazy" sandbox="allow-same-origin" title="P23-the-game-designer"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">Reframe the hackathon preview as a severe-game HUD where Socrates is the game master and the player&#x27;s score is measured in honest abstentions, recall hits, and wonderings retained — not answers r</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P23-the-game-designer.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P23-the-game-designer">Vote</button>
+  </div>
+</article><article class="card" data-id="P24-the-reluctant-adopter" data-slug="the-reluctant-adopter" data-summary="most llm demos hide their weaknesses behind marketing. this page does the opposite — it lists the five reasons a skeptical kaggle judge would dismiss he was socrates in 30 seconds, then answers each o five reasons to dismiss he was socrates, answered honestly — and a comparison table that admits where chatgpt wins. &amp;#x27;why should i use this?&amp;#x27; is the first section — five dismissal questions answered with citations. followed immediately by a head-to-head comparison ta" data-top5="0" >
+  <div class="card-meta">
+    <span class="rank-num">#25</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-reluctant-adopter</h3>
+  <div class="thumb">
+    <iframe src="P24-the-reluctant-adopter.html" loading="lazy" sandbox="allow-same-origin" title="P24-the-reluctant-adopter"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">Most LLM demos hide their weaknesses behind marketing. This page does the opposite — it lists the five reasons a skeptical Kaggle judge would dismiss He Was Socrates in 30 seconds, then answers each o</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P24-the-reluctant-adopter.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P24-the-reluctant-adopter">Vote</button>
+  </div>
+</article><article class="card" data-id="P26-the-anti-ai" data-slug="the-anti-ai" data-summary="he was socrates is not &amp;#x27;an ai bust&amp;#x27; — it is a deterministic on-device speech engine with a fixed korean socratic prompt. strip every ai-marketing tell from the surface and present the produc a desktop bust with the chrome of mail.app — named buttons, named states, named locales — and zero ai-marketing language anywhere on the surface. traditional saas desktop ui: header with product name + version, single primary [listen] button bound to spacebar, deterministic status pill (idle / listening /" data-top5="0" data-bp-t5="1">
+  <div class="card-meta">
+    <span class="rank-num">#26</span>
+    <span class="score">0.00</span>
+    <span class="badges"></span>
+  </div>
+  <h3 class="card-title">the-anti-ai</h3>
+  <div class="thumb">
+    <iframe src="P26-the-anti-ai.html" loading="lazy" sandbox="allow-same-origin" title="P26-the-anti-ai"></iframe>
+    <div class="thumb-overlay"></div>
+  </div>
+  <p class="card-summary">He Was Socrates is not &#x27;an AI bust&#x27; — it is a deterministic on-device speech engine with a fixed Korean Socratic prompt. Strip every AI-marketing tell from the surface and present the produc</p>
+  <div class="card-actions">
+    <a class="btn btn-full" href="P26-the-anti-ai.html" target="_blank" rel="noopener">Full ↗</a>
+    <button class="btn btn-vote" data-vote-target="P26-the-anti-ai">Vote</button>
+  </div>
+</article>
+</section>
+<div class="modal" id="modal">
+  <div class="modal-header"><span id="modal-title">—</span><button class="modal-close" id="modal-close">Close (Esc)</button></div>
+  <iframe class="modal-iframe" id="modal-iframe" src="about:blank" title="Preview"></iframe>
+</div>
+<script>
+(function() {
+  const RUN_ID = "r-20260507-010321";
+  const STORAGE_KEY = "pf-vote-" + RUN_ID;
+  const cards = Array.from(document.querySelectorAll(".card"));
+  const search = document.querySelector(".search");
+  const chips = Array.from(document.querySelectorAll(".chip[data-filter]"));
+  const modal = document.getElementById("modal"), modalIframe = document.getElementById("modal-iframe"), modalTitle = document.getElementById("modal-title"), modalClose = document.getElementById("modal-close");
+  function loadVotes() { try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")); } catch (e) { return new Set(); } }
+  function saveVotes(set) { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(set))); }
+  function applyVotes() { const v = loadVotes(); cards.forEach(c => c.classList.toggle("voted", v.has(c.dataset.id))); }
+  applyVotes();
+  document.querySelectorAll(".btn-vote").forEach(btn => btn.addEventListener("click", e => { e.stopPropagation(); const id = btn.dataset.voteTarget; const v = loadVotes(); if (v.has(id)) v.delete(id); else v.add(id); saveVotes(v); applyVotes(); }));
+  document.getElementById("clear-votes").addEventListener("click", () => { if (confirm("Clear all your votes?")) { localStorage.removeItem(STORAGE_KEY); applyVotes(); } });
+  let activeFilter = "all";
+  function applyFilter() {
+    const term = search.value.trim().toLowerCase();
+    cards.forEach(c => {
+      let show = true;
+      if (activeFilter === "top5") show = c.dataset.top5 === "1";
+      else if (["tp","up","bp","rp"].includes(activeFilter)) show = c.dataset[activeFilter] === "1" || c.dataset[activeFilter + "T5"] === "1";
+      if (show && term) show = (c.dataset.slug || "").includes(term) || (c.dataset.summary || "").includes(term);
+      c.classList.toggle("hidden", !show);
+    });
+  }
+  chips.forEach(chip => chip.addEventListener("click", () => { chips.forEach(c => c.classList.remove("active")); chip.classList.add("active"); activeFilter = chip.dataset.filter; applyFilter(); }));
+  search.addEventListener("input", applyFilter);
+  function openModal(card) { modalTitle.textContent = card.dataset.id; modalIframe.src = card.dataset.id + ".html"; modal.classList.add("open"); }
+  function closeModal() { modal.classList.remove("open"); modalIframe.src = "about:blank"; }
+  cards.forEach(c => c.addEventListener("click", e => { if (e.target.closest(".btn")) return; openModal(c); }));
+  modalClose.addEventListener("click", closeModal);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+})();
+</script></body></html>

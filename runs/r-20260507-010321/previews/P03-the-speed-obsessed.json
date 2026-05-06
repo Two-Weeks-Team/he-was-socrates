@@ -1,0 +1,11 @@
+{
+  "id": "P03",
+  "advocate": "The Speed-Obsessed",
+  "framing": "Judges have 5 seconds to decide. Skip the explainer page. Ship a landing page that takes them from 'what is this?' to 'downloading' in one scroll, with one CTA.",
+  "target_persona": "Kaggle/DeepMind judge with a tab full of submissions and a thumb on Cmd-W — needs the bust, the tagline, the download button visible without scrolling.",
+  "primary_surface": "Single landing page, fold-above hero (halftone bust SVG + 'He was Socrates.' + 너의 물음은 무엇인가 + one Download .dmg CTA). Below fold: 3 one-sentence sections. Onboarding: 1 click → DMG.",
+  "opus_4_7_capability": "Native function calling (defer_to_human + ask_back) is the only differentiator surfaced — everything else is cut. The CTA bets that one-line claims about abstention sell faster than tables of metrics.",
+  "mvp_scope": "Static landing page wired to a real .dmg release URL on day 1. Halftone SVG inline (no asset pipeline dependency). No analytics, no signup, no email gate. SaaS for everything else (GitHub Releases hosts the DMG, GitHub Pages serves the page).",
+  "one_liner_pitch": "He was Socrates — a Korean Socratic bust that runs on your Mac, gives back questions, and refuses to answer what it shouldn't. Download in one click.",
+  "spec_alignment_notes": "all fields populated, followed spec verbatim — target_persona narrowed to the judges sub-persona (the only one that matters in the 5-second skim window per success_criteria.evaluator_first_impression); primary_surface honors language_policy (English-primary heading + Korean identity subtitle verbatim from brief); 3 below-fold sections map 1:1 to invariants #1/#2/#3 per CLAUDE.md absolute invariants; CTA size '4 GB' reflects Gemma 4 E4B 4-bit MLX 3.97 GB rounded up per domain_terms.engineering_lexicon."
+}

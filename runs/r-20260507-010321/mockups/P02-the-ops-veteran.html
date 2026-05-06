@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>He Was Socrates — Local Daemon Status</title>
+<style>
+  :root {
+    --bg:        oklch(18% 0.012 285);
+    --bg-card:   oklch(22% 0.014 285);
+    --bg-soft:   oklch(26% 0.014 285);
+    --line:      oklch(34% 0.014 285);
+    --ink:       oklch(94% 0.008 95);
+    --ink-dim:   oklch(72% 0.012 95);
+    --ink-mute:  oklch(52% 0.012 95);
+    --ok:        oklch(78% 0.14 150);
+    --warn:      oklch(82% 0.14 85);
+    --crit:      oklch(70% 0.18 25);
+    --info:      oklch(78% 0.10 230);
+    --accent:    oklch(86% 0.06 95);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 22px 28px 60px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 18px; }
+  h1 { font-family: "Times New Roman", Times, serif; font-weight: 400; font-size: 22px;
+    margin: 0 0 4px; letter-spacing: 0.01em; }
+  .sub { color: var(--ink-dim); font-size: 12px; }
+  .ko { color: var(--accent); font-style: italic; }
+  .right { text-align: right; font-size: 11px; color: var(--ink-mute); line-height: 1.7; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px;
+    border: 1px solid var(--line); border-radius: 999px; font-size: 11px; color: var(--ink-dim); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; }
+  .dot.warn { background: var(--warn); }
+  .dot.crit { background: var(--crit); }
+  .dot.info { background: var(--info); }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-height: 132px; }
+  .card-head { display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.08em; }
+  .metric { font-family: "Times New Roman", Times, serif; font-size: 30px; line-height: 1.1;
+    color: var(--ink); }
+  .metric .unit { font-family: ui-monospace, monospace; font-size: 13px; color: var(--ink-dim);
+    margin-left: 4px; }
+  .sub-metric { font-size: 11px; color: var(--ink-dim); display: flex; gap: 14px; flex-wrap: wrap; }
+  .sub-metric span b { color: var(--ink); font-weight: 500; }
+  .src { font-size: 10px; color: var(--ink-mute); border-top: 1px dashed var(--line);
+    padding-top: 6px; margin-top: auto; }
+  .spark { display: flex; gap: 2px; align-items: flex-end; height: 22px; }
+  .spark i { display: block; width: 5px; background: var(--ink-dim); border-radius: 1px; }
+  .spark i.peak { background: var(--accent); }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px;
+    border: 1px solid var(--line); color: var(--ink-dim); }
+  .badge.ok { color: var(--ok); border-color: var(--ok); }
+  .badge.warn { color: var(--warn); border-color: var(--warn); }
+  .badge.crit { color: var(--crit); border-color: var(--crit); }
+  .badge.info { color: var(--info); border-color: var(--info); }
+  section.row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 14px; }
+  .panel { background: var(--bg-card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; }
+  .panel h2 { font-family: "Times New Roman", Times, serif; font-weight: 400; font-size: 15px;
+    margin: 0 0 10px; letter-spacing: 0.02em; color: var(--ink); display: flex;
+    justify-content: space-between; align-items: center; }
+  .panel h2 .meta { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink-mute); }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { text-align: left; font-weight: 500; color: var(--ink-mute); text-transform: uppercase;
+    letter-spacing: 0.07em; font-size: 10px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--bg-soft); color: var(--ink-dim);
+    vertical-align: top; }
+  td.t { color: var(--ink-mute); font-size: 10.5px; white-space: nowrap; }
+  td.lvl { width: 38px; }
+  td code { color: var(--ink); background: var(--bg-soft); padding: 1px 5px; border-radius: 2px;
+    font-size: 11px; }
+  .alert-row td { background: transparent; }
+  .alert-row.warn td { color: var(--ink); }
+  .ledger li { list-style: none; padding: 8px 0; border-bottom: 1px solid var(--bg-soft);
+    display: grid; grid-template-columns: 56px 1fr; gap: 10px; font-size: 11.5px; }
+  .ledger ul { padding: 0; margin: 0; }
+  .ledger .when { color: var(--ink-mute); font-size: 10.5px; }
+  .ledger .what { color: var(--ink-dim); }
+  .ledger .what b { color: var(--ink); font-weight: 500; }
+  footer { margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--line);
+    color: var(--ink-mute); font-size: 11px; display: flex; justify-content: space-between; }
+  .bust { width: 36px; height: 48px; }
+  .integrity { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .integrity .badge { font-family: ui-monospace, monospace; }
+  @media (max-width: 920px) { .grid { grid-template-columns: repeat(2, 1fr); } section.row { grid-template-columns: 1fr; } }
+  @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } header { flex-direction: column; gap: 8px; } .right { text-align: left; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div style="display:flex;gap:14px;align-items:flex-start">
+    <svg class="bust" viewBox="0 0 36 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <pattern id="ht" width="3" height="3" patternUnits="userSpaceOnUse">
+          <circle cx="1.5" cy="1.5" r="0.9" fill="oklch(94% 0.008 95)"/>
+        </pattern>
+      </defs>
+      <rect width="36" height="48" fill="oklch(22% 0.014 285)"/>
+      <ellipse cx="18" cy="20" rx="11" ry="13" fill="url(#ht)"/>
+      <path d="M7 48 Q7 34 18 33 Q29 34 29 48 Z" fill="url(#ht)"/>
+      <rect x="15" y="24" width="6" height="1.4" fill="oklch(22% 0.014 285)"/>
+    </svg>
+    <div>
+      <h1>He Was Socrates — Local Daemon Status</h1>
+      <div class="sub">last 24h · on-device only · no network egress · <span class="ko">자네의 물음 듣는 중</span></div>
+    </div>
+  </div>
+  <div class="right">
+    <div><span class="pill"><span class="dot"></span>healthy</span> &nbsp; <span class="pill"><span class="dot info"></span>airplane-mode OK</span></div>
+    <div style="margin-top:6px">host: M1 Max MBP 64GB &nbsp;·&nbsp; sandbox: enforced &nbsp;·&nbsp; build: a1b1100</div>
+    <div>generated 2026-05-07 09:14 KST · refresh 5s</div>
+  </div>
+</header>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-head"><span>TTFT — first token</span><span class="badge ok">PR-Λ verify-2</span></div>
+    <div class="metric">192<span class="unit">ms p50</span></div>
+    <div class="sub-metric">
+      <span>p95 <b>241ms</b></span><span>n <b>10</b></span><span>baseline <b>4 612ms</b></span><span>Δ <b>24×</b></span>
+    </div>
+    <div class="spark" aria-hidden="true">
+      <i style="height:8px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:7px"></i>
+      <i style="height:5px"></i><i style="height:9px"></i><i style="height:6px"></i><i style="height:7px"></i>
+      <i style="height:8px"></i><i class="peak" style="height:11px"></i>
+    </div>
+    <div class="src">src: claudedocs/bench/2026-05-06-latency-bench.json</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>KV cache · disk-mediated</span><span class="badge ok">hit</span></div>
+    <div class="metric">94.2<span class="unit">% hit</span></div>
+    <div class="sub-metric">
+      <span>cold loads <b>1</b></span><span>warm reuses <b>17</b></span><span>cache size <b>312 MB</b></span>
+    </div>
+    <div class="src">src: PR #32 disk-mediated KV reuse · PR-Λ</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Audio · STT engine</span><span class="badge info">on-device</span></div>
+    <div class="metric">idle<span class="unit">phase</span></div>
+    <div class="sub-metric">
+      <span>SFSpeech <b>onDevice=true</b></span><span>locales <b>ko_KR · en_US</b></span><span>buf <b>0/1024</b></span>
+    </div>
+    <div class="src">src: AudioInputManager.swift · SPEC iter6</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Viseme · frame budget</span><span class="badge ok">in-spec</span></div>
+    <div class="metric">28.7<span class="unit">ms / frame</span></div>
+    <div class="sub-metric">
+      <span>target <b>≤33.3ms</b></span><span>fps <b>30</b></span><span>drift <b>11ms</b></span><span>RM-fps <b>12</b></span>
+    </div>
+    <div class="src">src: VisemeDriver.swift · &gt;50ms drift triggers alert</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Function dispatch · 24h</span><span class="badge ok">4 / 4 OK</span></div>
+    <div class="metric">1 246<span class="unit">calls</span></div>
+    <div class="sub-metric">
+      <span>mode_classify <b>612</b></span><span>ask_back <b>518</b></span><span>defer <b>94</b></span><span>surface <b>22</b></span>
+    </div>
+    <div class="src">src: function_call_contract.yaml · Gemma 4 native fc</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Model weight integrity</span><span class="badge ok">verified</span></div>
+    <div class="metric">SHA-256<span class="unit">match</span></div>
+    <div class="sub-metric">
+      <span>variant <b>gemma-4-e4b-it-4bit</b></span><span>size <b>3.97 GB</b></span><span>last <b>09:00</b></span>
+    </div>
+    <div class="src">src: mlx-community via OS-mediated MLX cache</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Entitlements audit</span><span class="badge ok">NO-CLOUD</span></div>
+    <div class="metric">0<span class="unit">net entitlements</span></div>
+    <div class="sub-metric">
+      <span>network.client <b>absent</b></span><span>network.server <b>absent</b></span><span>audio-input <b>granted</b></span>
+    </div>
+    <div class="src">src: HeWasSocrates.entitlements · CLAUDE.md invariant #1</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Asset inventory · STT models</span><span class="badge ok">installed</span></div>
+    <div class="metric">2 / 2<span class="unit">locales</span></div>
+    <div class="sub-metric">
+      <span>ko_KR <b>198 MB</b></span><span>en_US <b>176 MB</b></span><span>install <b>single</b></span>
+    </div>
+    <div class="src">src: Preflight.swift (PR #33) · macOS 26 AssetInventory</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>Wondering log · on disk</span><span class="badge info">local-only</span></div>
+    <div class="metric">14.3<span class="unit">MB · 412 entries</span></div>
+    <div class="sub-metric">
+      <span>oldest <b>2026-02-11</b></span><span>dedup-fp <b>SHA-256</b></span><span>egress <b>0 B</b></span>
+    </div>
+    <div class="src">src: Core Data · Phase 4 surface stub wired</div>
+  </div>
+
+</div>
+
+<section class="row">
+
+  <div class="panel">
+    <h2>Audit log · function dispatch tail <span class="meta">last 8 of 1 246 · 24h window</span></h2>
+    <table>
+      <thead>
+        <tr><th class="t">time KST</th><th>function</th><th>turn signature</th><th>latency</th><th>result</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="t">09:14:02</td><td><code>ask_back</code></td><td>tone=평어체 · ko · 28 toks in</td><td>211ms</td><td><span class="badge ok">ok</span></td></tr>
+        <tr><td class="t">09:13:51</td><td><code>mode_classify</code></td><td>mode=inquiry · ko</td><td>62ms</td><td><span class="badge ok">ok</span></td></tr>
+        <tr><td class="t">09:13:44</td><td><code>defer_to_human</code></td><td>topic=medical · en→ko · ⊘</td><td>198ms</td><td><span class="badge info">deferred</span></td></tr>
+        <tr><td class="t">09:13:30</td><td><code>ask_back</code></td><td>tone=평어체 · ko · 41 toks in</td><td>187ms</td><td><span class="badge ok">ok</span></td></tr>
+        <tr><td class="t">09:12:58</td><td><code>surface_past_wonder</code></td><td>recall=2 entries · ctx 18.4K</td><td>284ms</td><td><span class="badge ok">ok</span></td></tr>
+        <tr><td class="t">09:12:11</td><td><code>mode_classify</code></td><td>mode=clarify · ko</td><td>58ms</td><td><span class="badge ok">ok</span></td></tr>
+        <tr><td class="t">09:11:47</td><td><code>defer_to_human</code></td><td>topic=legal · ko · ⊘</td><td>204ms</td><td><span class="badge info">deferred</span></td></tr>
+        <tr><td class="t">09:11:02</td><td><code>ask_back</code></td><td>tone=평어체 · ko · 22 toks in</td><td>176ms</td><td><span class="badge ok">ok</span></td></tr>
+      </tbody>
+    </table>
+    <div class="integrity">
+      <span class="badge ok">contract: function_call_contract.yaml</span>
+      <span class="badge ok">tone-lock: SystemPrompt.swift verbatim</span>
+      <span class="badge ok">log egress: 0 B (Core Data local)</span>
+    </div>
+  </div>
+
+  <div class="panel ledger">
+    <h2>Alert ledger <span class="meta">3 events · 24h</span></h2>
+    <ul>
+      <li>
+        <span class="when">09:13<br/><span class="badge info">INFO</span></span>
+        <span class="what"><b>defer_to_human fired</b> on medical topic — bust returned <span class="ko">⊘ 사람에게 물어보게</span>. Abstention is product, not failure.</span>
+      </li>
+      <li>
+        <span class="when">07:42<br/><span class="badge warn">WARN</span></span>
+        <span class="what"><b>viseme drift 47ms</b> during Phase.speaking — under 50ms threshold; no frame skip. JamoTimeline fallback active (Apple phoneme markers absent for Yuna voice).</span>
+      </li>
+      <li>
+        <span class="when">02:11<br/><span class="badge ok">OK</span></span>
+        <span class="what"><b>weight SHA-256 verified</b> on cold start · <code>gemma-4-e4b-it-4bit</code> · 3.97 GB · OS-mediated MLX cache hit, no fetch.</span>
+      </li>
+    </ul>
+    <div style="margin-top:10px;font-size:10.5px;color:var(--ink-mute);border-top:1px dashed var(--line);padding-top:8px">
+      thresholds: TTFT p95 &lt; 500ms · viseme drift &lt; 50ms · KV hit &gt; 80% · network egress = 0 B (hard fail)
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  <div>repo: github.com/Two-Weeks-Team/he-was-socrates · Apache-2.0 + CC-BY-4.0</div>
+  <div>Gemma 4 © Google DeepMind · MLX © Apple · all telemetry rendered from local disk</div>
+</footer>
+
+</div>
+</body>
+</html>

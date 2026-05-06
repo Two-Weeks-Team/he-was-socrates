@@ -1,0 +1,71 @@
+{
+  "panel": "TP",
+  "chair": "tp-lead",
+  "embodiment_note": "Plugin architecture forbids Task delegation from sub-agents; chair embodied 10 TP lenses internally (strategist / devil's advocate / critical reviewer / ROI / risk engineer / domain expert / operator / security auditor / pragmatist / innovator). Vote derived from convergence across those lenses applied to previews.json + spot-checked mockup HTML.",
+  "top5": [
+    {
+      "advocate_id": "P25-the-ai-native",
+      "rationale": "Strongest Gemma-4-feature exhibition: 4-function dispatch matrix, function_call_contract.yaml schema with line ranges, defer_to_human-first ordering, SystemPrompt.swift verbatim, Phase enum tied to configurable thinking — the 3 load-bearing Gemma 4 capabilities (function calling / 256K context / configurable thinking) are exhibited not asserted."
+    },
+    {
+      "advocate_id": "P22-the-researcher",
+      "rationale": "Highest engineering rigor: explicit Limitations section (L1 wondering-log Phase 4 stub, L2 single-machine n=10, L3 single-locked Korean tone) + numbered citations [1]–[14] + falsifiable claim framing — the only advocate that proactively concedes shipped-vs-designed-for boundary as a peer-reviewer-grade trust signal."
+    },
+    {
+      "advocate_id": "P13-the-data-nerd",
+      "rationale": "Best metric handling: charts render from actual firstChunkMs samples in claudedocs/bench/2026-05-06-latency-bench.json with p10/p50/p90 + n + hardware + uncertainty bounds; 24.0× speedup framed against slow-fallback first-chunk (correct comparator), not the marketing-baseline number. Inspection-ready by construction."
+    },
+    {
+      "advocate_id": "P19-the-embedded",
+      "rationale": "Most architecturally honest reframing: positions SocraticEngine as a Swift Package with the .app as one consumer of N. The NO-CLOUD invariant becomes a property the package guarantees to embedders, public API surface (EngineCoordinator / Phase / FunctionCallOrchestrator / TTSManager / AudioInputManager / TurnOutput / Mode / VisemeID) is enumerated correctly per CLAUDE.md stable-surface list."
+    },
+    {
+      "advocate_id": "P12-the-privacy-hawk",
+      "rationale": "Cleanest NO-CLOUD treatment: entitlements XML inline + inverted threat model with zero outbound arrows + 8-FAQ refutation of common 'but it must phone home' assumptions (telemetry / model updates / license check / crash reports / analytics / A/B tests / prompt logging / federated learning). Evidence-first, prose-second."
+    }
+  ],
+  "top3_final": [
+    {
+      "rank": 1,
+      "advocate_id": "P25-the-ai-native",
+      "rationale": "P25 is the only advocate that satisfies the Gemma-feature criterion through exhibition rather than assertion. The dispatch matrix renders the 4 functions with their actual contract semantics (defer_to_human as guard, ask_back as the only generative path, surface_past_wonder against 256K context, mode_classify driving Phase enum), the configurable thinking mode is correctly mapped to Phase.thinking visualization, and the orchestration sequence reflects function_call_contract.yaml step ordering. Of all 26 advocates, this is the one a Gemma 4 evaluator would walk away citing as 'they used the model the way it was designed to be used' — load-bearing not decorative. Technical correctness on every Gemma 4 surface (function calling / 256K / thinking) is the highest bar this panel measures, and P25 clears it with the most material on-page."
+    },
+    {
+      "rank": 2,
+      "advocate_id": "P22-the-researcher",
+      "rationale": "P22 is the most defensible piece of technical writing in the set. The Abstract / Methods / Results / Discussion / Limitations / References scaffold treats every metric as a falsifiable claim with a numbered citation; the Limitations section explicitly draws the shipped-vs-designed-for line that the project's CLAUDE.md anti-pattern #6 demands. Crucially, P22 cites TTFT_median = 192 ms with n, hardware, and the bench file path — exactly the rigor a peer-reviewer-style judge needs to score Technical credibly. The paper-form reframing risks looking austere, but it is the framing least likely to embarrass the project under technical scrutiny, and the only one that makes the Phase 4 stub disclosure a feature of the trust contract rather than a footnote."
+    },
+    {
+      "rank": 3,
+      "advocate_id": "P13-the-data-nerd",
+      "rationale": "P13 wins the data-handling axis decisively: the TTFT distribution chart is drawn from the actual ten firstChunkMs samples in the bench JSON (not a stylized facsimile), p10/p50/p90 are computed correctly, and the 24.0× speedup is framed against the slow-fallback first-chunk comparator (which is the engineering-honest comparator) rather than the misleading 4.6 s baseline. Methodology table includes hardware/n/p10/p50/p90 — the four pieces of context any technical evaluator demands before trusting a latency number. Edges P19 for 3rd because raw bench-handling rigor speaks more directly to the technical-execution rubric than the SDK-reframing thesis, even though both are strong."
+    }
+  ],
+  "watch_list": [
+    {
+      "advocate_id": "P26-the-anti-ai",
+      "concern": "Deliberately substitutes 'engine' for 'model' and 'a bust that asks back' for 'LLM'. For the Impact-Education narrative this is defensible, but for the Technical lens it is self-sabotage: the Gemma-feature criterion explicitly rewards exhibiting the model's native capabilities (function calling, 256K context, configurable thinking) — and P26's lexicon hides exactly that surface. Spec-alignment claim that 'load-bearing technical content is unchanged' is partially undercut by the framing choice."
+    },
+    {
+      "advocate_id": "P21-the-indie-hacker",
+      "concern": "Pitch-deck cadence + 'try / star / share' ask bar borrows monetization-funnel vocabulary that does not match a non-monetized hackathon submission. Technical content is intact but the framing dilutes engineering signal — the Hook/Problem/Insight/Proof slide pattern de-prioritizes the dispatch matrix and bench methodology in favor of one-line summaries."
+    },
+    {
+      "advocate_id": "P23-the-game-designer",
+      "concern": "XP scroll meter + Evidence Badge HUD adds a UI layer on top of the evaluator's actual reading task. Spec_alignment_notes correctly insist tone stays severe and copy stays sourced, but the badge-unlock mechanic + viseme keyframe scroll-driving + dispatch console widget pull engineering attention away from the engineering content. Risk: a fatigued judge reads the form, not the evidence."
+    },
+    {
+      "advocate_id": "P04-the-cost-conscious",
+      "concern": "TCO ledger ($0/month × 9 line items) is a rhetorical frame, not engineering evidence. The 'cost story and privacy story are the same story' insight is sound but the 9-row ledger is contrived (auth / monitoring / CDN / TLS / backup / scaling have no architectural counterpart in this project). Acceptable for ROI lens, weak for technical lens."
+    },
+    {
+      "advocate_id": "P15-the-community-builder",
+      "concern": "Contributor avatars + role badges + branch policy + Conventional Commit scopes are org-process surfaces, not technical-execution surfaces. The artifact treats the project as a multi-author workspace but the Two-Weeks-Team structure is not the technical claim being evaluated. NO-CLOUD + abstention + PR-Λ all surface, but they share the page with workspace chrome that competes for the judge's attention."
+    },
+    {
+      "advocate_id": "P02-the-ops-veteran",
+      "concern": "The 'no ops surface' inversion is true but operates as an assertion rather than evidence. Without a status board grounded in actual artifacts (entitlements file, bench JSON, swift-testing scenarios), the page-as-status-board reads as a rhetorical move. P12 makes a stronger version of this argument with file-path-level evidence."
+    }
+  ],
+  "panel_summary": "Technical Panel converges on P25 (Gemma 4 feature exhibition) > P22 (peer-reviewer rigor with explicit Limitations) > P13 (bench-derived charts with correct comparator) as the top-3 on engineering merit. P19 and P12 round out the top-5 with the strongest SDK-architecture and NO-CLOUD-evidence treatments respectively. Watch list flags six advocates whose framing choices either hide the engineering signal (P26 lexicon, P21 monetization cadence) or substitute organizational/cost rhetoric for technical evidence (P15, P04, P02), plus P23 whose HUD form competes with its sourced content. None of the watch-list six are technically wrong — they are technically muffled."
+}

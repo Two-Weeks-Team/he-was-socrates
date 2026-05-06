@@ -1,0 +1,128 @@
+{
+  "panel": "UP",
+  "panel_name": "UX Panel",
+  "chair": "UP_LEAD",
+  "run_id": "r-20260507-010321",
+  "lens": "UX (visual hierarchy, IA, type/grid/contrast, WCAG 2.2 AA, mobile, brand voice consistency, microcopy, motion restraint, first-impression cold-read for hackathon evaluators)",
+  "constraint_acknowledged": "Cannot dispatch UP01-UP10 sub-agents; chair embodied all 10 perspectives (end-user, designer, accessibility, IA, mobile, content, usability, brand voice, visual, motion).",
+  "evaluation_criteria": [
+    "1-bit halftone aesthetic consistency (single warm bone-accent ceiling, no rainbow gradients, no green/amber/red semantic-color stacks)",
+    "Editorial restraint (generous measure ~60-72ch, serif headings + sans body + mono numerics, no chat-bubble UI, no SaaS funnel chrome)",
+    "Information architecture clarity (hero → 7 differentiators surfaced ≤60s of scroll, verification footer, no buried evidence)",
+    "Korean 단정한 평어체 placed only on identity surfaces (system prompt, defer_to_human, bust subtitle); never primary nav copy",
+    "WCAG 2.2 AA contrast on dark theme + scalable type with clamp() + reduced-motion handling",
+    "Microcopy quality (no marketing superlatives, no friendly-chatbot voice, no 'your AI friend', every metric source-linked)",
+    "Mobile fallback (single-column collapse without horizontal scroll, ≥44px tap targets where interactive)",
+    "Cold-read first 5 seconds: NO-CLOUD + abstention + Korean identity legible without scrolling"
+  ],
+  "top5_culling": [
+    {
+      "rank": 1,
+      "advocate_id": "P05-the-design-forward",
+      "rationale": "Strongest editorial typography in the gallery — 64-66ch measure, Inter body / Times New Roman headings / JetBrains Mono numerics with a single warm bone-gold accent. Quote-break section transitions enforce reading rhythm. Hero bust framed with corner brackets in 360px square gives the halftone identity room to breathe. Single-column scroll with composed pacing — exactly the editorial restraint the product itself embodies."
+    },
+    {
+      "rank": 2,
+      "advocate_id": "P18-the-designer",
+      "rationale": "Most coherent 'designed object' in the set — chapter numerals, drop-cap lede, marginalia, plates with clamp() spacing, very subtle SVG noise grain at 0.06 opacity. Treats halftone as layout grammar, not asset choice. Slight risk: noise overlay may interact poorly with reduced-transparency settings, but the underlying composition would still hold."
+    },
+    {
+      "rank": 3,
+      "advocate_id": "P22-the-researcher",
+      "rationale": "Genre-aligned: paper-style framing tells judges 'this is a reproducible systems claim, not marketing'. Abstract → Methods → Results → Limitations → References scaffold gives every metric a place to live. Numbered citations inline make the verifiability promise visible at the type level. Risk: dense academic register may slow drive-by GitHub readers, but for the Kaggle/DeepMind primary audience this is a feature."
+    },
+    {
+      "rank": 4,
+      "advocate_id": "P01-the-contrarian",
+      "rationale": "Only advocate that earns its restraint at the form level. 880px measure, mono-first body, hairline borders, single 4.6s eye-pulse animation tied to Phase.thinking with prefers-reduced-motion fallback already coded. The page enacts the bust's withholding posture. UX cost: mono-only body type is harder to scan for non-engineering readers, but for the Kaggle technical-leaning judge slice it is the strongest first-impression in the set."
+    },
+    {
+      "rank": 5,
+      "advocate_id": "P11-the-pragmatist",
+      "rationale": "Cleanest information architecture: sidebar-nav + main-evidence-column verification document. Compact (~30 KB target), sticky sidebar gives evaluators a persistent map of where they are. Evidence ledger as the headline artifact does the verifiability work without prose ornament. Slight UX weakness: dense kv-rows can fatigue at long scroll, but the compact size budget is a feature for the size_budget criterion."
+    }
+  ],
+  "top3_final": [
+    {
+      "rank": 1,
+      "advocate_id": "P05-the-design-forward",
+      "rationale": "Earns the gallery hero on craft alone. The composition is the first signal evaluators receive that this team thinks about their work — generous whitespace, considered type scale, halftone bust framed with editorial restraint. Korean 평어체 quotes anchor section breaks as identity surfaces (verbatim from SystemPrompt.swift), English carries the argument. No marketing tone, no SaaS chrome, no rainbow gradients. The 1-bit halftone aesthetic and the editorial layout reinforce each other so the engineering claims read as coming from a team that understands design as discipline, not decoration."
+    },
+    {
+      "rank": 2,
+      "advocate_id": "P18-the-designer",
+      "rationale": "Closest companion to P05 with a different center of gravity — visual essay over editorial document. Chapter numerals + drop-cap lede + marginalia for Korean 평어체 sidebars give the page a printed-essay cadence rare in software previews. The 16-viseme PNGs treated as a typographic frieze is the cleanest answer in the gallery to the question 'how do you show a viseme system without animating it'. This advocate would convert hackathon judges who rate craft."
+    },
+    {
+      "rank": 3,
+      "advocate_id": "P22-the-researcher",
+      "rationale": "The verifiability commitment in idea.spec.json success_criteria gets its strongest UX expression here. Inline numbered citations on every metric, an explicit Limitations section that pre-empts the speculative-as-shipped objection (Phase 4 wondering log marked stub), Table 1 categories mapping. For the Kaggle/DeepMind primary persona ('English-reading, technical-leaning, strong bias toward measurable claims with verifiable sources'), the paper format is the most legible IA in the set. Risk: register may read as cold to general-dev secondary persona, mitigated because secondary readers aren't the conversion target."
+    }
+  ],
+  "watch_list": [
+    {
+      "advocate_id": "P02-the-ops-veteran",
+      "concerns": [
+        "Multi-color semantic stack (green ok / amber warn / null grey) violates the 1-bit halftone aesthetic ceiling — the brief asks monochrome accent, this introduces 3+ hues",
+        "Status-board chrome (uptime cards, on-call rotation panel) reads as cloud-ops dashboard pastiche, weakening the 'there is no ops surface' claim it tries to make",
+        "70 headings across 12 sections — visual fatigue risk for the 60-second skim window"
+      ]
+    },
+    {
+      "advocate_id": "P15-the-community-builder",
+      "concerns": [
+        "Multi-color violation: --ok / --warn / --danger stack with red/green/amber semantic colors against the 1-bit halftone constraint",
+        "Workspace chrome (sticky --wbar with backdrop-filter blur, members strip, copy-URL pill) introduces SaaS app patterns the brief explicitly refuses",
+        "15 sections is the highest in the gallery — IA bloat against the 8 required structure sections; reading rhythm collapses into channel-list scan",
+        "Avatar list and role pills risk reading as 'team bragging marketing', counter to professional honesty rule"
+      ]
+    },
+    {
+      "advocate_id": "P14-the-educator",
+      "concerns": [
+        "--accent / --warn / --ok 3-color stack edges past monochrome ceiling",
+        "14 sections + sticky progress bar + educator-banner + glossary footer + Socratic sidebar = chrome density that competes with content for attention",
+        "Toast-hint pattern referenced in spec_alignment_notes is friendly-app convention; needs verification it didn't slip into 'friendly chatbot' tone register"
+      ]
+    },
+    {
+      "advocate_id": "P08-the-slack-native",
+      "concerns": [
+        "Slack red/yellow/green window dots are full multi-color violation",
+        "Chat-message-card structure flirts with the chat-bubble UI anti-pattern even though the advocate claims to refuse it — borderline genre confusion",
+        "Slack chrome (titlebar, channelbar, message hover state) is platform pastiche; if a Kaggle judge does not use Slack, the framing is noise"
+      ]
+    },
+    {
+      "advocate_id": "P07-the-mobile-first",
+      "concerns": [
+        "Phone-frame chrome on desktop (390px max-width with 44px notch radius and box-shadow) wastes horizontal real estate the Kaggle reading environment provides — most judges open links on desktop",
+        "Single-column 15px body type is correct for mobile but feels cramped on desktop; first-impression for the primary persona is 'this is a phone mockup' not 'this is the project'",
+        "8-section vertical stack is fine for IA but the desktop reading experience is downstream of an assumption that contradicts spec.target_persona.primary.reading_environment ('Kaggle competition entry page → linked HTML preview')"
+      ]
+    },
+    {
+      "advocate_id": "P23-the-game-designer",
+      "concerns": [
+        "Fixed HUD bar with backdrop-filter blur is 2026-app-trend chrome that conflicts with the editorial-restraint identity",
+        "XP bar + badge unlocks + scroll-driven keyframes risk crossing into motion that contradicts the 'no animation except Phase.thinking pulse' restraint other advocates honor",
+        "Even when copy stays factual, the visual progression scaffold may read as gamification gloss to an editor-mode evaluator"
+      ]
+    },
+    {
+      "advocate_id": "P17-the-enterprise-buyer",
+      "concerns": [
+        "Procurement-register framing serves a secondary-persona slice (school district IT) rather than the primary (Kaggle/DeepMind judges); persona-fit is borderline for the headline gallery position",
+        "Risk-questionnaire chrome (control / evidence / verdict columns, audit-trail timeline) is dense and visually heavy — long-scroll fatigue"
+      ]
+    },
+    {
+      "advocate_id": "P24-the-reluctant-adopter",
+      "concerns": [
+        "74 headings across 10 sections is the highest density signal in the diversity report — IA risk of evidence buried under rebuttal scaffolding",
+        "Skeptic-rebuttal structure puts 'reasons to dismiss' as the first content section; for fatigued judges this is a high-risk bet on a UX gambit"
+      ]
+    }
+  ],
+  "diversity_validator_acknowledged": "I2 PASS (max jaccard 0.157, max structural 0.569). UX picks honor diversity: P05/P18/P22 occupy distinct lanes (editorial typography / visual essay / academic paper). No top-3 collisions with one another structurally."
+}

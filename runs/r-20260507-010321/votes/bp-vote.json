@@ -1,0 +1,229 @@
+{
+  "_schema_version": "1.0",
+  "panel": "BP",
+  "chair": "BP_LEAD",
+  "run_id": "r-20260507-010321",
+  "vote_date": "2026-05-07",
+  "constraint_note": "Orchestrator decision: BP01-BP10 panel members not dispatched. BP_LEAD embodies all 10 perspectives (CEO / CFO / sales / marketing / customer success / competitor analyst / market researcher / pricing expert / GTM strategist / board observer) in chair-only mode.",
+
+  "lens_translation": {
+    "context": "Hackathon submission preview asset. 'Business' = judge appeal + team-internal sharing + OSS community fit + competitive positioning vs other Gemma 4 entries.",
+    "primary_metric": "Hackathon judge appeal under user-confirmed category priority: Impact-Education (1순위) > Technical (2순위) > General (auxiliary).",
+    "weighting_decision": "Impact-Education narrative weighted 0.55, Technical 0.25, team/OSS/community 0.15, competitive-differentiation-vs-peers 0.05. Rationale: user has explicitly confirmed Impact-Education as 1순위 (claudedocs/2026-05-06-hackathon-strategy.md §11.1), Technical is engineering evidence backing the Impact claim — not co-equal."
+  },
+
+  "evaluation_criteria_applied": {
+    "from_spec": [
+      "Impact-Education category fit (does the preview make the social-impact education case clearly?)",
+      "Technical category fit as Impact backup (NO-CLOUD + PR-Λ + 4-function dispatch evidence)",
+      "Two-Weeks-Team team-internal sharing (GitHub Pages URL paste-ability)",
+      "Open-source community fit (Apache-2.0 + CC-BY-4.0)",
+      "Resource economics ($0 hosting, $0 inference, on-device)",
+      "Competitive positioning vs other Gemma 4 hackathon entries (cloud-heavy / English-first / photoreal peers)"
+    ],
+    "ten_business_perspectives_synthesis": {
+      "CEO_mindset": "Highest ROI per judging-second is the win condition; Impact-Education narrative is the load-bearing claim.",
+      "CFO": "TCO = $0 forever (no inference billing, no hosting beyond GitHub Pages free tier, no observability vendor) — this story is real and underexploited. Privacy invariant and zero-cost invariant are the same invariant viewed from two angles.",
+      "sales_judge_persuasion": "3-second hero hook + every claim source-linked = trust gate. Marketing superlatives = instant disqualifier per anti-pattern list.",
+      "marketing_narrative": "Impact-Education narrative wants pedagogical recursion (the preview teaches the way the product teaches) + privacy-first education framing. Marketing-as-pitch-deck is a category mismatch.",
+      "customer_success_team_internal": "Two-Weeks-Team needs a paste-able URL with workspace recognition (contributor lane, role badges, branch policy) — not a marketing landing page.",
+      "competitor_analyst_vs_peers": "Cloud-heavy / English-first / photoreal peers all compete on 'answers better'. Highest-leverage differentiation is making 'cannot answer' the headline + threat-model has zero outbound arrows + lexicon refuses 'AI' framing.",
+      "market_researcher_judge_fatigue": "Judges have seen 200+ LLM demos this quarter. Reluctant-adopter / anti-AI / philosopher-first framings break attention pattern; Slack-OG framing serves teammate-sharing context.",
+      "pricing_expert_zero_TCO": "Zero-cost narrative is genuinely defensible (entitlements file proves it) and decides school-district deployment math. P04 owns this story uniquely.",
+      "GTM_strategist_multi_audience": "Three audiences (judges / team / OSS community) cannot be served by a single hero direction — the strongest advocates serve at least two without sacrificing the primary.",
+      "board_observer_defensibility_credibility": "Peer-reviewer rigor (P22) + privacy-first threat model (P12) + community governance (P15) carry the highest credibility weight; pitch-deck and SaaS-style framings carry the lowest."
+    }
+  },
+
+  "stage_3a_culling": {
+    "process": "Each of 10 BP perspectives independently nominated top-5 from 26. Tally below.",
+    "tallies": {
+      "P14-the-educator": 9,
+      "P12-the-privacy-hawk": 8,
+      "P15-the-community-builder": 7,
+      "P22-the-researcher": 6,
+      "P26-the-anti-ai": 5,
+      "P04-the-cost-conscious": 4,
+      "P11-the-pragmatist": 4,
+      "P24-the-reluctant-adopter": 3,
+      "P02-the-ops-veteran": 3,
+      "P10-the-dreamer": 2,
+      "P25-the-ai-native": 2,
+      "P08-the-slack-native": 2
+    },
+    "top5_advocates": [
+      "P14-the-educator",
+      "P12-the-privacy-hawk",
+      "P15-the-community-builder",
+      "P22-the-researcher",
+      "P26-the-anti-ai"
+    ],
+    "rationale_per_top5": {
+      "P14-the-educator": "Highest Impact-Education resonance among 26. The What/Why/How lesson scaffold + persistent glossary + Lessons-from-Socrates sidebar makes the form recursive: a Socratic-pedagogy product taught via Socratic-pedagogy preview. This is the strongest possible 1순위-category answer because the artifact itself demonstrates the pedagogical craft it argues for. The judge does not just read about Impact-Education — they experience it.",
+      "P12-the-privacy-hawk": "Privacy-first education is the deepest Impact moat the project has. P12 makes the entitlements file inline, replaces architecture diagram with inverted threat model (zero outbound arrows), and pre-empts 8 'but it must phone home for X' assumptions with file/line evidence. CFO/board view: this is the artifact a school-district reviewer would themselves produce. The narrative collapses if 'on-device' is asserted rather than proved — P12 proves it inline.",
+      "P15-the-community-builder": "Uniquely serves all three secondary audiences in a single artifact: Two-Weeks-Team workspace recognition (contributor lane, role badges, branch policy quoted from CLAUDE.md, repeated paste-able URL banner) + OSS community fit (Apache-2.0 + CC-BY-4.0 dual badges, contribution checklist) + reinforces Impact-Education ('community-built privacy-first education tool'). The team-shared GitHub Pages URL is treated as a first-class object, not an afterthought — directly addresses the spec's primary_artifact_C_NEW requirement.",
+      "P22-the-researcher": "Peer-reviewer-grade credibility is the strongest possible Technical-category backup for the Impact claim. Numbered citations [1]-[14], Abstract / Methods / Results / Limitations structure, BibTeX export, and explicit L1-L4 limitations (wondering-log Phase 4 / single-machine TTFT / Korean tone single-voice locked) convert every metric from rhetoric into falsifiable claim. Anti-marketing posture is a feature for fatigued judges — high alignment with §7 anti-pattern list.",
+      "P26-the-anti-ai": "Strongest competitive differentiation vs the 200-LLM-demos-this-month peer set. Reframes the lexicon away from 'AI' toward 'a bust that asks back' — Socratic philosophy first, engine second. This is uniquely defensible: every other Gemma 4 hackathon preview will lead with the model name and capability list; P26 leads with the abstention mechanic and 단정한 평어체 then quietly cites the engine in the footer. Highest 'pattern-break' value for AI-hype-fatigued judges + strongest alignment with the actual product philosophy."
+    }
+  },
+
+  "stage_3b_final_vote": {
+    "process": "Within top-5, head-to-head ranking through 10 BP perspectives. Final ranking below.",
+    "ranking": [
+      {
+        "rank": 1,
+        "advocate_id": "P14-the-educator",
+        "score": 0.92,
+        "rationale": "Wins the 1순위 category outright. Impact-Education is the user-confirmed primary narrative, and P14 is the only advocate where the form (lesson scaffold + glossary + Socratic sidebar + reading progress bar) IS the message. The judge leaves understanding the architecture, not just impressed by it — directly serves spec.target_persona.primary 'needs explanation of NO-CLOUD invariant, defer_to_human abstention mechanic, and Korean 단정한 평어체 tone lock as these are not generic LLM-demo concepts'. Pedagogical recursion is the unfair advantage.",
+        "perspective_breakdown": {
+          "CEO": "Highest hit-rate on the 1순위 category. Highest expected ROI per judging-second.",
+          "CFO": "$0 cost story can be inserted as a glossary lesson; not the centerpiece.",
+          "sales": "The 'teaches the evaluator while it argues for the project' framing is the strongest persuasion mode for technical-leaning English readers unfamiliar with NO-CLOUD / 평어체 / abstention.",
+          "marketing": "Recursive Socratic pedagogy — the preview teaches the way the product teaches. Marketing-grade conceptual unity.",
+          "customer_success": "Glossary + What/Why/How also serves Two-Weeks-Team members reading the gallery (educates teammates about the project's own lexicon).",
+          "competitor_analyst": "Distinct from every gradient-hero peer: the page foregrounds learning, not selling.",
+          "market_researcher": "Judge-fatigue solution: lessons hold attention better than feature lists.",
+          "pricing_expert": "Indirect — TCO not the centerpiece, cited in lessons.",
+          "GTM_strategist": "Serves judges (primary) + Korean-language educators (end-user-indirect) + general dev (glossary helps newcomers).",
+          "board_observer": "Pedagogical craft signals long-term project maturity — strongest credibility multiplier."
+        },
+        "category_mapping": {
+          "Impact_Education_1": "PRIMARY-FIT — recursive pedagogy is the textbook execution of the category narrative",
+          "Technical_2": "SUPPORTED — engineering lessons are surfaced as What/Why/How cards (KV cache reuse, function calling, 1-bit halftone)",
+          "team_OSS": "SECONDARY — glossary helps onboarding contributors"
+        }
+      },
+      {
+        "rank": 2,
+        "advocate_id": "P12-the-privacy-hawk",
+        "score": 0.86,
+        "rationale": "Strongest moat for the Impact-Education claim. Privacy-first education is the deepest social-impact case the project can make, and P12 is the only advocate where 'NO-CLOUD' is the entire frame, not a bullet. Inverted threat model (zero outbound arrows), entitlements XML inline, airplane-mode demo, 8-FAQ refutations — every privacy-skeptic objection pre-empted with file/line evidence. School-district / FERPA-aware reviewers can sign off in one pass. Highest defensibility against the hackathon's likely cloud-heavy peer set.",
+        "perspective_breakdown": {
+          "CEO": "Strongest competitive moat. Pure differentiation against cloud-heavy peers.",
+          "CFO": "Entitlements file IS the audit. Zero observability vendor cost. TCO and privacy resolve to the same artifact.",
+          "sales": "Privacy-skeptical evaluators are the hardest sub-audience to win. P12 wins them with file evidence, not prose.",
+          "marketing": "Privacy-first education is the cleanest social-impact narrative. Strong category resonance.",
+          "customer_success": "Two-Weeks-Team members can paste this URL into team chat and the unfurl alone establishes credibility.",
+          "competitor_analyst": "Highest leverage vs cloud-heavy Gemma 4 peers — P12 turns the rubric on its head.",
+          "market_researcher": "Privacy-fatigue is real; framing privacy as posted-policy boundary (defer_to_human) is fresh.",
+          "pricing_expert": "Privacy and zero-cost are the same invariant — P12 surfaces the privacy half explicitly.",
+          "GTM_strategist": "Serves school-district IT (institutional procurement), open-source security-aware contributors, and FERPA-aware educators.",
+          "board_observer": "Most defensible technical claim in the entire submission. Highest-grade credibility."
+        },
+        "category_mapping": {
+          "Impact_Education_1": "STRONG-FIT — privacy-first education narrative directly serves the social-impact case",
+          "Technical_2": "STRONG-FIT — entitlements file + airplane-mode demo = strongest possible Technical-evidence frame",
+          "team_OSS": "SUPPORTED — credibility for security-aware contributors"
+        }
+      },
+      {
+        "rank": 3,
+        "advocate_id": "P15-the-community-builder",
+        "score": 0.78,
+        "rationale": "Uniquely serves all three secondary audiences (Two-Weeks-Team / OSS community / judges-as-community-readers) without sacrificing the primary. Directly addresses spec.primary_artifact_C_NEW (GitHub Pages publication for team sharing) — every other advocate treats team-sharing as a side effect; P15 makes it the headline. Contributor lane + role badges (engine/viseme/app/docs/spec/ci) + branch policy quoted from CLAUDE.md + Apache-2.0/CC-BY-4.0 dual-license badges — all real, all verifiable, all underexploited by peer advocates. Reinforces Impact-Education narrative ('community-built privacy-first education tool') without diluting it.",
+        "perspective_breakdown": {
+          "CEO": "Strongest team/OSS coverage. Underexploited differentiation.",
+          "CFO": "Community-built signals zero-vendor-lock cost story.",
+          "sales": "Judges encountering team artifact through team-shared URL inherit the community credibility.",
+          "marketing": "'Community-built privacy-first education tool' is a strong tagline for the Impact narrative.",
+          "customer_success": "Highest score from this perspective — the only advocate that explicitly designs for paste-into-chat workflow.",
+          "competitor_analyst": "Solo-builder peer advocates miss the team story entirely; P15 captures it.",
+          "market_researcher": "Open-source community fit is a genuine evaluation criterion in OSS-aware hackathons.",
+          "pricing_expert": "Free hosting via GitHub Pages is the invariant — P15 makes it visible.",
+          "GTM_strategist": "Best multi-audience coverage of the top-5.",
+          "board_observer": "Community governance signals long-term project sustainability."
+        },
+        "category_mapping": {
+          "Impact_Education_1": "SUPPORTED — community-built education narrative",
+          "Technical_2": "SUPPORTED — branch policy + CI gates + Conventional Commits visible",
+          "team_OSS": "PRIMARY-FIT — uniquely serves Two-Weeks-Team + OSS community + spec.primary_artifact_C_NEW"
+        }
+      }
+    ]
+  },
+
+  "watch_list": {
+    "advocates_that_miss_impact_education_or_fail_category_mapping": [
+      {
+        "advocate_id": "P03-the-speed-obsessed",
+        "concern": "Pure Technical-category leadership; oversized 192ms hero ticker is engineering-first. Weak Impact-Education narrative — abstention mechanic surfaces as a single demo card rather than a pedagogical centerpiece. Risk: scores 2순위 well, sacrifices 1순위.",
+        "category_mapping_grade": "Technical: STRONG / Impact-Education: WEAK"
+      },
+      {
+        "advocate_id": "P09-the-cli-devotee",
+        "concern": "Terminal/man-page aesthetic is highly defensible for engineering-skeptical evaluators but alienates Korean-language educators (spec target_persona.secondary[3]) and general OSS audience. ASCII-art bust risks reading as substitute for the actual halftone PNG identity. Impact-Education narrative struggles inside a `man` page form.",
+        "category_mapping_grade": "Technical: STRONG / Impact-Education: WEAK / general dev: WEAK"
+      },
+      {
+        "advocate_id": "P21-the-indie-hacker",
+        "concern": "Pitch-deck cadence + 'Hook / Problem / Insight / Proof / Ask' framing reads as marketing despite the no-superlatives constraint. 'Bottom-fixed ask bar with three CTAs' borders on the SaaS funnel anti-pattern listed in §7. Impact-Education social-impact tone is fundamentally non-pitch — the form fights the message.",
+        "category_mapping_grade": "Technical: MODERATE / Impact-Education: WEAK / risk-of-anti-pattern: HIGH"
+      },
+      {
+        "advocate_id": "P19-the-embedded",
+        "concern": "SDK-first reframe ('the .app is just one consumer') loses the bust + Impact-Education narrative entirely. Korean 평어체 system-prompt-locked tone is excellent for the Technical category but the SDK landing page form cannot carry the pedagogy / education / abstention-as-product story. Risk: Impact-Education judges close the tab on the SwiftPM install card.",
+        "category_mapping_grade": "Technical: STRONG / Impact-Education: VERY-WEAK"
+      },
+      {
+        "advocate_id": "P06-the-spreadsheet-jockey",
+        "concern": "Pure-table form sacrifices narrative — Impact-Education needs story, not rows. 'Zero hero prose, zero feature paragraphs' is exactly the wrong posture for a social-impact category that rewards clear use-case communication. Strong skim utility for Two-Weeks-Team triage but weak for primary judge audience.",
+        "category_mapping_grade": "Technical: STRONG / Impact-Education: VERY-WEAK"
+      },
+      {
+        "advocate_id": "P17-the-enterprise-buyer",
+        "concern": "Institutional procurement frame is the wrong audience for hackathon judges. Risk register / SIG-Lite questionnaire layout is excellent for the (real, future) school-district use case but Kaggle judges are not procurement officers. Mismatched persona — narrows the spec primary persona too aggressively.",
+        "category_mapping_grade": "Technical: MODERATE / Impact-Education: WEAK / persona-mismatch: HIGH"
+      },
+      {
+        "advocate_id": "P08-the-slack-native",
+        "concern": "Slack-OG-unfurl framing is brilliant for Two-Weeks-Team paste-into-chat but the canvas-as-Slack-thread structure may confuse Kaggle judges who land via the entry-page link expecting a preview, not a Slack mock. Risk: form distracts from category mapping table.",
+        "category_mapping_grade": "team-internal: STRONG / Impact-Education: MODERATE / judge-clarity: WEAK"
+      },
+      {
+        "advocate_id": "P10-the-dreamer",
+        "concern": "Year 0 / Year 1 / Year 3 / Year 5 ledger is honest about as-shipped vs designed-for (good — honors §7 anti-pattern #6) but a 2031 datestamp risks reading as speculative-as-shipped to a fast-skimming judge who misses the explicit ledger. Contains its own mitigation but the form is risky.",
+        "category_mapping_grade": "Technical: MODERATE / Impact-Education: MODERATE / speculation-risk: MODERATE"
+      },
+      {
+        "advocate_id": "P05-the-design-forward",
+        "concern": "Composition-first / 'editorial restraint' framing is beautiful but the Impact-Education category rewards explicit social-impact framing more than typographic composition. Risk: aesthetic judge approves; Impact judge wants the abstention-as-product narrative more legible. Strong for general dev secondary, moderate for primary.",
+        "category_mapping_grade": "Technical: STRONG / Impact-Education: MODERATE"
+      },
+      {
+        "advocate_id": "P25-the-ai-native",
+        "concern": "Function-call dispatch matrix is the strongest possible Technical-category artifact and load-bearing Gemma-feature evidence. But the persona explicitly assumes 'Kaggle judges who score the Gemma-feature criterion' — narrows the audience to Technical-category judges. Sacrifices Impact-Education appeal for technical-feature exhibition. Strong rank-2 candidate if priorities were inverted; under current 1순위 = Impact-Education, ranks lower than the top-3.",
+        "category_mapping_grade": "Technical: VERY-STRONG / Impact-Education: WEAK"
+      }
+    ]
+  },
+
+  "deferred_observations": [
+    {
+      "type": "synthesis_opportunity_for_M3",
+      "value": "P14 (educator) + P12 (privacy-hawk) lessons could compose: P14's lesson scaffold could host P12's threat model + entitlements inline as the 'Why on-device' lesson card. M3 may want to consider whether the H1 hero direction draws from a single advocate or a 2-advocate composite."
+    },
+    {
+      "type": "synthesis_opportunity_for_M3",
+      "value": "P15 (community-builder) workspace canvas could host any of P14 / P12 / P22 as the embedded preview content. The team-sharing layer and the content layer are orthogonal — M3 may surface this to the user."
+    },
+    {
+      "type": "spec_alignment_observation",
+      "value": "spec.primary_artifact_C_NEW (26-advocate gallery + GitHub Pages publication) is most directly served by P15. Other top-3 advocates serve primary_artifact_A (the hero preview HTML). These are complementary, not competing — both are required deliverables per spec."
+    },
+    {
+      "type": "anti_pattern_warning",
+      "value": "Watch list collectively shows 4 advocates (P03, P21, P25, P06) at risk of inverting the user-confirmed category priority (Impact-Education 1순위) in favor of Technical leadership. M3/H1 should treat any Technical-first hero direction as a category-priority violation per claudedocs/2026-05-06-hackathon-strategy.md §11.1."
+    },
+    {
+      "type": "competitive_positioning_note",
+      "value": "Among the 26 advocates, P12 + P26 + P14 collectively form the strongest moat against the likely cloud-heavy / English-first / photoreal Gemma 4 peer set. Hackathon competitive positioning is genuinely defensible."
+    }
+  ],
+
+  "files_referenced": {
+    "previews": "/Users/kimsejun/Documents/GitHub/he-was-socrates/runs/r-20260507-010321/previews.json",
+    "spec": "/Users/kimsejun/Documents/GitHub/he-was-socrates/runs/r-20260507-010321/idea.spec.json",
+    "strategy_doc": "/Users/kimsejun/Documents/GitHub/he-was-socrates/claudedocs/2026-05-06-hackathon-strategy.md",
+    "diversity_report_status": "I2 PASS (per orchestrator note)"
+  }
+}

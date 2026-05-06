@@ -1,0 +1,11 @@
+{
+  "id": "P25",
+  "advocate": "The AI-Native",
+  "framing": "He Was Socrates is not a chat product, it is a function-call orchestrator with a voice front-end — so the AI-native preview is the developer's debug palette: a ⌘K command surface that makes the four-function dispatch and Korean streaming visible as power-user instrumentation.",
+  "target_persona": "Technical Kaggle/DeepMind judges who want to see the LLM internals — function-call orchestration, token streaming, Phase transitions — exposed as a power-user palette rather than hidden behind a marketing chat UI.",
+  "primary_surface": "Floating ⌘K command palette overlay (chat-bubble UI deliberately absent — the project ships voice-only); palette is the only structured surface, plus a streaming response panel with phase-by-phase function-call telemetry and YAML excerpt tooltips.",
+  "opus_4_7_capability": "Long-context reasoning over the function_call_contract.yaml + SystemPrompt.swift + bench JSON to compose a faithful palette mock that surfaces orchestration semantics (defer_to_human first → mode_classify → ask_back streaming) without inventing a chat UI the project does not have.",
+  "mvp_scope": "4-day demo: static HTML palette overlay showing one example invocation '@socrates ask 용기란 무엇인가' with the orchestration steps lighting up sequentially, Korean ask_back streaming token-by-token in the response area, and three function-call YAML excerpts inspectable as tooltips on the Phase chips.",
+  "one_liner_pitch": "⌘K opens the Socratic developer palette — type @socrates and watch the four-function dispatch stream Korean tokens with phase telemetry, no chat UI required.",
+  "spec_alignment_notes": "spec target_persona=Kaggle/DeepMind judges (technical-leaning) → reframed as a developer/power-user palette rather than a chat UI because the project's primary_surface is fullscreen voice-only bust (no chat surface exists); palette respects NO-CLOUD invariant (no network in mock), defer_to_human first per orchestration.steps, Korean 평어체 verbatim from SystemPrompt.swift, English chrome per language_policy. Differentiator from other advocates: surface = command palette, not marketing scroll-page or hero. AI-native bias honored without violating CLAUDE.md invariant #4 (no chat-bubble photoreal companion UI)."
+}
