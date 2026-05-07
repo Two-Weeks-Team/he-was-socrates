@@ -4,7 +4,7 @@ import TTFTChart from "@/components/TTFTChart";
 
 export default function Home() {
   return (
-    <>
+    <main>
       <ProgressRail />
 
       {/* Section 0 · HERO */}
@@ -63,8 +63,8 @@ export default function Home() {
               )}
             </div>
           </div>
-          <aside className="sidebar-wmt">
-            <h4>Why this matters</h4>
+          <aside className="sidebar-wmt" aria-label="Why this matters">
+            <h3>Why this matters</h3>
             <p>
               The interaction model is deliberately narrow: voice in, voice out, one bust on a black
               screen. Constraints are the curriculum. The user learns that Socrates does not answer;
@@ -112,8 +112,8 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <aside className="sidebar-wmt">
-            <h4>Why this matters</h4>
+          <aside className="sidebar-wmt" aria-label="Why this matters">
+            <h3>Why this matters</h3>
             <p>
               Most LLM products optimize for friendliness — a tone that flatters and de-escalates.
               The bust does the opposite. It maintains a distance that says: <em>this is your work,
@@ -301,7 +301,7 @@ export default function Home() {
         <div className="limit-grid">
           <div className="limit-card">
             <span className="tag">designed-for · Phase 4</span>
-            <h4>Multi-year wondering recall</h4>
+            <h3 className="limit-h3">Multi-year wondering recall</h3>
             <p>
               The wondering log is a local SQLite store with content-fingerprint dedup, designed to
               surface echoes of the user&rsquo;s questions across years via Gemma 4&rsquo;s 256K context.
@@ -311,7 +311,7 @@ export default function Home() {
           </div>
           <div className="limit-card">
             <span className="tag">measured · M1 Max only</span>
-            <h4>TTFT generalization</h4>
+            <h3 className="limit-h3">TTFT generalization</h3>
             <p>
               The 192 ms TTFT median is measured on M1 Max MBP 64 GB. We have not characterized M3 Max,
               M4, or base M1. Subsequent Apple Silicon should be in the same order of magnitude but is
@@ -320,7 +320,7 @@ export default function Home() {
           </div>
           <div className="limit-card">
             <span className="tag">platform · macOS 26 floor</span>
-            <h4>No Sonoma / Sequoia support</h4>
+            <h3 className="limit-h3">No Sonoma / Sequoia support</h3>
             <p>
               The first-launch UX uses macOS 26&rsquo;s <code>SpeechAnalyzer</code> +{" "}
               <code>AssetInventory</code> for in-app speech-asset install. macOS 14 (Sonoma) and 15
@@ -329,7 +329,7 @@ export default function Home() {
           </div>
           <div className="limit-card">
             <span className="tag">tone · single-voice locked</span>
-            <h4>Korean 평어체 not customizable</h4>
+            <h3 className="limit-h3">Korean 평어체 not customizable</h3>
             <p>
               The system prompt is verbatim, written by the project&rsquo;s Korean speaker, and embedded
               at compile time. Users cannot soften the tone, switch to 존댓말, or add personality.
@@ -423,6 +423,6 @@ export default function Home() {
           He Was Socrates · Two-Weeks-Team · 2026 · Generated 2026-05-07 · run r-20260507-010321 · profile max
         </p>
       </footer>
-    </>
+    </main>
   );
 }

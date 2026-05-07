@@ -125,3 +125,4 @@ footer.colophon { background: var(--color-ink-2); border-top: 1px solid oklch(0.
 .refs ol li { counter-increment: r; padding: 4px 0 4px 32px; position: relative; }
 .refs ol li::before { content: "[" counter(r) "]"; position: absolute; left: 0; color: var(--color-accent); }
 .foot-meta { font-family: var(--font-mono); font-size: 11px; color: var(--color-bone-dim); margin-top: 24px; }
+.limit-card h3.limit-h3 { font-family: var(--font-serif); font-size: 16px; color: var(--color-bone); margin-bottom: 8px; font-weight: 400; }
