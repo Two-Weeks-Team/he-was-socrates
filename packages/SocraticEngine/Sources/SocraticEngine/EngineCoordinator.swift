@@ -164,24 +164,34 @@ public final class EngineCoordinator {
 
     // MARK: - Lifecycle
 
-    /// Bootstrap: request permissions, load Gemma model, start viseme tick.
-    public func bootstrap() async {
+    /// Bootstrap: optionally request permissions, load Gemma model, start viseme tick.
+    ///
+    /// - Parameter skipPermissions: when `true`, the bootstrap path skips the
+    ///   inline `audio.requestPermissions()` call. Used by the iter-6 first-
+    ///   launch UX flow where the host (`SocraticAppViewModel`) defers TCC
+    ///   prompts to the first Spacebar press per Apple HIG Privacy guidance
+    ///   ("context-related permission requests are less likely to cause
+    ///   surprise"). Default `false` preserves the legacy bootstrap-time
+    ///   request for any caller still relying on it (tests + headless runs).
+    public func bootstrap(skipPermissions: Bool = false) async {
         transition(to: .bootstrapping)
 
-        let permission = await audio.requestPermissions()
-        if case .denied(let reason) = permission {
-            // PR-δ: route mic vs speech to distinct keys so the recovery
-            // hint can deep-link to the correct System Settings pane.
-            let key: String =
-                reason == "microphone"
-                ? PhaseFailureKey.micDenied
-                : PhaseFailureKey.speechRecognitionDenied
-            transition(to: .failed(key))
-            return
-        }
-        if case .restricted = permission {
-            transition(to: .failed(PhaseFailureKey.speechRecognitionRestricted))
-            return
+        if !skipPermissions {
+            let permission = await audio.requestPermissions()
+            if case .denied(let reason) = permission {
+                // PR-δ: route mic vs speech to distinct keys so the recovery
+                // hint can deep-link to the correct System Settings pane.
+                let key: String =
+                    reason == "microphone"
+                    ? PhaseFailureKey.micDenied
+                    : PhaseFailureKey.speechRecognitionDenied
+                transition(to: .failed(key))
+                return
+            }
+            if case .restricted = permission {
+                transition(to: .failed(PhaseFailureKey.speechRecognitionRestricted))
+                return
+            }
         }
 
         do {
