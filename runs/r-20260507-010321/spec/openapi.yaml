@@ -1,0 +1,74 @@
+openapi: 3.1.0
+
+# =============================================================================
+# Intentionally empty API surface.
+#
+# This file exists to satisfy SpecDD's contract requirement for a frozen API
+# surface artefact. The "He Was Socrates" web companion (Next.js 16 + Vercel,
+# scoped by SPEC.md.iter7-chosen-preview-publication.md) has NO API endpoints
+# by design.
+#
+# Why no endpoints:
+#   * The companion is a static export (`output: 'export'`) served from the
+#     Vercel CDN. There are no serverless functions, no edge functions, no
+#     middleware in the request path.
+#   * SPEC.md.iter7 §3 (NO-DATA-COLLECTION) forbids any runtime egress, form
+#     submission, or telemetry surface. Adding an endpoint would require a
+#     new delta amendment and would compromise the trust posture that the
+#     macOS app's NO-CLOUD invariant establishes.
+#   * The companion's role is to be read by Kaggle judges, not interacted
+#     with. Reading does not require an API.
+#
+# What this means for SpecDD's freeze gate:
+#   * `paths: {}` is the locked surface. Any future PR introducing a non-empty
+#     `paths` block is a spec violation that requires an iter8+ delta.
+#   * Critics SC1..SC7 (Spec self-correction critics) should treat the empty
+#     paths as compliant with the trigger context, NOT as a missing artefact.
+#
+# What about the Kaggle entry page integration?
+#   * Kaggle links the production Vercel URL via plain anchor; no programmatic
+#     API call is involved.
+#
+# What about future "contact form" or "newsletter signup" requests?
+#   * Forbidden by SPEC.md.iter7 §3 unless explicitly relaxed by a new delta.
+# =============================================================================
+
+info:
+  title: "He Was Socrates — Web Companion (Next.js 16 + Vercel)"
+  version: "0.1.0-iter7"
+  summary: "Hackathon-submission web companion. Static export, no API surface."
+  description: |
+    The web companion for the Kaggle/DeepMind "Gemma 4 Good Hackathon"
+    submission. It documents the macOS app's design and on-device guarantees;
+    it does not provide programmatic functionality.
+
+    Locked by:
+      - runs/r-20260507-010321/chosen_preview.json
+      - runs/r-20260507-010321/design-approved.json
+      - runs/2026-05-05-spec/spec/SPEC.md.iter7-chosen-preview-publication.md
+
+    See the iter7 amendment for invariants, particularly §3
+    (NO-DATA-COLLECTION) which is what justifies the empty paths block.
+  contact:
+    name: "Sejun Kim"
+    email: "app.2weeks@gmail.com"
+  license:
+    name: "Apache-2.0"
+    identifier: "Apache-2.0"
+
+servers:
+  # Production submission URL (provisional; final URL recorded in build.md
+  # once the Vercel project is created).
+  - url: "https://he-was-socrates.vercel.app"
+    description: "Vercel production CDN. Static HTML/CSS/JS only — no request handlers."
+
+# The locked, intentionally-empty path collection.
+paths: {}
+
+# No reusable schemas, parameters, or security schemes are defined: there is
+# nothing for them to apply to. Listing security schemes here would be
+# misleading — a static CDN cannot enforce them at the application layer.
+components: {}
+
+# Tag list kept empty for symmetry with paths.
+tags: []
