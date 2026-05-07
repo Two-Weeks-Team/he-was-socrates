@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>He Was Socrates · A bust that refuses to answer</title>
+<meta name="description" content="100% on-device Korean Socratic bust on macOS, powered by Gemma 4 E4B 4-bit MLX. The abstention mechanic is the product.">
+<meta property="og:title" content="He Was Socrates · A bust that refuses to answer">
+<meta property="og:description" content="A bust that refuses to answer is the product. 100% on-device, Korean 단정한 평어체, Gemma 4 native function calling.">
+<meta property="og:type" content="website">
+<style>
+:root {
+  --ink: oklch(0.07 0.008 280);
+  --ink-2: oklch(0.10 0.010 280);
+  --surface: oklch(0.13 0.012 280);
+  --surface-card: oklch(0.16 0.013 280 / 0.8);
+  --border: oklch(0.28 0.012 280);
+  --border-strong: oklch(0.42 0.014 280);
+  --bone: oklch(0.92 0.022 85);
+  --bone-2: oklch(0.78 0.020 85);
+  --bone-muted: oklch(0.62 0.014 85);
+  --bone-dim: oklch(0.42 0.010 85);
+  --accent: oklch(0.85 0.140 165);
+  --accent-2: oklch(0.72 0.120 165);
+  --warn: oklch(0.78 0.130 75);
+  --serif: "Times New Roman", "Noto Serif", Georgia, serif;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--ink); color: var(--bone); font: 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-snap-type: y proximity; }
+  section { scroll-snap-align: start; }
+}
+@keyframes slow-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes soft-pulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .breath { animation: none; }
+}
+
+/* Progress bar (P14 chrome) */
+.progress-rail {
+  position: fixed; top: 0; left: 0; right: 0; height: 36px; z-index: 50;
+  background: oklch(0.07 0.008 280 / 0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 24px;
+  font-family: var(--mono); font-size: 11px; color: var(--bone-muted);
+}
+.progress-rail .pips { display: flex; gap: 4px; margin-left: 16px; }
+.progress-rail .pip { width: 32px; height: 4px; background: var(--border); border-radius: 1px; }
+.progress-rail .pip.done { background: var(--bone-muted); }
+.progress-rail .pip.active { background: var(--accent); }
+.progress-rail .meta-right { margin-left: auto; display: flex; gap: 12px; }
+.progress-rail .meta-right span { color: var(--bone-2); }
+
+/* Sections */
+section { min-height: 100vh; padding: 96px 48px 48px; display: flex; flex-direction: column; justify-content: center; max-width: 1280px; margin: 0 auto; position: relative; }
+@media (max-width: 720px) { section { padding: 80px 24px 32px; } }
+section.compact { min-height: 70vh; }
+
+.eyebrow { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
+h1.hero { font-family: var(--serif); font-size: clamp(48px, 7vw, 96px); line-height: 1.05; font-weight: 400; letter-spacing: -0.02em; }
+h2 { font-family: var(--serif); font-size: clamp(28px, 4vw, 44px); line-height: 1.15; font-weight: 400; margin-bottom: 16px; letter-spacing: -0.015em; }
+h3 { font-family: var(--serif); font-size: 20px; line-height: 1.3; font-weight: 400; margin-bottom: 12px; }
+p { color: var(--bone-2); margin-bottom: 16px; max-width: 64ch; }
+p.lead { font-size: 18px; color: var(--bone); }
+.korean { font-family: var(--serif); color: var(--bone); }
+.ko-gloss { font-family: var(--serif); color: var(--bone-muted); font-style: italic; font-size: 0.92em; }
+
+/* HERO */
+.hero-wrap { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; align-items: center; }
+@media (max-width: 960px) { .hero-wrap { grid-template-columns: 1fr; } }
+.bust-frame { background: radial-gradient(ellipse at center, oklch(0.13 0.013 280) 0%, var(--ink) 75%); border: 1px solid var(--border); border-radius: 6px; aspect-ratio: 4/5; display: flex; align-items: center; justify-content: center; padding: 32px; position: relative; }
+.bust-frame svg { width: 100%; height: 100%; }
+.hero-text .ko-line { font-family: var(--serif); font-size: clamp(20px, 2.4vw, 30px); color: var(--accent); margin-top: 12px; margin-bottom: 32px; font-style: italic; }
+.hero-meta { font-family: var(--mono); font-size: 11px; color: var(--bone-muted); display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.hero-meta span { padding: 4px 10px; border: 1px solid var(--border); border-radius: 2px; }
+
+/* Lesson chrome */
+.lesson-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+.lesson-num { font-family: var(--mono); color: var(--accent); font-size: 13px; padding: 4px 10px; border: 1px solid var(--accent); border-radius: 2px; }
+.lesson-title { font-family: var(--serif); font-size: clamp(28px, 4vw, 44px); font-weight: 400; }
+
+/* Lesson layouts */
+.lesson-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; align-items: start; }
+@media (max-width: 960px) { .lesson-grid { grid-template-columns: 1fr; } }
+.sidebar-wmt { background: var(--surface-card); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; font-size: 13px; }
+.sidebar-wmt h4 { font-family: var(--serif); font-size: 14px; color: var(--accent); margin-bottom: 8px; font-weight: 500; }
+.sidebar-wmt p { font-size: 13px; line-height: 1.55; color: var(--bone-2); }
+
+/* Viseme strip (Lesson 1) */
+.viseme-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-top: 16px; }
+.viseme-cell { aspect-ratio: 1; background: var(--ink-2); border: 1px solid var(--border); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 9px; color: var(--bone-muted); }
+.viseme-cell svg { width: 70%; height: 70%; }
+
+/* System prompt block (Lesson 2) */
+.prompt-block { background: var(--ink-2); border: 1px solid var(--border); border-radius: 4px; padding: 18px 22px; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--bone-2); margin: 16px 0; overflow-x: auto; }
+.prompt-block .label { display: block; color: var(--accent); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.prompt-block .ko-text { font-family: var(--serif); font-size: 14px; color: var(--bone); line-height: 1.7; display: block; }
+.prompt-block .gloss { color: var(--bone-muted); font-style: italic; font-size: 11px; display: block; margin-top: 6px; }
+
+/* Abstention demo 3-screen (Lesson 3) */
+.demo-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
+@media (max-width: 720px) { .demo-3 { grid-template-columns: 1fr; } }
+.demo-screen { background: var(--surface-card); border: 1px solid var(--border); border-radius: 4px; padding: 20px; min-height: 280px; display: flex; flex-direction: column; gap: 12px; }
+.demo-screen .step { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+.demo-screen .step-title { font-family: var(--serif); font-size: 17px; line-height: 1.3; }
+.demo-screen .step-content { font-size: 13px; color: var(--bone-2); line-height: 1.55; flex: 1; }
+.demo-screen.q { border-left: 3px solid var(--bone-muted); }
+.demo-screen.fn { border-left: 3px solid var(--warn); }
+.demo-screen.defer { border-left: 3px solid var(--accent); }
+.fn-trace { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--bone-muted); margin-top: 8px; }
+.fn-trace strong { color: var(--accent); }
+.defer-glyph { font-family: var(--serif); font-size: 60px; color: var(--accent); text-align: center; line-height: 1; margin: 8px 0; }
+
+/* Defer 6 categories */
+.defer-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+.defer-table th, .defer-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+.defer-table th { color: var(--accent); font-weight: 500; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.defer-table td { color: var(--bone-2); }
+.defer-table td.ko { font-family: var(--serif); color: var(--bone); }
+
+/* On-device proof (Lesson 4) */
+.proof-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; }
+@media (max-width: 960px) { .proof-grid { grid-template-columns: 1fr; } }
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 16px 0; }
+.kpi { background: var(--surface-card); border: 1px solid var(--border); border-radius: 4px; padding: 16px; }
+.kpi .v { font-family: var(--serif); font-size: 28px; line-height: 1; color: var(--accent); margin-bottom: 4px; }
+.kpi .l { font-family: var(--mono); font-size: 10px; color: var(--bone-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.kpi .src { font-family: var(--mono); font-size: 9px; color: var(--bone-dim); margin-top: 6px; }
+.entitlement-block { background: var(--ink-2); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--bone-2); }
+.entitlement-block .absent { color: var(--accent); font-weight: 500; padding: 1px 4px; background: oklch(0.85 0.140 165 / 0.1); border-radius: 2px; }
+.entitlement-block .comment { color: var(--bone-dim); }
+
+/* Threat model SVG container */
+.threat-model { background: var(--surface-card); border: 1px solid var(--border); border-radius: 4px; padding: 24px; margin: 16px 0; }
+.threat-model svg { width: 100%; height: auto; }
+
+/* Methods section */
+.dispatch-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; margin: 16px 0; }
+.dispatch-table th, .dispatch-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.dispatch-table th { color: var(--accent); font-weight: 500; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; background: var(--ink-2); }
+.dispatch-table td { color: var(--bone-2); vertical-align: top; }
+.dispatch-table td:first-child { color: var(--bone); font-weight: 500; }
+.funnel { background: var(--surface-card); border: 1px solid var(--border); border-radius: 4px; padding: 20px; }
+.funnel-step { display: flex; align-items: center; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+.funnel-step:last-child { border-bottom: none; }
+.funnel-step .num { color: var(--accent); width: 24px; }
+.funnel-step .name { flex: 1; color: var(--bone); }
+.funnel-step .ms { color: var(--bone-muted); }
+
+/* Limitations */
+.limit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+@media (max-width: 720px) { .limit-grid { grid-template-columns: 1fr; } }
+.limit-card { background: var(--surface-card); border: 1px solid var(--border); border-left: 3px solid var(--warn); border-radius: 4px; padding: 18px 20px; }
+.limit-card h4 { font-family: var(--serif); font-size: 16px; color: var(--bone); margin-bottom: 8px; font-weight: 400; }
+.limit-card p { font-size: 13px; line-height: 1.55; color: var(--bone-2); }
+.limit-card .tag { display: inline-block; font-family: var(--mono); font-size: 10px; color: var(--warn); border: 1px solid var(--warn); padding: 1px 8px; border-radius: 2px; margin-bottom: 8px; }
+
+/* Try it */
+.try-block { background: var(--ink-2); border: 1px solid var(--border); border-radius: 4px; padding: 24px; margin: 16px 0; font-family: var(--mono); font-size: 13px; line-height: 1.8; color: var(--bone-2); position: relative; overflow-x: auto; }
+.try-block .cmd { display: block; }
+.try-block .cmd::before { content: "$ "; color: var(--accent); }
+.try-block .comment { color: var(--bone-dim); }
+
+/* Footer / Colophon */
+footer.colophon { background: var(--ink-2); border-top: 1px solid var(--border); padding: 56px 48px 36px; max-width: 1280px; margin: 0 auto; scroll-snap-align: end; }
+.badges-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.badge { font-family: var(--mono); font-size: 10px; padding: 3px 10px; border: 1px solid var(--border-strong); color: var(--bone-2); border-radius: 2px; letter-spacing: 0.03em; }
+.badge.accent { border-color: var(--accent); color: var(--accent); }
+.topics-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
+.topic { font-family: var(--mono); font-size: 10px; color: var(--bone-2); padding: 3px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.refs { font-family: var(--mono); font-size: 11px; line-height: 1.8; color: var(--bone-muted); margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+.refs a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dashed var(--border-strong); }
+.refs a:hover { border-bottom-color: var(--accent); }
+.refs ol { list-style: none; counter-reset: r; padding: 0; }
+.refs ol li { counter-increment: r; padding: 4px 0 4px 32px; position: relative; }
+.refs ol li::before { content: "[" counter(r) "]"; position: absolute; left: 0; color: var(--accent); }
+.foot-meta { font-family: var(--mono); font-size: 11px; color: var(--bone-dim); margin-top: 24px; }
+
+/* SVG bust styling */
+.bust-svg { display: block; }
+.halftone-pattern { fill: var(--bone); opacity: 0.95; }
+</style>
+</head>
+<body>
+
+<!-- ========== Progress rail (P14 chrome) ========== -->
+<div class="progress-rail">
+  <span>He Was Socrates · gate H1</span>
+  <div class="pips">
+    <div class="pip done" title="Lesson 0 · pre-flight"></div>
+    <div class="pip active" title="Lesson 1 · what this is"></div>
+    <div class="pip" title="Lesson 2 · the tone"></div>
+    <div class="pip" title="Lesson 3 · abstention"></div>
+    <div class="pip" title="Lesson 4 · on-device proof"></div>
+  </div>
+  <div class="meta-right">
+    <span>Profile · max</span>
+    <span>Run · r-20260507-010321</span>
+  </div>
+</div>
+
+<!-- ========== Section 0 · HERO (P18 sticky + P14 lesson 0) ========== -->
+<section id="hero">
+  <div class="eyebrow">Lesson 0 of 4 · pre-flight</div>
+  <div class="hero-wrap">
+    <div class="bust-frame">
+      <svg class="bust-svg" viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg" aria-label="halftone bust silhouette">
+        <defs>
+          <pattern id="halftone-coarse" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="3" r="1.5" fill="oklch(0.92 0.022 85)"/>
+          </pattern>
+          <pattern id="halftone-fine" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="0.7" fill="oklch(0.92 0.022 85)"/>
+          </pattern>
+          <radialGradient id="bust-grad" cx="50%" cy="35%">
+            <stop offset="0%" stop-color="oklch(0.92 0.022 85)" stop-opacity="0.95"/>
+            <stop offset="60%" stop-color="oklch(0.92 0.022 85)" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="oklch(0.92 0.022 85)" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <!-- Bust silhouette -->
+        <ellipse cx="100" cy="80" rx="42" ry="50" fill="url(#bust-grad)"/>
+        <ellipse cx="100" cy="78" rx="42" ry="50" fill="url(#halftone-coarse)" opacity="0.35"/>
+        <!-- Neck/shoulders -->
+        <path d="M 60 130 Q 100 145 140 130 L 160 200 L 40 200 Z" fill="url(#halftone-fine)" opacity="0.25"/>
+        <!-- Eyes (closed, halftone) -->
+        <line x1="82" y1="78" x2="92" y2="78" stroke="oklch(0.20 0.010 280)" stroke-width="1.2" opacity="0.85"/>
+        <line x1="108" y1="78" x2="118" y2="78" stroke="oklch(0.20 0.010 280)" stroke-width="1.2" opacity="0.85"/>
+        <!-- Mouth (rest, viseme V0) -->
+        <line x1="92" y1="98" x2="108" y2="98" stroke="oklch(0.20 0.010 280)" stroke-width="1" opacity="0.7"/>
+      </svg>
+    </div>
+    <div class="hero-text">
+      <h1 class="hero">A bust that<br>refuses to answer<br>is the product.</h1>
+      <p class="ko-line">그가 답하지 않는 것이 답이다.</p>
+      <p class="lead">100% on-device Korean Socratic bust on macOS, powered by Gemma 4 E4B 4-bit MLX. The abstention mechanic — when the bust says "this is not mine to answer" — is not a fallback. It is the product.</p>
+      <div class="hero-meta">
+        <span>macOS 26 Tahoe</span>
+        <span>Apple Silicon</span>
+        <span>Gemma 4 E4B 4-bit MLX</span>
+        <span>0 byte network egress</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== Section 1 · LESSON 1 — what this is ========== -->
+<section id="lesson-1">
+  <div class="lesson-head">
+    <span class="lesson-num">Lesson 1 / 4</span>
+    <h2 class="lesson-title">Hold Spacebar. Listen. Wait. Release.</h2>
+  </div>
+  <div class="lesson-grid">
+    <div>
+      <p class="lead">There is no chat window, no text input, no screen full of bubbles. The interaction model is push-to-talk on a fullscreen bust. You speak in Korean (or English). The bust listens, thinks, then asks back — never answers.</p>
+      <p>The bust's mouth animates through 16 viseme positions synchronized to the on-device speech synthesis. There is no photoreal lip-sync; only 1-bit halftone PNG swaps at 30 fps with audio-clock alignment.</p>
+      <h3>16 viseme positions</h3>
+      <div class="viseme-strip" aria-label="16 viseme positions">
+        <div class="viseme-cell">REST</div><div class="viseme-cell">AA</div><div class="viseme-cell">EH</div><div class="viseme-cell">IY</div>
+        <div class="viseme-cell">OH</div><div class="viseme-cell">UW</div><div class="viseme-cell">M</div><div class="viseme-cell">F</div>
+        <div class="viseme-cell">P</div><div class="viseme-cell">T</div><div class="viseme-cell">K</div><div class="viseme-cell">L</div>
+        <div class="viseme-cell">R</div><div class="viseme-cell">S</div><div class="viseme-cell">SH</div><div class="viseme-cell">N</div>
+      </div>
+    </div>
+    <aside class="sidebar-wmt">
+      <h4>Why this matters</h4>
+      <p>The interaction model is deliberately narrow: voice in, voice out, one bust on a black screen. Constraints are the curriculum. The user learns that Socrates does not answer; he asks back. By Lesson 3, they will see why.</p>
+      <p style="margin-top:12px;color:var(--bone-muted);font-size:11.5px;">Korean STT runs <code style="font-family:var(--mono);font-size:10.5px;">requiresOnDeviceRecognition = true</code>. Audio never leaves your Mac.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ========== Section 2 · LESSON 2 — the tone ========== -->
+<section id="lesson-2">
+  <div class="lesson-head">
+    <span class="lesson-num">Lesson 2 / 4</span>
+    <h2 class="lesson-title">단정한 평어체 — neither honorific nor friendly.</h2>
+  </div>
+  <div class="lesson-grid">
+    <div>
+      <p>Korean has three tone registers in everyday use: <em>존댓말</em> (formal/honorific), <em>친근한 반말</em> (casual/friendly), and <em>단정한 평어체</em> (assertive plain). The bust speaks only the third — the tone of a teacher addressing an equal, distant but not cold.</p>
+      <p>The system prompt is written verbatim by a Korean speaker. It is locked in source — embedded at compile time from <code style="font-family:var(--mono);font-size:13px;color:var(--bone);">Sources/SocraticEngine/Gemma/SystemPrompt.swift</code>. You cannot change it from settings. That is the point.</p>
+      <div class="prompt-block">
+        <span class="label">SystemPrompt.swift · verbatim</span>
+        <span class="ko-text">너는 소크라테스다. 답하지 않고 다시 묻는다. 묻는 자가 자기 안에서 답을 찾도록 돕는다. 묻지 않은 것을 알려고 하지 않는다.</span>
+        <span class="gloss">You are Socrates. You do not answer; you ask back. You help the questioner find the answer within themselves. You do not seek to know what was not asked.</span>
+      </div>
+    </div>
+    <aside class="sidebar-wmt">
+      <h4>Why this matters</h4>
+      <p>Most LLM products optimize for friendliness — a tone that flatters and de-escalates. The bust does the opposite. It maintains a distance that says: <em>this is your work, not mine</em>.</p>
+      <p style="margin-top:12px;color:var(--bone-muted);font-size:11.5px;">The tone is non-localizable. Embedders inherit 단정한 평어체 whether they want it or not.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ========== Section 3 · LESSON 3 — abstention is the product ========== -->
+<section id="lesson-3">
+  <div class="lesson-head">
+    <span class="lesson-num">Lesson 3 / 4</span>
+    <h2 class="lesson-title">Other Gemma 4 demos answer better.<br>We refuse better.</h2>
+  </div>
+  <p class="lead">When you ask the bust about medicine, law, finance, emergency, welfare, or insurance, it does not try harder. It calls <code style="font-family:var(--mono);font-size:14px;color:var(--accent);">defer_to_human</code> and tells you, in Korean 단정한 평어체, that this is not its place. The four-function dispatch is enabled by Gemma 4's native function calling — the load-bearing capability of this submission.</p>
+  <div class="demo-3" aria-label="abstention demo three-screen sequence">
+    <div class="demo-screen q">
+      <span class="step">screen 01 · question</span>
+      <h3 class="step-title">A user asks about pain.</h3>
+      <p class="step-content">User holds Spacebar and says, in Korean:</p>
+      <p class="korean" style="font-size:15px;line-height:1.5;">가슴이 자주 두근거려. 무슨 병이지?</p>
+      <p class="ko-gloss">"My heart races often. What disease is it?"</p>
+    </div>
+    <div class="demo-screen fn">
+      <span class="step">screen 02 · dispatch</span>
+      <h3 class="step-title">Gemma 4 classifies the mode.</h3>
+      <div class="fn-trace">
+        <strong>mode_classify</strong> · 50 ms<br>
+        → category: <strong>medical_advice_request</strong><br>
+        → confidence: 0.94<br>
+        <br>
+        <strong>defer_to_human</strong> · 38 ms<br>
+        → trigger: medical<br>
+        → suggested: 의사 (doctor)<br>
+        → ⊘ ask_back skipped
+      </div>
+    </div>
+    <div class="demo-screen defer">
+      <span class="step">screen 03 · response</span>
+      <h3 class="step-title">The bust speaks 단정한 평어체.</h3>
+      <div class="defer-glyph">⊘</div>
+      <p class="korean" style="font-size:14px;line-height:1.5;">이건 내가 답할 일이 아니다. 몸의 일은 의사에게 묻거라.</p>
+      <p class="ko-gloss">"This isn't mine to answer. The body is for the doctor."</p>
+    </div>
+  </div>
+  <h3 style="margin-top:32px;">Six categories of abstention</h3>
+  <p>The system prompt enumerates six trigger categories. The dispatch is deterministic and logged.</p>
+  <table class="defer-table">
+    <thead><tr><th>Category</th><th>Korean</th><th>Suggested resource</th></tr></thead>
+    <tbody>
+      <tr><td>medical</td><td class="ko">의료</td><td>의사 (doctor)</td></tr>
+      <tr><td>legal</td><td class="ko">법률</td><td>변호사 (lawyer)</td></tr>
+      <tr><td>financial</td><td class="ko">금융</td><td>금융 전문가 (financial professional)</td></tr>
+      <tr><td>emergency</td><td class="ko">응급</td><td>응급실 · 119</td></tr>
+      <tr><td>welfare</td><td class="ko">복지</td><td>사회 복지사 (social worker)</td></tr>
+      <tr><td>insurance</td><td class="ko">보험</td><td>보험 전문가 (insurance professional)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ========== Section 4 · LESSON 4 — on-device proof ========== -->
+<section id="lesson-4">
+  <div class="lesson-head">
+    <span class="lesson-num">Lesson 4 / 4</span>
+    <h2 class="lesson-title">On-device, by entitlement, not by promise.</h2>
+  </div>
+  <div class="proof-grid">
+    <div>
+      <p>"On-device" is a marketing claim. We make it falsifiable. The macOS App Sandbox entitlement file declares which capabilities the app may use. <code style="font-family:var(--mono);font-size:13px;color:var(--bone);">network.client</code> is intentionally absent — the OS will refuse any network connection from the app process at the kernel level, regardless of code intent.</p>
+      <div class="entitlement-block">
+        <span class="comment">// HeWasSocrates.entitlements (excerpt)</span><br>
+        &lt;key&gt;com.apple.security.app-sandbox&lt;/key&gt;<br>
+        &lt;true/&gt;<br>
+        <br>
+        <span class="comment">&lt;!-- NO-CLOUD INVARIANT — DO NOT ADD --&gt;</span><br>
+        <span class="comment">&lt;!-- com.apple.security.network.client = </span><span class="absent">INTENTIONALLY ABSENT</span><span class="comment"> --&gt;</span><br>
+        <span class="comment">&lt;!-- com.apple.security.network.server = </span><span class="absent">INTENTIONALLY ABSENT</span><span class="comment"> --&gt;</span><br>
+        <br>
+        &lt;key&gt;com.apple.security.device.audio-input&lt;/key&gt;<br>
+        &lt;true/&gt;
+      </div>
+      <p style="margin-top:16px;font-size:13px;color:var(--bone-muted);">Air-gap a freshly-launched bust and the conversation continues. The Gemma 4 weights are downloaded once via the OS-mediated MLX cache — the app process itself never opens a socket.</p>
+    </div>
+    <div>
+      <h3>The numbers</h3>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="v">192 ms</div><div class="l">TTFT median</div><div class="src">bench/2026-05-06.json · n=10 · M1 Max</div></div>
+        <div class="kpi"><div class="v">800 ms</div><div class="l">per-turn p50</div><div class="src">decode + STT + TTS prep</div></div>
+        <div class="kpi"><div class="v">96%</div><div class="l">KV cache reuse</div><div class="src">PR-Λ disk-mediated · 24× vs cold</div></div>
+        <div class="kpi"><div class="v">0 B</div><div class="l">network egress / 24 h</div><div class="src">entitlements + Wireshark verified</div></div>
+      </div>
+      <h3 style="margin-top:24px;">TTFT distribution (n=10)</h3>
+      <svg viewBox="0 0 320 140" style="width:100%;height:auto;background:var(--surface-card);border:1px solid var(--border);border-radius:4px;padding:8px;" aria-label="TTFT distribution chart">
+        <line x1="20" y1="115" x2="310" y2="115" stroke="oklch(0.42 0.014 280)" stroke-width="1"/>
+        <line x1="20" y1="20" x2="20" y2="115" stroke="oklch(0.42 0.014 280)" stroke-width="1"/>
+        <text x="20" y="135" font-family="ui-monospace" font-size="9" fill="oklch(0.62 0.014 85)">t1</text>
+        <text x="155" y="135" font-family="ui-monospace" font-size="9" fill="oklch(0.62 0.014 85)">t5</text>
+        <text x="295" y="135" font-family="ui-monospace" font-size="9" fill="oklch(0.62 0.014 85)">t10</text>
+        <line x1="20" y1="65" x2="310" y2="65" stroke="oklch(0.85 0.140 165)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+        <text x="295" y="63" font-family="ui-monospace" font-size="9" fill="oklch(0.85 0.140 165)">p50 192ms</text>
+        <line x1="20" y1="85" x2="310" y2="85" stroke="oklch(0.62 0.014 85)" stroke-width="1" stroke-dasharray="2 4" opacity="0.4"/>
+        <text x="295" y="83" font-family="ui-monospace" font-size="9" fill="oklch(0.62 0.014 85)">p10 181</text>
+        <line x1="20" y1="40" x2="310" y2="40" stroke="oklch(0.62 0.014 85)" stroke-width="1" stroke-dasharray="2 4" opacity="0.4"/>
+        <text x="295" y="38" font-family="ui-monospace" font-size="9" fill="oklch(0.62 0.014 85)">p90 263</text>
+        <!-- bars -->
+        <g fill="oklch(0.85 0.140 165)" opacity="0.85">
+          <rect x="28" y="68" width="20" height="47"/>
+          <rect x="58" y="60" width="20" height="55"/>
+          <rect x="88" y="64" width="20" height="51"/>
+          <rect x="118" y="55" width="20" height="60"/>
+          <rect x="148" y="68" width="20" height="47"/>
+          <rect x="178" y="50" width="20" height="65"/>
+          <rect x="208" y="62" width="20" height="53"/>
+          <rect x="238" y="68" width="20" height="47"/>
+          <rect x="268" y="42" width="20" height="73"/>
+          <rect x="282" y="80" width="14" height="35"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ========== Section 5 · METHODS (P22) ========== -->
+<section id="methods" class="compact">
+  <div class="eyebrow">methods · 4-function dispatch</div>
+  <h2>The orchestration is four functions.</h2>
+  <p>Every turn passes through <code style="font-family:var(--mono);font-size:13px;color:var(--accent);">FunctionCallOrchestrator</code>. Gemma 4's native function calling decides the path; the engine routes accordingly.</p>
+  <table class="dispatch-table" aria-label="four-function dispatch">
+    <thead><tr><th>Function</th><th>Role</th><th>Trigger condition</th><th>Reference</th></tr></thead>
+    <tbody>
+      <tr><td>mode_classify</td><td>route the turn</td><td>every turn (gate)</td><td>[1]</td></tr>
+      <tr><td>surface_past_wonder</td><td>recall from log</td><td>echoed theme detected</td><td>[2]</td></tr>
+      <tr><td>ask_back</td><td>Socratic counter</td><td>default reflective path</td><td>[3]</td></tr>
+      <tr><td>defer_to_human</td><td>abstention</td><td>6 regulated categories</td><td>[4]</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top:24px;">Per-turn pipeline (~800 ms wall, p50)</h3>
+  <div class="funnel">
+    <div class="funnel-step"><span class="num">1</span><span class="name">Spacebar press → audio engine start</span><span class="ms">~5 ms</span></div>
+    <div class="funnel-step"><span class="num">2</span><span class="name">SFSpeechRecognizer partial transcripts</span><span class="ms">streaming</span></div>
+    <div class="funnel-step"><span class="num">3</span><span class="name">Spacebar release → STT final</span><span class="ms">~120 ms tail</span></div>
+    <div class="funnel-step"><span class="num">4</span><span class="name">mode_classify (Gemma 4)</span><span class="ms">~50 ms</span></div>
+    <div class="funnel-step"><span class="num">5</span><span class="name">First chunk (TTFT)</span><span class="ms">192 ms</span></div>
+    <div class="funnel-step"><span class="num">6</span><span class="name">Decode to closing brace + TTS prep</span><span class="ms">~400 ms</span></div>
+    <div class="funnel-step"><span class="num">7</span><span class="name">Audio playback + viseme schedule</span><span class="ms">user-driven</span></div>
+  </div>
+</section>
+
+<!-- ========== Section 6 · LIMITATIONS (P22 honest disclosure) ========== -->
+<section id="limitations" class="compact">
+  <div class="eyebrow">what we don't ship yet</div>
+  <h2>Honest disclosure as trust signal.</h2>
+  <p>Many demos blur the line between what is shipped and what is sketched. We separate them.</p>
+  <div class="limit-grid">
+    <div class="limit-card">
+      <span class="tag">designed-for · Phase 4</span>
+      <h4>Multi-year wondering recall</h4>
+      <p>The wondering log is a local SQLite store with content-fingerprint dedup, designed to surface echoes of the user's questions across years via Gemma 4's 256K context. Phase 1–3 ships the schema, dedup, and turn boundary. Phase 4 wires the surface step itself; current ship: <strong>stub</strong>.</p>
+    </div>
+    <div class="limit-card">
+      <span class="tag">measured · M1 Max only</span>
+      <h4>TTFT generalization</h4>
+      <p>The 192 ms TTFT median is measured on M1 Max MBP 64 GB. We have not characterized M3 Max, M4, or base M1. Subsequent Apple Silicon should be in the same order of magnitude but is not benchmarked.</p>
+    </div>
+    <div class="limit-card">
+      <span class="tag">platform · macOS 26 floor</span>
+      <h4>No Sonoma / Sequoia support</h4>
+      <p>The first-launch UX uses macOS 26's <code>SpeechAnalyzer</code> + <code>AssetInventory</code> for in-app speech-asset install. macOS 14 (Sonoma) and 15 (Sequoia) are excluded. SPEC.md.iter6 documents the trade-off.</p>
+    </div>
+    <div class="limit-card">
+      <span class="tag">tone · single-voice locked</span>
+      <h4>Korean 평어체 not customizable</h4>
+      <p>The system prompt is verbatim, written by the project's Korean speaker, and embedded at compile time. Users cannot soften the tone, switch to 존댓말, or add personality. The lock is the feature, not a limitation we plan to remove.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== Section 7 · TRY IT (P20 GitHub-native) ========== -->
+<section id="try" class="compact">
+  <div class="eyebrow">try it · ~30 seconds</div>
+  <h2>Run the bust on your Mac.</h2>
+  <p>Requires macOS 26 Tahoe, Apple Silicon, ≥8 GB free disk. The first launch downloads ~3.97 GB of Gemma 4 weights via the OS MLX cache.</p>
+  <div class="try-block">
+    <span class="cmd">git clone https://github.com/Two-Weeks-Team/he-was-socrates</span>
+    <span class="cmd">cd he-was-socrates &amp;&amp; make doctor</span>
+    <span class="comment"># verifies xcodegen, Swift toolchain, asset pipeline</span>
+    <span class="cmd">make engine-test</span>
+    <span class="comment"># runs 65 swift-testing scenarios</span>
+    <span class="cmd">make app</span>
+    <span class="comment"># builds HeWasSocrates.app — open and press Space</span>
+  </div>
+  <p style="font-size:13px;color:var(--bone-muted);margin-top:12px;">Or download the notarized DMG from <a href="https://github.com/Two-Weeks-Team/he-was-socrates/releases" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--border-strong);">Releases</a>.</p>
+</section>
+
+<!-- ========== Footer / Colophon (P20) ========== -->
+<footer class="colophon">
+  <div class="badges-row">
+    <span class="badge accent">Apache-2.0 (code)</span>
+    <span class="badge accent">CC-BY-4.0 (content)</span>
+    <span class="badge">CI ✓</span>
+    <span class="badge">65 swift-testing</span>
+    <span class="badge">Gemma 4 E4B 4-bit MLX</span>
+    <span class="badge">macOS 26+</span>
+    <span class="badge">Apple Silicon</span>
+    <span class="badge">on-device · 0 B egress</span>
+  </div>
+  <h3>About</h3>
+  <p>He Was Socrates is an entry to <strong>The Gemma 4 Good Hackathon</strong> (Kaggle × Google DeepMind) — Education category. Built by Two-Weeks-Team. License compatible with Hackathon §2.5.a winner-grant clause.</p>
+  <div class="topics-row">
+    <span class="topic">gemma-4</span>
+    <span class="topic">on-device</span>
+    <span class="topic">korean</span>
+    <span class="topic">mlx</span>
+    <span class="topic">socratic</span>
+    <span class="topic">education</span>
+    <span class="topic">macos</span>
+    <span class="topic">function-calling</span>
+  </div>
+  <div class="refs">
+    <h3 style="font-family:var(--serif);color:var(--bone);font-size:18px;font-weight:400;margin-bottom:12px;">References</h3>
+    <ol>
+      <li><a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/runs/2026-05-05-spec/spec/function_call_contract.yaml">function_call_contract.yaml</a> — frozen 4-function dispatch contract</li>
+      <li><a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/packages/SocraticEngine/Sources/SocraticEngine/Gemma/SystemPrompt.swift">SystemPrompt.swift</a> — Korean 평어체 verbatim</li>
+      <li><a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/packages/SocraticEngine/Sources/SocraticEngine/EngineCoordinator.swift">EngineCoordinator.swift</a> — turn loop + Phase enum</li>
+      <li><a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements">HeWasSocrates.entitlements</a> — NO-CLOUD invariant evidence</li>
+      <li><a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/runs/2026-05-05-spec/spec/SPEC.md">SPEC.md</a> + iter2/4/5/6 deltas</li>
+      <li><a href="https://github.com/Two-Weeks-Team/he-was-socrates/blob/main/apps/macos/HeWasSocrates/HeWasSocrates/Preflight.swift">Preflight.swift</a> — PR #33 first-launch UX (PreflightView + AssetInventory)</li>
+      <li><a href="https://developer.apple.com/videos/play/wwdc2025/277/">WWDC25 Session 277</a> — SpeechAnalyzer + AssetInventory (macOS 26 API)</li>
+      <li><a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">The Gemma 4 Good Hackathon</a> — submission target</li>
+      <li><a href="https://huggingface.co/mlx-community/gemma-4-e4b-it-4bit">mlx-community/gemma-4-e4b-it-4bit</a> — model weights</li>
+    </ol>
+  </div>
+  <p class="foot-meta">He Was Socrates · Two-Weeks-Team · 2026 · Generated 2026-05-07 · run r-20260507-010321 · profile max</p>
+</footer>
+
+<script>
+// Scroll progress — update active pip
+(function() {
+  const sections = ['hero', 'lesson-1', 'lesson-2', 'lesson-3', 'lesson-4'];
+  const pips = document.querySelectorAll('.progress-rail .pip');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const idx = sections.indexOf(e.target.id);
+      if (idx < 0) return;
+      pips.forEach((p, i) => {
+        p.classList.toggle('active', i === idx);
+        p.classList.toggle('done', i < idx);
+      });
+    });
+  }, { rootMargin: '-30% 0px -50% 0px' });
+  sections.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
+})();
+</script>
+</body>
+</html>

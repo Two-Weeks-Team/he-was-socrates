@@ -1,0 +1,38 @@
+{
+  "run_id": "r-20260507-010321",
+  "approval_timestamp": "2026-05-07T07:00:00Z",
+  "approver": "user (Sejun Kim) — explicit base+refs decision 2026-05-07",
+  "h1_gate": "passed",
+  "approved_artifact": "chosen_preview/index.html",
+  "design_tokens": {
+    "color_space": "OKLCH",
+    "ink": "oklch(0.07 0.008 280)",
+    "bone": "oklch(0.92 0.022 85)",
+    "accent": "oklch(0.85 0.140 165)",
+    "warn": "oklch(0.78 0.130 75)"
+  },
+  "typography": {
+    "serif_heading": "Times New Roman, Noto Serif, Georgia, serif",
+    "sans_body": "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    "mono_code": "JetBrains Mono, Fira Code, ui-monospace, monospace"
+  },
+  "motion": {
+    "scroll_snap": "y proximity (no-preference)",
+    "keyframes": ["slow-fade", "soft-pulse"],
+    "prefers_reduced_motion": "honored"
+  },
+  "mitigations_applied": [
+    "M01 entitlements key correctness (com.apple.security.device.audio-input only)",
+    "M02 monochrome only — no semantic color tokens (warn used only for designed-for tags)",
+    "M03 Phase 4 wondering log marked designed-for (Limitations §4)",
+    "M04 Impact-Education narrative leads (Lessons 1-3 before technical Lesson 4)",
+    "M05 Korean restricted to identity surfaces (system prompt + defer demo + hero subtitle)",
+    "M06 every metric source-cited (bench JSON + repo paths)"
+  ],
+  "next_phase": "SpecDD — chief-engineer-pm.md §3.9 trigger",
+  "spec_dd_inputs": {
+    "design_artifact": "chosen_preview/index.html",
+    "spec_lock_target": "runs/2026-05-05-spec/spec/SPEC.md.iter7-chosen-preview-publication.md",
+    "stack_hint": "static HTML asset (no backend, no DB) — SpecDD must respect zero-network architecture"
+  }
+}
