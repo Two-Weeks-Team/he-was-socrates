@@ -1,9 +1,9 @@
 # He Was Socrates
 
 [![CI](https://github.com/Two-Weeks-Team/he-was-socrates/actions/workflows/ci.yml/badge.svg)](https://github.com/Two-Weeks-Team/he-was-socrates/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-41%20passing-brightgreen)](https://github.com/Two-Weeks-Team/he-was-socrates/actions)
+[![Tests](https://img.shields.io/badge/tests-65%20passing-brightgreen)](https://github.com/Two-Weeks-Team/he-was-socrates/actions)
 [![Swift 6.1+](https://img.shields.io/badge/Swift-6.1%2B-orange?logo=swift&logoColor=white)](https://swift.org)
-[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue?logo=apple&logoColor=white)](https://www.apple.com/macos)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue?logo=apple&logoColor=white)](https://www.apple.com/macos)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-required-lightgrey?logo=apple&logoColor=white)](https://www.apple.com/mac)
 [![License: Apache 2.0](https://img.shields.io/badge/License%20(code)-Apache_2.0-green.svg)](LICENSE)
 [![License: CC BY 4.0](https://img.shields.io/badge/License%20(content)-CC_BY_4.0-lightgrey.svg)](LICENSE)
@@ -19,6 +19,10 @@
 > Asks back. **That refusal is the entire product.**
 
 Submission for **The Gemma 4 Good Hackathon** (Kaggle / Google DeepMind, deadline 2026-05-19 08:59 KST). Track: **Main + Impact: Future of Education** (no Special Tech bonus).
+
+🌐 **Live preview**: [Web companion](https://github.com/Two-Weeks-Team/he-was-socrates) (Next.js 16, static, NO-DATA-COLLECTION) · [Preview gallery (26 advocates)](https://two-weeks-team.github.io/he-was-socrates/runs/r-20260507-010321/mockups/gallery.html) (team review surface)
+
+📐 **Engineering evidence**: TTFT median **192 ms** (n=10, M1 Max — [bench JSON](claudedocs/bench/2026-05-06-latency-bench.json)) · **24×** improvement via PR-Λ disk-mediated KV cache · **0 byte** network egress per 24 h (entitlements verified) · Lighthouse 94.5 avg (perf 86 / a11y 96 / best 96 / SEO 100).
 
 ---
 
