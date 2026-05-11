@@ -20,9 +20,9 @@
 
 Submission for **The Gemma 4 Good Hackathon** (Kaggle / Google DeepMind, deadline 2026-05-19 08:59 KST). Track: **Main + Impact: Future of Education** (no Special Tech bonus).
 
-🌐 **Live preview**: [Web companion](https://github.com/Two-Weeks-Team/he-was-socrates) (Next.js 16, static, NO-DATA-COLLECTION) · [Preview gallery (26 advocates)](https://two-weeks-team.github.io/he-was-socrates/runs/r-20260507-010321/mockups/gallery.html) (team review surface)
+🌐 **Live**: [**he-was-socrates.vercel.app**](https://he-was-socrates.vercel.app) — the web companion (Next.js 16 static, inline CSS, NO-DATA-COLLECTION) walks through the four lessons the macOS app teaches. Mirror: [gh-pages](https://two-weeks-team.github.io/he-was-socrates/web/) · [Preview gallery (26 advocates)](https://two-weeks-team.github.io/he-was-socrates/runs/r-20260507-010321/mockups/gallery.html) (team review surface).
 
-📐 **Engineering evidence**: TTFT median **192 ms** (n=10, M1 Max — [bench JSON](claudedocs/bench/2026-05-06-latency-bench.json)) · **24×** improvement via PR-Λ disk-mediated KV cache · **0 byte** network egress per 24 h (entitlements verified) · Lighthouse 94.5 avg (perf 86 / a11y 96 / best 96 / SEO 100).
+📐 **Engineering evidence**: TTFT median **192 ms** (n=10, M1 Max — [bench JSON](claudedocs/bench/2026-05-06-latency-bench.json)) · **24×** improvement via PR-Λ disk-mediated KV cache · **0 byte** network egress per 24 h (entitlements verified) · web companion ships with **0 render-blocking stylesheets** (CSS inlined, Tailwind dropped).
 
 ---
 
@@ -235,7 +235,8 @@ Build-time Python toolchain (NOT shipped in DMG):
 | **2** Asset pipeline | ✅ | 17 1-bit halftone PNGs, deterministic build, live editor |
 | **3** Engine real impls | ✅ | Audio/TTS/VisemeDriver/JamoTimeline/Orchestrator |
 | **4** MLX-Swift + Gemma 4 | ✅ architecture | `LLMRegistry.gemma4_e4b_it_4bit` wired; first-launch HF download |
-| **5** Demo materials | 🟡 partial | video script + writeup draft written; video shoot pending |
+| **5** Demo materials | 🟡 partial | video script + writeup draft (1,294 w) written; video shoot + DMG notarize pending |
+| **6** Web companion | ✅ | Next.js 16 static, deployed [he-was-socrates.vercel.app](https://he-was-socrates.vercel.app), 0 render-blocking CSS, NO-DATA-COLLECTION lint-enforced |
 | **Day-1** AVSpeech ko-KR phoneme probe | ⏳ ready | `tools/ApplePhonemeProbe` ready to run |
 
 Frozen SpecDD lock: `e5dfadf2c8…314c5` (preserved unchanged). Iter-2 amendment + iter-4 API correction live as delta documents alongside the lock.
@@ -246,21 +247,26 @@ Frozen SpecDD lock: `e5dfadf2c8…314c5` (preserved unchanged). Iter-2 amendment
 
 ```
 he-was-socrates/
-├── apps/macos/HeWasSocrates/         # macOS app target (xcodegen → .xcodeproj)
+├── apps/macos/HeWasSocrates/         # macOS app target (xcodegen → .xcodeproj) — THE PRODUCT
+├── apps/web/                          # Next.js 16 static web companion (he-was-socrates.vercel.app)
 ├── packages/SocraticEngine/          # Swift Package (engine layer)
 ├── tools/ApplePhonemeProbe/          # Stage-5 day-1 probe
 ├── assets/                           # source portrait + 17 generated PNGs + manifest
 ├── scripts/                          # build-time Python toolchain (NOT shipped)
 ├── docs/                             # video script, writeup draft, etc.
+├── chosen_preview/                    # H1-locked landing prototype (37 KB self-contained)
 ├── runs/2026-05-05-spec/             # locked SpecDD artifacts (DO NOT EDIT)
+├── runs/r-20260507-010321/            # PreviewDD run — 26 advocates, chosen + spec + votes
 ├── memory/                           # PreviewForge cross-cycle memory
-├── .github/                          # CI workflows + issue/PR templates
+├── .github/                          # CI workflows (macos-26) + issue/PR templates
 ├── README.md  SETUP.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md  SECURITY.md
 ├── CHANGELOG.md  LICENSE  NOTICE  Brewfile
 ├── HANDOFF.md                        # gallery → repo handoff record
 ├── Makefile                          # `make doctor / assets / engine-test / app`
 └── .gitignore
 ```
+
+**Two surfaces, one product.** The macOS app (`apps/macos/`) *is* the product — a fullscreen Socratic bust you talk to. The web companion (`apps/web/` → [he-was-socrates.vercel.app](https://he-was-socrates.vercel.app)) is the *teaching surface*: it walks a visitor through the four lessons the app embodies (push-to-talk interaction · 단정한 평어체 tone · the abstention mechanic · on-device-by-entitlement proof) and ends with a `git clone` + `make app` path. The web companion runs no LLM and collects no data — it is documentation that happens to be a webpage.
 
 ---
 
