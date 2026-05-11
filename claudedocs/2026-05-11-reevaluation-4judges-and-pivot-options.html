@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>He Was Socrates — 4-Judge Re-evaluation + Pivot Options (A/B/C)</title>
+<style>
+  :root {
+    --bg:#0d1117; --card:#161b22; --card2:#1c2128; --border:#30363d;
+    --fg:#e6edf3; --muted:#8b949e; --accent:#58a6ff;
+    --green:#3fb950; --red:#f85149; --orange:#d29922; --purple:#bc8cff; --cyan:#39d353; --pink:#f778ba;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.65;}
+  .container{max-width:1180px;margin:0 auto;padding:2rem 1.5rem;}
+  h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;line-height:1.2;}
+  h2{font-size:1.45rem;font-weight:700;color:var(--accent);margin:2.5rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:.5rem;}
+  h3{font-size:1.12rem;font-weight:600;color:var(--fg);margin:1.5rem 0 .6rem;}
+  h4{font-size:1rem;font-weight:600;color:var(--purple);margin:1.1rem 0 .4rem;}
+  p,li{color:var(--fg);font-size:.94rem;}
+  .subtitle{color:var(--muted);font-size:1.02rem;margin-bottom:1.5rem;max-width:900px;}
+  ul,ol{padding-left:1.5rem;margin:.6rem 0;} li{margin:.3rem 0;}
+  strong{color:#fff;font-weight:600;}
+  code{background:var(--card2);padding:.12rem .35rem;border-radius:4px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.85em;color:var(--cyan);}
+  pre{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;overflow-x:auto;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.8rem;line-height:1.5;margin:.6rem 0;}
+  pre code{background:transparent;padding:0;color:var(--fg);}
+  a{color:var(--accent);text-decoration:none;} a:hover{text-decoration:underline;}
+  hr{border:none;border-top:1px solid var(--border);margin:2rem 0;}
+  .meta{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+  .meta-badge{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.35rem .8rem;font-size:.8rem;color:var(--muted);}
+  .meta-badge strong{color:var(--fg);}
+  .verdict-badge{display:inline-block;padding:.45rem 1.15rem;border-radius:999px;font-size:.95rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem;}
+  .v-hold{background:rgba(63,185,80,.15);color:var(--green);border:1px solid var(--green);}
+  .tldr{background:linear-gradient(135deg,rgba(188,140,255,.08),rgba(88,166,255,.08));border:1px solid var(--purple);border-radius:14px;padding:1.4rem 1.7rem;margin:1.4rem 0 2rem;}
+  .tldr h3{color:var(--purple);margin-top:0;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;background:var(--card);border-radius:10px;overflow:hidden;}
+  th,td{text-align:left;padding:.65rem .9rem;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:top;}
+  th{background:var(--card2);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.72rem;letter-spacing:.05em;}
+  tbody tr:last-child td{border-bottom:none;} tbody tr:hover{background:rgba(88,166,255,.04);}
+  .status{display:inline-block;padding:.12rem .5rem;border-radius:4px;font-size:.72rem;font-weight:700;text-transform:uppercase;}
+  .s-go{background:rgba(63,185,80,.15);color:var(--green);} .s-mid{background:rgba(210,153,34,.15);color:var(--orange);} .s-no{background:rgba(248,81,73,.15);color:var(--red);} .s-na{background:rgba(139,148,158,.15);color:var(--muted);}
+  .judge{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;margin:1rem 0;border-left:4px solid var(--accent);}
+  .j1{border-left-color:#58a6ff;} .j2{border-left-color:#bc8cff;} .j3{border-left-color:#3fb950;} .j4{border-left-color:#f778ba;}
+  .judge h3{margin-top:0;}
+  .pill{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.72rem;font-weight:700;margin-left:.4rem;}
+  .pill-a{background:rgba(63,185,80,.15);color:var(--green);} .pill-b{background:rgba(248,81,73,.15);color:var(--red);} .pill-h{background:rgba(210,153,34,.15);color:var(--orange);}
+  .scen{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;margin:1rem 0;}
+  .scen.sa{border-top:3px solid var(--green);} .scen.sb{border-top:3px solid var(--red);} .scen.sc{border-top:3px solid var(--orange);}
+  .gaps{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.4rem;margin:1rem 0;}
+  .checklist{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.4rem;}
+  .checklist li{list-style:none;margin:.5rem 0;padding-left:1.7rem;position:relative;}
+  .checklist li::before{content:"☐";position:absolute;left:0;color:var(--muted);font-size:1.05rem;}
+  footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;text-align:center;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>He Was Socrates — 4-Judge Re-evaluation</h1>
+<p class="subtitle">컨텍스트-프리 전문가 심사 에이전트 4종이 독립 평가 · Scenario A(현 트랙) vs B(Gemma 4 zero-cost 피벗) vs C(항상-켜진 라이프로깅 마니또) · 수상가능성 기준 재평가</p>
+
+<div class="verdict-badge v-hold">VERDICT: HOLD A's BUILD · GRAFT B's FRAMING · DEFER C TO POST-HACKATHON</div>
+
+<div class="meta">
+  <span class="meta-badge"><strong>대회</strong> · The Gemma 4 Good Hackathon (Kaggle × Google DeepMind)</span>
+  <span class="meta-badge"><strong>마감</strong> · 2026-05-19 08:59 KST (D-8)</span>
+  <span class="meta-badge"><strong>분석</strong> · 2026-05-11</span>
+  <span class="meta-badge"><strong>심사 에이전트</strong> · 4종 (Hackathon Judge · Product Strategist · Technical Reviewer · Impact Skeptic)</span>
+</div>
+
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <p><strong>4명의 독립 심사 에이전트가 만장일치로 "전면 피벗하지 말 것"으로 수렴.</strong> 8일 안에 코드베이스를 갈아엎으면 더 나쁜 결과물을 출품하게 된다. 합의안: ① <strong>A의 코드베이스 유지</strong> (65 tests, CI green, frozen contract — 버릴 수 없는 자산) ② B의 "Gemma 4 = $0 forever, on-device-by-entitlement"를 <strong>오프닝 framing</strong>으로 graft (abstention은 "신뢰성 증명"으로 강등, 헤드라인 아님) ③ <strong>주 트랙을 Technical로 재지정</strong> (macOS-only가 Impact 트랙의 reach를 죽임) ④ <strong>long-context recall이 STUB인 것을 절대 과대주장 금지</strong> (credibility landmine — 가장 위험) ⑤ D-8은 <strong>코드가 아니라 포장</strong> (Wireshark가 0 패킷 잡는 영상 + DMG + 스크린샷 + Kaggle 페이지). 추정 수상가능성: A 그대로 ~3-5% / 전면 B 피벗 ~1-2% / 하이브리드(A+B framing) <strong>~7-10%</strong>. <strong>Scenario C(라이프로깅 마니또)는 D-8 해커톤엔 불가능 — 다만 wondering log이 이미 그 씨앗이므로 writeup "Future direction"에 심을 가치 있는 product vision</strong>.</p>
+</div>
+
+<h2>1. 4명 심사 에이전트 verdict 요약</h2>
+<table>
+  <thead><tr><th style="width:18%;">에이전트</th><th style="width:14%;">판정</th><th style="width:22%;">수상가능성 (A / B)</th><th>핵심 논점</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Hackathon Judge</strong><br><span style="color:var(--muted);font-size:.8rem;">rubric 점수관</span></td>
+      <td><span class="pill pill-h">HYBRID</span> A's build + B's framing</td>
+      <td>A 그대로 <strong>3-5%</strong> · 전면 B <strong>1-2%</strong> · 하이브리드 <strong>7-10%</strong></td>
+      <td>코드 freeze하고 D-1~3을 전부 영상·DMG·스크린샷·Kaggle 페이지에 써라. 주 트랙은 Technical. 영상은 "대화 중 Wireshark가 0 패킷 잡는 10초"가 핵심. <strong>최대 리스크: Technical 심사가 multimodal을 무겁게 보면 (image input 없음) 하이브리드도 3-4%로 떨어짐 — 8일 안에 해결 불가</strong>.</td>
+    </tr>
+    <tr>
+      <td><strong>Product Strategist</strong><br><span style="color:var(--muted);font-size:.8rem;">JTBD · 차별화 · Godin</span></td>
+      <td><span class="pill pill-a">HOLD A</span> + B narrative graft</td>
+      <td>A <strong>Med</strong> · B <strong>Low</strong></td>
+      <td>"$0 forever"는 모든 on-device Gemma 출품작이 주장 가능 — moat가 아니라 입장료. "답하지 않는 흉상이 질문을 봉인된 채 되돌려준다"는 심사위원이 다른 심사위원에게 옮기는 문장 (Godin test 통과). macOS-only가 진짜 상처 — 싸우지 말고 트랙을 Technical로 재지정해서 narrowness를 "constrained environments"로 전환. Korean-first는 오히려 자산(authenticity).</td>
+    </tr>
+    <tr>
+      <td><strong>Technical Reviewer</strong><br><span style="color:var(--muted);font-size:.8rem;">엔지니어 회의주의</span></td>
+      <td><span class="pill pill-h">HYBRID</span> A: B+ / B: C-</td>
+      <td>(grade) A <strong>B+</strong> · B <strong>C-</strong></td>
+      <td>function calling = 진짜·load-bearing (frozen YAML contract + parser). thinking mode = 장식 (warmup 옆 UI 애니메이션). <strong>256K long context = STUB — "uses Gemma 4's long context"는 현 상태로 거짓</strong>. 192ms TTFT는 진짜 흥미로운 systems trick (단 "24× vs cold"는 strawman — "warm-turn latency가 대화 길어져도 평탄"으로 reframe). D-8 변경: <strong>thin real surface_past_wonder 출시</strong> (인프라 이미 있음, 1-2일, credibility landmine 제거).</td>
+    </tr>
+    <tr>
+      <td><strong>Impact Skeptic</strong><br><span style="color:var(--muted);font-size:.8rem;">교육 실무 + AI 안전</span></td>
+      <td><span class="pill pill-h">HYBRID</span> A-with-honesty</td>
+      <td>A in Impact <strong>Low-Med</strong> · B in Impact <strong>Low</strong></td>
+      <td>abstention = 값싸고 무해한 theater (이미 답 안 하는 도구에 하드코딩 거절 리스트 추가 = 거의 중복). 진짜 안전 스토리는 그들이 underselling하는 것: <strong>on-device + 0 network egress + kernel sandbox</strong>. macOS 26 + Apple Silicon + 8GB는 "constrained environment"의 정반대 — Impact 트랙엔 near-disqualifying. D-8 변경: <strong>engine package의 Linux/Windows CLI 빌드</strong> ($200 Linux box에서 도는 headless socrates-cli) — "affluent-Mac-only" 반론을 무력화, "constrained environments"에 직격.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>만장일치 합의 (4/4)</h3>
+<ol>
+  <li><strong>전면 B 피벗 금지</strong> — 8일 안에 cross-platform 데모 + 새 narrative + 영상 + 패키징 재구축 = 아무것도 출품 못 함. 현재 영상/DMG/스크린샷조차 미완인데 더 큰 걸 시도 = 자멸.</li>
+  <li><strong>A의 코드베이스 유지</strong> — 65 tests, 8 CI jobs green, frozen 4-function contract, bench harness. 8일에 이걸 태우는 건 negative EV.</li>
+  <li><strong>B의 framing graft</strong> — "Gemma 4, fully on-device, zero servers, zero per-query cost, zero bytes leave the machine — provably, by OS entitlement"를 영상 첫 20초 + writeup 헤드라인으로. abstention은 "신뢰성 증명"으로 격하 (헤드라인 아님).</li>
+  <li><strong>주 트랙 = Technical</strong> (was Impact). Impact:Education은 부 트랙 (use case로 writeup에만). macOS-only가 Impact의 reach를 죽이므로.</li>
+  <li><strong>long-context STUB을 절대 과대주장 금지</strong> — 가장 위험한 credibility landmine. writeup이 "256K context로 다년 회상"을 헤드라인으로 쓰고 심사위원이 코드를 열어 stub을 발견하면 → <strong>출품 전체의 신뢰도 하락</strong> (작동하는 부분까지). 해법: (a) thin real surface_past_wonder 출시 [Technical Reviewer 권장, 1-2일], 또는 (b) "designed-for, schema shipped, recall is roadmap"으로 한 문장 강등 [5분, 안전].</li>
+  <li><strong>D-8 우선순위 = 포장</strong> — 코드 아님. 영상(Wireshark 0 패킷 + abstention 실시간) + 노타라이즈 DMG + 앱 스크린샷 5-7장 + Kaggle 페이지. category-leading engine이라도 shippable demo 없으면 "working demo" + "use-case communication" 점수 0 = rubric의 2/3.</li>
+</ol>
+
+<h2>2. 세 시나리오 비교</h2>
+
+<div class="scen sa">
+  <h3>Scenario A — 현 트랙 그대로 (status quo)</h3>
+  <p><strong>무엇</strong>: macOS 풀스크린 소크라테스 흉상, push-to-talk, "답하지 않는 것이 제품", Impact:Education + Technical, Korean-first, macOS 26+ only.</p>
+  <p><strong>강점</strong>: 완성됨 (65 tests, CI green) · "abstention is the product"는 Godin-test 통과하는 기억에 남는 포지셔닝 · NO-CLOUD-by-entitlement는 거의 아무도 못 가진 검증 가능 차별화 · 192ms TTFT + 24× systems trick (bench JSON 공개) · 한국어 정체성 = authenticity.</p>
+  <p><strong>약점</strong>: macOS 26+ only = Impact 트랙 reach 거의 disqualifying · long-context recall STUB (과대주장 시 landmine) · multimodal = voice+talking head only (image/video input 없음 → Technical 심사가 multimodal 무겁게 보면 타격) · D-8에 영상/DMG/스크린샷/Kaggle 페이지 전부 미완.</p>
+  <p><strong>수상가능성</strong>: 그대로 ~3-5% (any tier). framing graft 시 ~7-10%.</p>
+</div>
+
+<div class="scen sb">
+  <h3>Scenario B — Gemma 4 zero-cost 전면 피벗</h3>
+  <p><strong>무엇</strong>: "Gemma 4 = $0 forever, no servers"를 중심으로 재정렬, 그 강점이 가장 잘 먹히는 트랙/문제영역 선택 (저자원 지역 무료 교육 / 기후-datacenter 에너지 0 / $0-운영 health triage / 무연결 환경 offline assistant). 비용: macOS-only + Korean-only + refusal 훅 폐기, narrative 재구축, 어쩌면 cross-platform 데모 신규 — 8일 안에.</p>
+  <p><strong>강점</strong>: 추상적으로는 더 큰 impact 스토리 · "constrained environments" 직격.</p>
+  <p><strong>약점</strong>: "$0 forever"는 입장료지 moat 아님 (모든 on-device 출품작이 주장) · 8일 재구축 = 덜 다듬어진 결과물 · 가장 붐비는 레인(generic offline Gemma wrapper)에 늦게 진입 · sharp identity 상실 · 완성된 B+ engine을 버리고 C- 받기 · 분배 계획·타겟 커뮤니티 없음.</p>
+  <p><strong>수상가능성</strong>: ~1-2% (전면 피벗). <span class="status s-no">만장일치 비추천</span></p>
+</div>
+
+<div class="scen sc">
+  <h3>Scenario C — 항상-켜진 라이프로깅 "마니또" 비서 (사용자 신규 제안)</h3>
+  <p><strong>무엇</strong>: 하루종일 화면 기록 + 음성 청취 + 모든 일상 기록, Qdrant 등 로컬 벡터 DB로 메모리 관리 (OpenClaw / Hermes / Rewind.ai 류), 조용히 항상 곁에 있는 비용 0 개인 비서. 마니또(secret-friend) 정서.</p>
+  <p><strong>해커톤 적합성 (D-8)</strong>: <span class="status s-no">불가능</span> — ScreenCaptureKit + 새 entitlement (<code>com.apple.security.device.screen-capture</code> 또는 TCC grant, 현재 없음) + 상시 마이크 (현재 push-to-talk only) + Qdrant 통합 + 메모리 retrieval 파이프라인 = 수개월 프로젝트. 8일에 출품 불가.</p>
+  <p><strong>현 invariant과의 긴장</strong>: NO-CLOUD는 유지 가능 (Qdrant 로컬 실행). 그러나 "모든 것을 기록"은 "abstention/minimal/refuses-to-answer" thesis와 정면 충돌 — 미니멀 흉상에서 surveillance-grade 라이프로거로의 정체성 전환. 1-bit halftone 미학·"답하지 않음" 헤드라인과 양립 어려움.</p>
+  <p><strong>그러나 — 이미 씨앗이 있다</strong>: <code>WonderingLog</code> actor에 <code>append</code> · <code>surface(matching:max:)</code> · <code>exportJSON</code> · <code>contentFingerprint</code> (SHA-256 dedup)가 이미 구현됨. <code>surface_past_wonder</code> 함수 + Gemma 4 256K context = "다년 회상"의 축소판. 즉 C는 <strong>피벗이 아니라 이미 있는 것의 확대</strong>. "14개월 전 자네가 '얼음이 왜 미끄러운지' 물었지 — 그 답이 비 오는 도로에도 통하는가?"라는 writeup의 예시가 정확히 C의 미니어처.</p>
+  <p><strong>판정</strong>: D-8 해커톤엔 <span class="status s-no">제외</span>. 다만 <strong>writeup "Future direction"에 심을 가치 있는 product vision</strong> — wondering log → 다년 회상 → "ambient memory companion, 여전히 $0, 여전히 on-device, 여전히 0 byte egress". 아키텍처에 다리가 있음을 보여주고, stub이 "데모용 stub"이 아니라 "실제 제품의 토대"임을 입증. <strong>post-hackathon 1순위 product 방향으로 별도 design doc 가치 있음 — 단 지금은 아님</strong>. Rewind.ai($$$/subscription)·cloud assistant 대비 "$0 forever because on-device"가 진짜 차별화.</p>
+</div>
+
+<h2>3. 권고 — D-8 실행 계획</h2>
+<div class="gaps">
+  <h4>코드 (최소, freeze 우선)</h4>
+  <ol>
+    <li><strong>long-context landmine 제거</strong> — 두 옵션 중 하나:
+      <ul>
+        <li><strong>(권장) thin real <code>surface_past_wonder</code> 출시</strong> [Technical Reviewer]: 인프라 (<code>WonderingLog.surface(matching:)</code> + dedup + turn boundary) 이미 존재. 매 턴 top-K fingerprinted 엔트리를 recency + naive keyword overlap으로 뽑아 프롬프트에 concat → <code>surface_past_wonder</code>가 참조. 256K-scale 불필요 — 수십 개 실엔트리만 흘러도 "long-context: stubbed" → "long-context: working, scales to 256K". 1-2일, 기존 인프라 위에서. <strong>+ 보너스: Scenario C의 씨앗을 구체화</strong>.</li>
+        <li><strong>(안전, 5분) writeup 강등</strong>: long-context를 "designed-for, schema shipped, recall is roadmap"으로 한 문장. headline은 function-calling + on-device abstention으로 재배치.</li>
+      </ul>
+    </li>
+    <li><strong>(스트레치, 팀원 여유 시) engine의 Linux/Windows CLI 빌드</strong> [Impact Skeptic]: engine package가 CommandLineTools만으로 빌드된다면 headless <code>socrates-cli</code> (function-call orchestrator + generic local-LLM backend). "affluent-Mac-only" 반론 무력화, "constrained environments" 직격. <strong>위험: D-8에 새 코드 = 리스크. engine의 CLT-only 빌드 경로가 cheap할 때만</strong>.</li>
+    <li>그 외 — <strong>코드 freeze</strong>. 새 기능 추가 금지. C 방향 구현 금지 (post-hackathon).</li>
+  </ol>
+  <h4>포장 (D-8 메인 — 코드 아님)</h4>
+  <ol start="4">
+    <li><strong>3분 데모 영상</strong> — 한 컷 위주: 의료 질문 → <code>defer_to_human</code> 실시간 거절 화면 → Wireshark가 세션 전체에서 0 패킷 잡는 컷 → tagline 카드 "On-device by entitlement, not by promise." 첫 20초에 "$0 forever, zero servers, zero bytes leave the machine" framing. <span style="color:var(--muted)">팀원 진행 중 — 스크립트 완성됨</span></li>
+    <li><strong>노타라이즈 DMG + GitHub Release</strong> — <code>xcrun notarytool submit</code> + <code>stapler staple</code> + <code>gh release create</code>. <span style="color:var(--muted)">팀원 진행 중, Apple Dev enrolled</span></li>
+    <li><strong>앱 스크린샷 5-7장</strong> — Preflight · idle bust · listening · thinking pulse · speaking viseme · abstention demo · (가능 시) wondering surfacing. README hero 아래 + writeup + Kaggle 페이지. <span style="color:var(--muted)">본인 가능, ~1h</span></li>
+    <li><strong>Kaggle 제출 페이지</strong> — writeup draft 1,294w를 폼에 맞춰 트림 + 이미지 임베드. headline 재배치 (function-calling + on-device, not long-context). <span style="color:var(--muted)">팀원 진행 중</span></li>
+    <li><strong>writeup "Future direction"에 Scenario C 씨앗</strong> — wondering log → 다년 회상 → "ambient memory companion (여전히 $0, on-device, 0 egress)". 아키텍처에 다리 있음 + stub이 토대임을 입증.</li>
+  </ol>
+  <h4>트랙 / 포지셔닝</h4>
+  <ol start="9">
+    <li><strong>주 트랙 = Technical</strong>, 부 트랙 = Impact:Education (writeup의 use case로만). README/Kaggle의 "Track: Main + Impact: Future of Education"을 "Track: Technical (use case: education)"로 재배치 검토.</li>
+    <li><strong>narrowness를 strength로 reframe</strong> — macOS-only + Korean-only를 "v1 platform"으로 제시 (사과 아님). "verifiable refusal + zero egress on a 4-bit local model"이 claim, education이 use case.</li>
+  </ol>
+</div>
+
+<h2>4. 하지 말 것 (4/4 합의)</h2>
+<ul>
+  <li>❌ 전면 B 피벗 — cross-platform 재구축은 8일에 negative EV</li>
+  <li>❌ Scenario C 구현 — 화면 기록 + 상시 마이크 + Qdrant = 수개월. D-8 절대 불가</li>
+  <li>❌ long-context를 "256K context로 다년 회상"으로 headline — stub이라 거짓, credibility landmine</li>
+  <li>❌ thinking mode를 lead로 — 장식적 (warmup 옆 UI 애니메이션), 심사가 probe하면 thin</li>
+  <li>❌ "24× vs cold"를 자랑 — strawman. "warm-turn latency 평탄"으로 reframe</li>
+  <li>❌ 신규 기능 추가 일반 — D-8엔 안정화 &gt; 신규. 코드 freeze.</li>
+</ul>
+
+<h2>5. 수상가능성 종합</h2>
+<table>
+  <thead><tr><th>경로</th><th style="width:18%;">추정 (any tier)</th><th>근거</th></tr></thead>
+  <tbody>
+    <tr><td>Scenario A 그대로 (Impact 주 트랙)</td><td><span class="status s-no">3-5%</span></td><td>완성도는 높으나 Impact 트랙에서 macOS-only reach가 치명적. abstention은 영리하지만 "안 도와주는 게 기능"은 impact 심사위원에게 hard sell</td></tr>
+    <tr><td>Scenario B 전면 피벗</td><td><span class="status s-no">1-2%</span></td><td>붐비는 레인에 늦게·반쯤 만들어진 채 진입. 완성된 B+ engine 폐기. 차별화 없음</td></tr>
+    <tr><td><strong>하이브리드 (A's build + B's framing + Technical 트랙 + 포장 집중)</strong></td><td><span class="status s-go">7-10%</span></td><td>검증 가능 차별화 (0 egress by entitlement) + 완성된 engine + sharp positioning. Technical 트랙이 macOS-only를 "constrained environment"로 전환. <strong>최대 리스크: multimodal 가중치 (image input 없음)</strong></td></tr>
+    <tr><td>Scenario C (이번 해커톤)</td><td><span class="status s-na">N/A</span></td><td>D-8 구현 불가. post-hackathon product 방향으로만 유효</td></tr>
+  </tbody>
+</table>
+
+<h2>6. 사용자 액션 체크리스트</h2>
+<div class="checklist">
+  <ul>
+    <li><strong>결정</strong>: long-context landmine 처리 — (a) thin real surface_past_wonder 출시 [1-2일, 본인 가능, +Scenario C 씨앗] vs (b) writeup 강등 [5분, 안전]</li>
+    <li><strong>결정</strong>: 주 트랙을 Technical로 재지정할지 (Impact는 use case로 강등)</li>
+    <li><strong>본인 작업</strong>: 앱 스크린샷 5-7장 캡처 (~1h)</li>
+    <li><strong>본인 작업</strong>: Lighthouse 실측 (`npx -y lighthouse https://he-was-socrates.vercel.app`) — perf 86→? 확인</li>
+    <li><strong>팀 조율</strong>: 데모 영상 — Wireshark 0-패킷 컷 포함되도록 + 첫 20초 "$0 forever" framing 반영 요청</li>
+    <li><strong>팀 조율</strong>: 노타라이즈 DMG + GitHub Release + Kaggle 페이지 진도</li>
+    <li><strong>writeup 편집</strong>: headline을 function-calling + on-device abstention으로 재배치, long-context는 roadmap으로, "Future direction"에 ambient memory companion (Scenario C) 씨앗 추가</li>
+    <li><strong>스트레치 (팀원 여유 시)</strong>: engine Linux/Windows CLI 빌드 검토 — engine이 CommandLineTools-only로 빌드되는지 확인 후 cheap하면 진행</li>
+    <li><strong>post-hackathon 백로그</strong>: Scenario C (ambient memory manito) design doc — 화면 기록(ScreenCaptureKit) + 상시 음성 + Qdrant 로컬 벡터 메모리 + Gemma 4 256K recall, 여전히 NO-CLOUD. 마감 후 별도 검토</li>
+  </ul>
+</div>
+
+<h2>7. 시간 제약을 제거한 재평가 (사용자 요청: "시간 무시")</h2>
+<p style="color:var(--muted);font-size:.9rem;">위 섹션 1-6은 D-8 마감 제약 하의 평가. 사용자가 "시간 제약 무시"를 요청 — 4명 심사 에이전트에게 "시간 무제한, 어느 시나리오든 완벽히 구현 가능"이라는 조건으로 재질문. 결과가 크게 달라짐.</p>
+
+<table>
+  <thead><tr><th style="width:18%;">에이전트</th><th style="width:32%;">시간-무제한 순위 (flawless execution)</th><th>bet + 핵심</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Hackathon Judge</strong></td>
+      <td>① <strong>Hybrid C-on-A ~45%</strong> · ② A polished ~30% · ③ C raw ~15% · ④ B ~12%</td>
+      <td><strong>Hybrid C-on-A</strong>: A의 spine 유지 (abstention, halftone bust, on-device, kernel zero-egress) + <code>surface_past_wonder</code>를 진짜로 (다년 wondering log → 256K context recall). "두 여름 전 자네가 망각이 자비의 일종인지 물었지 — 그게 바뀌었나?"가 대회 전체에서 가장 quotable한 장면. + vision input 추가. <strong>최대 리스크: 메모리는 보이지 않는다 — recall을 시각적으로 부정 불가능하게 만들어야 함</strong> (timeline 스크롤, 옛 엔트리 타임스탬프 화면 표시, 그 다음 surface)</td>
+    </tr>
+    <tr>
+      <td><strong>Product Strategist</strong></td>
+      <td>① <strong>C (A 정체성 입은 하이브리드)</strong> · ② A polished · ③ B as thesis</td>
+      <td><strong>C with A's identity</strong>: 유일하게 <strong>구조적 moat</strong> 있는 방향. Rewind.ai/Limitless가 구독료 받는 이유 = cloud 추론에 marginal cost. Gemma-4-on-device가 "$0 forever, screen+audio never transmitted"를 incumbent가 P&L 깨지 않으면 진입 불가능한 카테고리로 만듦 (textbook Porter). "$0 forever"(B)는 입장료지 moat 아님 — 모든 Gemma 출품작이 주장. abstention은 character 레이어로 격하. <strong>최대 리스크: "상시 녹화"가 surveillance로 읽힘 — 모든 데모를 Wireshark 0-패킷으로 시작, log를 보고/삭제 가능하게</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Technical Reviewer</strong></td>
+      <td><strong>C &gt; A &gt; B</strong> (Gemma-4-specific 기여 깊이)</td>
+      <td><strong>Hybrid C+A: "He Was Socrates, with a real memory"</strong>. C가 <strong>유일한 "full Gemma 4" 출품작</strong> — 5개 다 사용 (function calling, thinking, 256K, edge/4-bit, vision). 256K-as-ambient-memory는 진짜 어려운 문제 (token budget allocation, hierarchical summarization tiers, hard ceiling 하의 eviction policy — off-the-shelf 답 없음). naive RAG로 trivial 아님. Rewind clone 리스크 NO (on-device VLM indexing + Gemma-256K를 retriever 아닌 reasoning substrate로 + kernel zero-egress + deterministic pipeline = 신규). <strong>1-bit halftone bust 폐기</strong> (ambient엔 안 맞음). <strong>최대 리스크: 4-bit edge에서 동시 자원 예산</strong> (VLM + embeddings + Gemma-256K KV-cache 연속 = thermal throttle) — "burst-mode만 가능, steady-state 불가"가 정직한 답일 수도</td>
+    </tr>
+    <tr>
+      <td><strong>Impact Skeptic</strong> <span style="color:var(--red);font-size:.78rem;font-weight:700;">(반대 의견)</span></td>
+      <td>① <strong>B (저연결 지역 오프라인 교육)</strong> · ② A · ③ C — <span style="color:var(--red)">C는 위험</span></td>
+      <td><strong>B narrowed: 오프라인 교육 전달</strong> (generic "Gemma is free" 아님). 또는 B-core/A-flavor 하이브리드. <strong>C는 3등이고 위험 — "wellness 의상 입은 consumer surveillance 제품"</strong>. 상시 자기-녹화는 behavior-altering (본인 + 동의 안 한 주변인 — 자녀·동료·치료사 chilling), ADHD/grief/aging 인구에 rumination loop 제조, "모든 나쁜 날의 완벽한 검색 가능 기록" = 우울증 가속제. on-device여도 구원 안 됨 — harm이 private해질 뿐. <strong>AI-safety-literate Impact 심사위원은 C를 reckless로 읽음</strong>. B-hybrid 최대 리스크: hallucination에 의한 educational malpractice at scale</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>시간 무제한 — 합의와 균열</h3>
+<p><strong>합의 (4/4)</strong>:</p>
+<ul>
+  <li>"Gemma = $0 forever"를 순수 thesis로 쓰면 약함 — 입장료지 moat 아님 (3/4가 B를 최하위. Impact Skeptic만 B #1, 그것도 *narrowed* "오프라인 교육 전달"일 때만, generic cost thesis 아님)</li>
+  <li>A의 abstention mechanic은 headline이 아니라 character/safety 레이어로 격하해야 함 — ingredient지 dish 아님 (4/4)</li>
+  <li>A의 on-device + kernel-enforced zero-egress는 <strong>진짜 moat</strong> — 유지 가치 (4/4)</li>
+  <li>순수 시나리오보다 하이브리드가 낫다 (4/4 모두 하이브리드 제안)</li>
+</ul>
+<p><strong>균열 (3 vs 1)</strong>:</p>
+<ul>
+  <li><strong>3/4 (Hackathon Judge · Product Strategist · Technical Reviewer) → C-with-A's-identity에 bet</strong> — ambient memory companion (on-device, free-forever, Socratic character). C의 "$0 forever because on-device, nothing leaves the machine"가 가장 강한 포지션 — Rewind/Limitless가 못 넘는 구조적 moat + Gemma 4의 모든 기능 사용 (유일한 "full Gemma 4" 출품작). 추정 ~40-45% (flawless execution).</li>
+  <li><strong>1/4 (Impact Skeptic) → C 강력 반대</strong> — 상시 화면+음성 녹화는 behavior-altering, 취약 인구에 harm, AI-safety-literate Impact 심사위원이 penalize. B-hybrid (오프라인 교육) 권장. <strong>이 반대는 강하고 구체적 — Impact 트랙 한정으로는 disqualifying</strong>.</li>
+  <li>나머지 3명도 이 리스크 인정 (Product Strategist: "creepy/surveillance로 읽힘 — Wireshark 0-패킷으로 시작"; Hackathon Judge: "C-raw는 creepy") — 다만 framing + opt-in + 보이고 삭제 가능한 log + on-device 프라이버시 스토리로 *관리 가능*하다고 봄.</li>
+</ul>
+
+<h3>시간 무제한 — 종합 권고</h3>
+<div class="tldr">
+  <h3>VERDICT (시간 무제한)</h3>
+  <p><strong>최고 ceiling 방향 = "마니또" 하이브리드: He Was Socrates의 정체성 위에 ambient memory companion을 짓는다.</strong> 이건 피벗이 아니라 <strong>이미 있는 것의 확대</strong> — wondering log + dedup + <code>surface_past_wonder</code>가 이미 그 씨앗. 3/4 심사관이 이 방향에 bet (~40-45% flawless execution), 단 1명이 ambient 녹화의 윤리에 강한 반대 (Impact 트랙 한정 disqualifying). 따라서:</p>
+  <ul>
+    <li><strong>A에서 유지</strong>: kernel-enforced zero network egress (the moat) · Socratic character + 단정한 평어체 · abstention gate (이제 프라이버시/안전 *레이어*: "네 의료/금융 일에 의견 안 냄" — ambient 비서에 더 강한 안전 스토리) · deterministic build discipline · frozen function-call contract 패턴</li>
+    <li><strong>새로 구축</strong>: opt-in·사용자 통제 연속 capture → on-device VLM indexing → 로컬 벡터 DB (Qdrant급) → Gemma-4-256K를 reasoning substrate로 (hierarchical summary tiers, token-budget allocation, eviction policy) → memory 연산에 function calling. + <strong>vision input 추가</strong> (현재 미사용 Gemma 모달리티)</li>
+    <li><strong>윤리 정면 대응</strong>: opt-in · log 보이고 삭제 가능 · pause/blackout 컨트롤 · 동의 안 한 타인 자동 녹화 금지 · 규제/민감 주제 의견 거부 (abstention gate가 여기서 값어치를 함) · 데모는 Wireshark 0-패킷으로 시작</li>
+    <li><strong>트랙</strong>: Technical 주 (C가 명백히 가장 강함 — "유일한 full-Gemma-4 출품작, 신규 on-device 256K memory system") · Health(인지 offloading) 또는 Education(학습자 지적 이력) 부. <strong>주의: 취약 사용자(ADHD/치매/grief)에 검증 안 된 clinical-adjacent 주장 금지 — 검증하는 named partner 없이는</strong></li>
+    <li><strong>1-bit halftone bust</strong>: 유지 (Hackathon Judge·Product Strategist는 bust가 기억에 남는 정체성이라 봄) vs 폐기 (Technical Reviewer는 ambient에 안 맞는다 봄) — 하위 결정</li>
+  </ul>
+  <p><strong>시간 무제한 추정 수상가능성 (flawless)</strong>: 마니또 하이브리드 ~40-45% (Technical 주) · A polished ~30% · B narrowed (오프라인 교육) ~12-15% (낮은 ceiling, 견고한 floor) · C raw (A 정체성·윤리 framing 없이) ~15% (Rewind clone + surveillance framing 리스크)</p>
+  <p><strong>최대 리스크 (합의)</strong>: ① 메모리는 보이지 않는다 — recall을 시각적으로 부정 불가능하게 ② surveillance framing — opt-in·삭제 가능·blackout·Wireshark-first ③ 4-bit edge 동시 자원 예산 — "burst-mode only" 가능성, 데모를 burst-mode 중심으로 ④ 취약 사용자 윤리 — named partner 없이 clinical 주장 금지</p>
+</div>
+
+<h3>이번 해커톤(D-8)과의 관계</h3>
+<p>시간 무제한 verdict는 <strong>방향(direction)</strong>에 대한 답이지 <strong>화요일에 뭘 출품하나</strong>에 대한 답이 아님. 실제로는: D-8 해커톤엔 A의 다듬은 빌드를 출품 (섹션 1-6의 시간-제약 권고), 그리고 <strong>마니또 하이브리드를 post-hackathon 로드맵으로 채택</strong> — wondering log → 다년 회상 → ambient memory companion이라는 호 자체가 자연스러운 진화. writeup "Future direction"에 이 방향을 명시하면 stub이 "데모용 stub"이 아니라 "실제 제품의 1단계"임을 입증하고, 출품의 야심을 키움. <strong>Scenario C는 "이번 해커톤 피벗"으로는 불가하지만 "프로젝트의 진짜 목적지"로는 3/4 심사관이 가장 강한 베팅</strong> — 단 ambient 녹화의 윤리를 architecture로 방어해야 함 (on-device + 0 egress + opt-in + visible/deletable + abstention gate).</p>
+
+<footer>
+  <p>4-Judge Re-evaluation · 2026-05-11 · 컨텍스트-프리 독립 심사 에이전트 4종 (general-purpose, 동일 사실 브리프 + 다른 평가 렌즈) · 섹션 1-6 = D-8 제약 하 · 섹션 7 = 시간 무제한</p>
+  <p style="margin-top:.4rem;">대회: <a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">The Gemma 4 Good Hackathon</a> · 마감 2026-05-19 08:59 KST</p>
+  <p style="margin-top:.4rem;">관련: <a href="hackathon-audit-20260511-gemma-4-good-hackathon.html">hackathon-audit-20260511</a> · <a href="2026-05-11-pm-session-handoff.md">PM session handoff</a></p>
+</footer>
+
+</div>
+</body>
+</html>

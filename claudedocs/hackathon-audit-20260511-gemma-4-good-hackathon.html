@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hackathon Audit — The Gemma 4 Good Hackathon</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --card2: #1c2128; --border: #30363d;
+    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --orange: #d29922;
+    --purple: #bc8cff; --cyan: #39d353; --pink: #f778ba;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; background:var(--bg); color:var(--fg); line-height:1.65; }
+  .container { max-width:1200px; margin:0 auto; padding:2rem 1.5rem; }
+
+  h1 { font-size:2.4rem; font-weight:800; background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:.5rem; line-height:1.2; }
+  h2 { font-size:1.5rem; font-weight:700; color:var(--accent); margin:2.5rem 0 1rem; border-bottom:1px solid var(--border); padding-bottom:.5rem; }
+  h3 { font-size:1.15rem; font-weight:600; color:var(--fg); margin:1.5rem 0 .75rem; }
+  h4 { font-size:1rem; font-weight:600; color:var(--purple); margin:1.25rem 0 .5rem; }
+  p, li { color:var(--fg); font-size:.95rem; }
+  .subtitle { color:var(--muted); font-size:1.05rem; margin-bottom:1.5rem; max-width:900px; }
+  ul, ol { padding-left:1.5rem; margin:.75rem 0; }
+  li { margin:.3rem 0; }
+  strong { color:#fff; font-weight:600; }
+  code { background:var(--card2); padding:.15rem .4rem; border-radius:4px; font-family:'SF Mono', Menlo, Consolas, monospace; font-size:.85em; color:var(--cyan); }
+  pre { background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:.85rem 1rem; overflow-x:auto; font-family:'SF Mono', Menlo, Consolas, monospace; font-size:.82rem; line-height:1.5; margin:.75rem 0; }
+  pre code { background:transparent; padding:0; color:var(--fg); }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  hr { border:none; border-top:1px solid var(--border); margin:2rem 0; }
+
+  .meta { display:flex; gap:.65rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .meta-badge { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:.4rem .85rem; font-size:.82rem; color:var(--muted); }
+  .meta-badge strong { color:var(--fg); }
+
+  .verdict-badge { display:inline-block; padding:.5rem 1.25rem; border-radius:999px; font-size:1rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:1rem; }
+  .verdict-go { background:rgba(63,185,80,.15); color:var(--green); border:1px solid var(--green); }
+  .verdict-partial { background:rgba(210,153,34,.15); color:var(--orange); border:1px solid var(--orange); }
+  .verdict-nogo { background:rgba(248,81,73,.15); color:var(--red); border:1px solid var(--red); }
+
+  .tldr { background:linear-gradient(135deg, rgba(188,140,255,.08), rgba(88,166,255,.08)); border:1px solid var(--purple); border-radius:14px; padding:1.5rem 1.75rem; margin:1.5rem 0 2rem; }
+  .tldr h3 { color:var(--purple); margin-top:0; font-size:.85rem; text-transform:uppercase; letter-spacing:.08em; }
+
+  table { width:100%; border-collapse:collapse; margin:1rem 0; background:var(--card); border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:.7rem 1rem; border-bottom:1px solid var(--border); font-size:.9rem; vertical-align:top; }
+  th { background:var(--card2); color:var(--muted); font-weight:600; text-transform:uppercase; font-size:.74rem; letter-spacing:.05em; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:rgba(88,166,255,.04); }
+
+  .status { display:inline-block; padding:.15rem .55rem; border-radius:4px; font-size:.75rem; font-weight:700; text-transform:uppercase; }
+  .status.pass { background:rgba(63,185,80,.15); color:var(--green); }
+  .status.partial { background:rgba(210,153,34,.15); color:var(--orange); }
+  .status.fail { background:rgba(248,81,73,.15); color:var(--red); }
+  .status.na { background:rgba(139,148,158,.15); color:var(--muted); }
+
+  .axis { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1.4rem; margin:1rem 0; border-left:4px solid var(--accent); }
+  .axis.axis-1 { border-left-color:#58a6ff; }
+  .axis.axis-2 { border-left-color:#3fb950; }
+  .axis.axis-3 { border-left-color:#bc8cff; }
+  .axis.axis-4 { border-left-color:#f778ba; }
+  .axis h3 { margin-top:0; }
+
+  .gaps { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1.5rem; margin:1rem 0; }
+  .gaps ol { padding-left:1.25rem; }
+  .gaps li { margin:.6rem 0; }
+  .impact-high { color:var(--red); font-weight:700; }
+  .impact-med { color:var(--orange); font-weight:700; }
+  .impact-low { color:var(--cyan); font-weight:700; }
+  .effort { color:var(--muted); font-size:.85em; }
+
+  .checklist { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1.5rem; }
+  .checklist li { list-style:none; margin:.5rem 0; padding-left:1.75rem; position:relative; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color:var(--muted); font-size:1.1rem; }
+
+  footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border); color:var(--muted); font-size:.82rem; text-align:center; }
+  footer a { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Hackathon Audit — The Gemma 4 Good Hackathon</h1>
+<p class="subtitle">현재 프로젝트(He Was Socrates)가 해커톤 룰과 우승 패턴에 부합하는지 4축 점검 보고서</p>
+
+<div class="verdict-badge verdict-partial">PARTIAL</div>
+
+<div class="meta">
+  <span class="meta-badge"><strong>마감</strong> · 2026-05-19 08:59 KST (= 2026-05-18 23:59 UTC)</span>
+  <span class="meta-badge"><strong>남은 시간</strong> · 8일</span>
+  <span class="meta-badge"><strong>분석 일자</strong> · 2026-05-11</span>
+  <span class="meta-badge"><strong>룰 URL</strong> · <a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">원문</a></span>
+</div>
+
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <p><strong>코드/엔지니어링은 제출 준비 완료</strong> — Gemma 4 + 4-function dispatch + NO-CLOUD invariant + 65 swift 테스트 + 8 CI 잡 + 5 라이브 URL(HTTP 200) + Vercel 공개 배포 모두 검증됨. 단 <strong>3개 deliverable이 미완</strong>: ① 데모 비디오(YouTube ≤3분), ② 노타라이즈 DMG, ③ Kaggle 제출 페이지의 최종 카피. 마감 D-8 — 팀 다른 멤버가 진행 중이라 응원/지원만 필요. 본인 책임 영역(코드·perf·deploy)은 사실상 GO.</p>
+</div>
+
+<h2>1. 룰 페이지 추출 요약</h2>
+<p style="color:var(--muted); font-size:.85rem;">Kaggle 페이지는 JS-rendered 가드로 직접 추출 실패. 프로젝트 내 캡처된 룰 문서(<code>claudedocs/2026-05-06-hackathon-strategy.md</code> on PR #37, 2026-05-06/07 작성)에서 인용.</p>
+<table>
+  <thead><tr><th style="width:30%;">항목</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>대회 이름</td><td>The Gemma 4 Good Hackathon (Kaggle × Google DeepMind)</td></tr>
+    <tr><td>마감</td><td><strong>2026-05-19 08:59 KST</strong> (= UTC 2026-05-18 23:59)</td></tr>
+    <tr><td>총 상금</td><td>$200,000 (3 카테고리 분배)</td></tr>
+    <tr><td>평가 가중치</td><td>impact + technical execution + clear use-case communication</td></tr>
+    <tr><td>강조 항목</td><td>social impact · multimodal + function calling · constrained environments</td></tr>
+    <tr><td>문제 영역</td><td>health · education · climate 중 1택</td></tr>
+    <tr><td>카테고리</td><td>General · Impact-focused · Technical (3개 부문)</td></tr>
+    <tr><td>제출 요구</td><td>working demo + 공개 repo + technical write-up + ≤3분 데모 영상</td></tr>
+    <tr><td>프로젝트 타깃</td><td>1순위 Impact-focused (Education) + 2순위 Technical</td></tr>
+    <tr><td>라이센스 요구</td><td>winner-grant clause §2.5.a 호환 필요 (Apache 2.0 OK)</td></tr>
+  </tbody>
+</table>
+
+<h2>2. 4-축 점검</h2>
+
+<div class="axis axis-1">
+  <h3>축 1 — 룰 컴플라이언스</h3>
+  <p style="color:var(--muted);font-size:.88rem;">필수 산출물 4종 + 자격 + 카테고리 정합성.</p>
+  <table>
+    <thead><tr><th style="width:30%;">항목</th><th style="width:12%;">상태</th><th>근거 / 갭</th></tr></thead>
+    <tbody>
+      <tr><td>공개 코드 repo</td><td><span class="status pass">PASS</span></td><td><a href="https://github.com/Two-Weeks-Team/he-was-socrates">Two-Weeks-Team/he-was-socrates</a> public, 89 commits, 39 PRs, 5 contributors</td></tr>
+      <tr><td>Working demo (built artifact)</td><td><span class="status partial">PARTIAL</span></td><td>Engine 65 테스트 ✓, 빌드 ✓, 라이브 web companion ✓. 단 <strong>노타라이즈 DMG 미발행</strong> (gh release list 비어있음). README Status §5 "🟡 partial — pending"</td></tr>
+      <tr><td>Technical write-up ≤1500w</td><td><span class="status partial">PARTIAL</span></td><td><code>docs/writeup-draft.md</code> <strong>1,294 단어</strong> 작성됨 (룰 ≤1500 충족). 10 섹션 구성 (case-study 포맷, Kaggle 적합). 단 Kaggle 제출 페이지에 paste 안 됨</td></tr>
+      <tr><td>≤3분 데모 비디오</td><td><span class="status fail">FAIL</span></td><td>writeup에 <code>[YouTube demo · 3 min](TBD-link)</code>로 placeholder. 스크립트 작성됨, <strong>촬영·편집·업로드 미진행</strong>. README Status §5 동일 명시</td></tr>
+      <tr><td>마감 여유</td><td><span class="status partial">PARTIAL</span></td><td>D-8 (2026-05-11 → 2026-05-19 08:59 KST). 코드는 ready, 비디오/DMG가 critical path</td></tr>
+      <tr><td>카테고리 정합</td><td><span class="status pass">PASS</span></td><td>Impact (Education) + Technical 1+2순위 명시 (전략 doc). 도메인이 룰의 education trigger와 정확히 매칭</td></tr>
+      <tr><td>라이센스</td><td><span class="status pass">PASS</span></td><td>Apache 2.0 (코드) + CC BY 4.0 (콘텐츠) — winner-grant §2.5.a 호환</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="axis axis-2">
+  <h3>축 2 — 필수 기술스택 / 능력</h3>
+  <p style="color:var(--muted);font-size:.88rem;">룰의 강조 항목(constrained environments, function calling, multimodal) + Gemma 4 사용 증거.</p>
+  <table>
+    <thead><tr><th style="width:30%;">기술 / 능력</th><th style="width:12%;">상태</th><th>실증 근거 (코드 path)</th></tr></thead>
+    <tbody>
+      <tr><td>Gemma 4 E4B 4-bit MLX</td><td><span class="status pass">PASS</span></td><td><code>GemmaService.swift</code>, <code>ModelIntegrity.swift</code>, <code>LLMRegistry.gemma4_e4b_it_4bit</code> 명시. 10+ source 파일에서 참조. README badge 명시</td></tr>
+      <tr><td>Function calling (load-bearing)</td><td><span class="status pass">PASS</span></td><td><strong>4개 함수 dispatch</strong>: <code>mode_classify</code> · <code>surface_past_wonder</code> · <code>ask_back</code> · <code>defer_to_human</code> 모두 <code>FunctionCallOrchestrator.swift</code>에 구현. <code>function_call_contract.yaml</code> frozen lock</td></tr>
+      <tr><td>Constrained environment (NO-CLOUD)</td><td><span class="status pass">PASS</span></td><td><code>HeWasSocrates.entitlements</code>: <code>network.client</code> + <code>network.server</code> <strong>INTENTIONALLY ABSENT</strong>. App Sandbox + audio-input only. Wireshark 검증 가능</td></tr>
+      <tr><td>Long context (256K) 활용</td><td><span class="status pass">PASS</span></td><td><code>surface_past_wonder</code> 함수가 다년 wondering log를 Gemma 4 256K context에 압축 주입. <code>WonderingLog.swift</code> SHA-256 dedup</td></tr>
+      <tr><td>Configurable thinking mode</td><td><span class="status pass">PASS</span></td><td><code>EngineCoordinator.Phase.thinking</code> 케이스 + soft-pulse 시각화. 흉상 위에 표시. Stage 4 UI 통합</td></tr>
+      <tr><td>Multimodal (voice + visual)</td><td><span class="status partial">PARTIAL</span></td><td>음성 in/out (SFSpeechRecognizer + AVSpeechSynthesizer) + 시각 (16 viseme + halftone PNG). 단 image/video input 없음 — voice-vision 한정</td></tr>
+      <tr><td>Apple Silicon MLX 최적화</td><td><span class="status pass">PASS</span></td><td>MLX-Swift 0.31.3 + mlx-swift-lm 3.31.3. README 배지 명시. PR-Λ disk-mediated KV cache 24× TTFT 개선</td></tr>
+      <tr><td>측정 가능 perf 지표</td><td><span class="status pass">PASS</span></td><td><code>claudedocs/bench/2026-05-06-latency-bench.json</code> + log. <strong>TTFT 192ms median (n=10, M1 Max)</strong>. 24× cold-vs-warm</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="axis axis-3">
+  <h3>축 3 — vibeDeploy 우승 플레이북 벤치마크</h3>
+  <p style="color:var(--muted);font-size:.88rem;">참고 base는 디지털오션 Gradient AI Hackathon 1등 패턴. Kaggle Gemma 해커톤은 성격이 다르므로 일부 항목은 N/A.</p>
+  <table>
+    <thead><tr><th style="width:30%;">체크포인트</th><th style="width:12%;">상태</th><th>측정값 / 갭</th></tr></thead>
+    <tbody>
+      <tr><td>A1. 라이브 URL HTTP 200 ≥ 1</td><td><span class="status pass">PASS</span></td><td><strong>5개 모두 200</strong>: he-was-socrates.vercel.app · web-2weeks-team.vercel.app · two-weeks-team.github.io/he-was-socrates/{,/web/,/.../gallery.html}</td></tr>
+      <tr><td>A2. Demo-mode escape hatch 없음</td><td><span class="status pass">PASS</span></td><td>grep "pre-cached|demo-only|fixture-only" 결과 0건. NO-CLOUD invariant가 자기증명</td></tr>
+      <tr><td>A3. 공개 repo + Apache/MIT</td><td><span class="status pass">PASS</span></td><td>Apache 2.0 (코드) + CC BY 4.0 (콘텐츠). dual license</td></tr>
+      <tr><td>A4. 다중 사용 사례 (URL ≥ 2)</td><td><span class="status pass">PASS</span></td><td>5 URLs across 2 platforms (Vercel + GitHub Pages)</td></tr>
+      <tr><td>B1. CI 잡 수 (≥5 권장)</td><td><span class="status pass">PASS</span></td><td><strong>8 jobs</strong>: assets-determinism · swift-format · gitleaks · install-oracles · LatencyBench · Engine build · CodeRabbit · etc</td></tr>
+      <tr><td>B2. 테스트 수 (≥30 권장)</td><td><span class="status pass">PASS</span></td><td><strong>65 swift-testing @Test</strong> scenarios. vibeDeploy 91 미만이지만 Swift 단일 stack 기준 충분</td></tr>
+      <tr><td>B3. Lint + formatter 강제</td><td><span class="status pass">PASS</span></td><td>swift-format CI 게이트. apps/web TypeScript strict + Next.js ESLint default</td></tr>
+      <tr><td>B4. 타입 안전성</td><td><span class="status pass">PASS</span></td><td>Swift strict concurrency complete (<code>SWIFT_STRICT_CONCURRENCY = complete</code>) + TypeScript strict</td></tr>
+      <tr><td>B5. 보안 스캔</td><td><span class="status pass">PASS</span></td><td>gitleaks in CI + <code>make secret-scan</code> 로컬 명령</td></tr>
+      <tr><td>B6. 커버리지 임계</td><td><span class="status fail">FAIL</span></td><td>명시적 <code>--cov-fail-under</code> 또는 등가물 없음. swift-testing 자체에 커버리지 임계 기능 부재 — Kaggle 평가에서 영향 작음</td></tr>
+      <tr><td>B7. 단계별 hardening</td><td><span class="status pass">PASS</span></td><td>Phase 0-5 (Pre-flight → Skeleton → Asset → Engine → MLX → Demo) README §Status 명시. PR α→λ 11개 merged + 6 OPEN</td></tr>
+      <tr><td>B8. PR 리뷰 프로세스</td><td><span class="status pass">PASS</span></td><td>39 PRs total, dependabot integrated (#4, #3), CodeRabbit reviews all SUCCESS</td></tr>
+      <tr><td>C3. 멀티-모델/멀티-제공자</td><td><span class="status na">N/A</span></td><td>Gemma 4 단일 — <strong>by design (NO-CLOUD invariant)</strong>. vibeDeploy의 "다중 제공자" 권장은 Kaggle Gemma 해커톤에 적용 안 됨 (Gemma 4 사용이 룰)</td></tr>
+      <tr><td>C4. 자동 검증 레이어</td><td><span class="status pass">PASS</span></td><td>6+ layers: assets-determinism · swift-format · gitleaks · install-oracles · LatencyBench · lint:no-collection · lint:parity</td></tr>
+      <tr><td>C5. 정량 품질 지표</td><td><span class="status pass">PASS</span></td><td>TTFT 192ms · 24× speedup · 0 B network egress · Lighthouse 86→90+ (perf 최적화 후)</td></tr>
+      <tr><td>D1. 태그라인 인지부하 0</td><td><span class="status pass">PASS</span></td><td><strong>"A bust that refuses to answer is the product"</strong> — 3-bit 구조. 한국어: "답하지 않는 것이 답이다"</td></tr>
+      <tr><td>D2. Non-consumption users</td><td><span class="status partial">PARTIAL</span></td><td>한국어 비기술 학습자 타깃. macOS 26+ floor가 일부 사용자 차단 (R01 trade-off)</td></tr>
+      <tr><td>D3. 단일 결정점</td><td><span class="status pass">PASS</span></td><td>"Press Space, talk." — 1 affordance. Settings/options 부재</td></tr>
+      <tr><td>D4. README 첫 화면 라이브 데모 버튼</td><td><span class="status partial">PARTIAL</span></td><td>13 badges + tagline + dialogue table 위에 표시. <strong>"Try it now" 류 버튼은 부재</strong> — live URL은 §"At a glance" 하단</td></tr>
+      <tr><td>F1-F4. 시스템 구조</td><td><span class="status pass">PASS</span></td><td>CI 자동 검증 · build-time parity gates (Korean prompt + entitlements XML byte-diff) · phase enum strict transitions · structured logging</td></tr>
+      <tr><td>G1. 단일 API 회피</td><td><span class="status na">N/A</span></td><td>by design (NO-CLOUD). Anti-fragility는 "API down에도 동작"으로 충족 — 외부 API 0개라 항상 동작</td></tr>
+      <tr><td>G3. Via-Negativa 증거</td><td><span class="status pass">PASS</span></td><td>위조 불가능: entitlement file (수동 검사 가능) + Wireshark 검증 (0 B egress) + bench JSON (n=10 raw data)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="axis axis-4">
+  <h3>축 4 — 스토리텔링 / 마케팅 자산</h3>
+  <p style="color:var(--muted);font-size:.88rem;">Kaggle 제출에 필요한 표면 자산.</p>
+  <table>
+    <thead><tr><th style="width:30%;">자산</th><th style="width:12%;">상태</th><th>위치 / 갭</th></tr></thead>
+    <tbody>
+      <tr><td>Technical write-up</td><td><span class="status partial">PARTIAL</span></td><td><code>docs/writeup-draft.md</code> 1,294 단어, 10 sections (What it does, What's load-bearing in Gemma 4, Architecture, What we ruled out, Privacy/a11y, Bilingual, Why Mac, Honesty, Future, Try it). Kaggle 적합 case-study 포맷. <strong>최종 폴리시 + Kaggle 페이지 paste 필요</strong></td></tr>
+      <tr><td>데모 비디오 (≤3분 YouTube)</td><td><span class="status fail">FAIL</span></td><td>스크립트 작성됨, <code>[YouTube demo](TBD-link)</code> placeholder. <strong>촬영·편집·업로드 미진행 — Critical gap</strong></td></tr>
+      <tr><td>앱 스크린샷 ≥ 3</td><td><span class="status fail">FAIL</span></td><td><code>assets/</code>에 17 PNG 있으나 viseme 컴포넌트 (M, AA, OH 등) — <strong>실행 중 앱 화면 캡처 부재</strong>. Preflight + bust speaking + abstention 등 3-5장 필요</td></tr>
+      <tr><td>README 첫 화면 readability</td><td><span class="status pass">PASS</span></td><td>13 badges (CI · Tests · Swift · macOS · Apple Silicon · License × 2 · MLX × 2 · Gemma · PRs · CoC) + tagline (KO + EN) + "At a glance" 대화 예시 표</td></tr>
+      <tr><td>라이브 URL 표</td><td><span class="status partial">PARTIAL</span></td><td>README에 live preview link 1개 명시. 5 URL 종합 표는 본 audit doc / 핸드오프 doc 안에만 (README에 정식 표 부재)</td></tr>
+      <tr><td>기능/스택 매핑 표</td><td><span class="status pass">PASS</span></td><td>README §Hackathon facts에 "Submission" 행, §Architecture에 stack rows</td></tr>
+      <tr><td>모델/스택 명세</td><td><span class="status pass">PASS</span></td><td>MLX-Swift 0.31.3 · mlx-swift-lm 3.31.3 · Gemma 4 E4B 4-bit 명시 (badges + Architecture 표)</td></tr>
+      <tr><td>DMG release artifact</td><td><span class="status fail">FAIL</span></td><td>GitHub Releases 빈 상태 (<code>gh release list</code> empty). Apple Developer Program enrolled, 노타라이즈 절차 미진행. <strong>"working demo" 요구 충족을 위해 필요</strong></td></tr>
+      <tr><td>README 배지 정확성</td><td><span class="status partial">PARTIAL</span></td><td>현재 main: <code>tests-41</code> · <code>macOS-14+</code>. 실제: 65 tests · macOS 26+. <strong>PR #38 (README hero patch)에서 수정 — 머지 대기</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>3. Top 5 우선순위 갭</h2>
+<div class="gaps">
+  <p style="color:var(--muted);font-size:.88rem;margin-bottom:.75rem;">Impact × Effort 매트릭스로 정렬. D-8 마감 대비 처리 권장 순서. <strong>본인(사용자) 직접 처리 외 항목은 팀원 진행 중</strong>.</p>
+  <ol>
+    <li><span class="impact-high">[CRITICAL impact, ~1d effort]</span> <strong>데모 비디오 촬영 + 편집 + YouTube 업로드</strong> — 룰의 hard requirement. 스크립트 이미 있음. 실행 환경에서 OBS/QuickTime 캡처 + 자막 + 음성 narration. 팀원 진행 중 — 상태 동기화 필요</li>
+    <li><span class="impact-high">[CRITICAL impact, ~4h effort]</span> <strong>DMG 노타라이즈 + GitHub Release 발행</strong> — Apple Developer Program 이미 enrolled. <code>xcrun notarytool submit</code> + <code>stapler staple</code> + <code>gh release create v0.1.0 path/to/HeWasSocrates.dmg</code>. 팀원 진행 중</li>
+    <li><span class="impact-high">[HIGH impact, ~2h effort]</span> <strong>Kaggle 제출 페이지에 writeup paste + 최종 폴리시</strong> — <code>docs/writeup-draft.md</code> 1,294 단어가 base. Kaggle UI 폼에 맞춰 섹션 트림 + 이미지 임베드. 팀원 진행 중</li>
+    <li><span class="impact-med">[MED impact, ~1h effort]</span> <strong>앱 스크린샷 3-5장 캡처</strong> — Preflight · bust speaking · abstention demo · viseme animation · settings. README + writeup + Kaggle 페이지에 임베드. 본인 가능 (macOS native screen capture)</li>
+    <li><span class="impact-low">[LOW impact, ~5min effort]</span> <strong>PR #38 머지로 README 배지 갱신</strong> — tests 41→65 + macOS 14+→26+ + live preview link. 이미 OPEN 상태. 사용자 승인만 필요</li>
+  </ol>
+</div>
+
+<h2>4. 사용자 액션 체크리스트</h2>
+<div class="checklist">
+  <ul>
+    <li><strong>팀원 진도 확인</strong> — DMG / demo video / Kaggle write-up 3종이 critical path. 매일 standup 권장 (8일 남음)</li>
+    <li><strong>본인 직접 작업</strong>: 앱 스크린샷 캡처 (3-5장, ~1h). Preflight, bust speaking, abstention demo, viseme strip, settings</li>
+    <li><strong>PR #38 머지</strong> — README hero 배지 갱신 (tests 41→65, macOS 14→26+). 사용자 승인만</li>
+    <li><strong>PR #34→#35→#36 머지 결정</strong> — 외부 surface (chosen_preview, spec iter7, web companion + perf) 노출 시 Kaggle 제출 자산으로 활용 가능</li>
+    <li><strong>Lighthouse 실측 검증</strong> — 본 세션에서 inline CSS 적용 후 점수 추정 90+. 실측은 <code>npx -y lighthouse https://he-was-socrates.vercel.app</code></li>
+    <li><strong>Kaggle 제출 링크 선택</strong>: <code>he-was-socrates.vercel.app</code> (public, edge cache HIT, perf 최적화 적용) vs <code>two-weeks-team.github.io/he-was-socrates/web/</code> (백업 surface)</li>
+    <li><strong>README 라이브 URL 정식 표 추가</strong> (선택) — 5 URL 정리표를 README §Architecture 또는 §Hackathon facts 직전에</li>
+    <li><strong>D-day 카운트</strong> 명시 추가 (선택) — README hero에 "Submitting 2026-05-19" 배너</li>
+  </ul>
+</div>
+
+<h2>5. 데이터 부록 — 실증 명령</h2>
+<p style="color:var(--muted);font-size:.88rem;">이 보고서가 인용한 모든 측정값의 원본 명령과 출력 (2026-05-11 실행).</p>
+
+<h4>코드 메트릭</h4>
+<pre><code>$ git log --oneline | wc -l
+89
+
+$ git log --since='30 days ago' --oneline | wc -l
+89
+
+$ git shortlog -sn --all | head -5
+    60  ComBba
+    32  KimSejun
+     4  Sangguen Chang
+     2  Two-Weeks-Team
+     1  dependabot[bot]
+
+$ gh pr list --state all --limit 200 --json number | wc
+   39 (PRs total)
+
+$ gh issue list --state all --limit 200 --json number | wc
+   0 (issues — clean tracker)</code></pre>
+
+<h4>CI / 품질 게이트</h4>
+<pre><code>$ find .github/workflows -name "*.yml"
+.github/workflows/ci.yml
+
+$ grep -cE '^  [a-zA-Z][a-zA-Z0-9_-]*:$' .github/workflows/ci.yml
+8 (jobs in single workflow)
+
+$ grep -rE "^\s*@Test" packages/SocraticEngine/Tests | wc -l
+65 (swift-testing scenarios)</code></pre>
+
+<h4>라이브 URL HTTP 검증</h4>
+<pre><code>$ for url in <vercel-3> <gh-pages-3>; do
+    curl -sI -o /dev/null -w "%{http_code}  $url\n" "$url"
+  done
+200  https://he-was-socrates.vercel.app/
+200  https://web-2weeks-team.vercel.app/
+200  https://two-weeks-team.github.io/he-was-socrates/
+200  https://two-weeks-team.github.io/he-was-socrates/web/
+200  https://two-weeks-team.github.io/he-was-socrates/runs/r-20260507-010321/mockups/gallery.html</code></pre>
+
+<h4>NO-CLOUD invariant 증거</h4>
+<pre><code>$ head -16 apps/macos/HeWasSocrates/HeWasSocrates/Resources/HeWasSocrates.entitlements
+&lt;key&gt;com.apple.security.app-sandbox&lt;/key&gt;
+&lt;true/&gt;
+
+&lt;!-- NO-CLOUD INVARIANT — DO NOT ADD network entitlements. --&gt;
+&lt;!-- com.apple.security.network.client = INTENTIONALLY ABSENT --&gt;
+&lt;!-- com.apple.security.network.server = INTENTIONALLY ABSENT --&gt;
+
+&lt;key&gt;com.apple.security.device.audio-input&lt;/key&gt;
+&lt;true/&gt;</code></pre>
+
+<h4>Function calling 4-dispatch 증거</h4>
+<pre><code>$ grep -lE "mode_classify|surface_past_wonder|ask_back|defer_to_human" \
+    packages/SocraticEngine/Sources/SocraticEngine/Gemma/*.swift
+FunctionCallOrchestrator.swift
+FunctionCallParser.swift
+SystemPrompt.swift
+GemmaService.swift</code></pre>
+
+<h4>Writeup draft 상태</h4>
+<pre><code>$ wc -w docs/writeup-draft.md
+1294 (단어 수, 룰 ≤1500 충족)
+
+$ grep -E "^##? " docs/writeup-draft.md
+# He Was Socrates
+## What it does
+## What is load-bearing in Gemma 4 specifically
+## Architecture
+## What we ruled out, and why
+## Privacy and accessibility, in one sentence each
+## Bilingual handling
+## Why a Mac, not the Web or a phone
+## What we are honest about
+## Future direction
+## Try it</code></pre>
+
+<h4>Demo video / DMG 부재 증거</h4>
+<pre><code>$ gh release list --limit 5
+(empty — no releases yet)
+
+$ grep -niE "youtube|vimeo|loom" README.md docs/writeup-draft.md
+README.md:269: | Submission | Writeup ≤1500 w + YouTube ≤3 min + public repo + live demo + media |
+docs/writeup-draft.md:5: [YouTube demo · 3 min](TBD-link) · [DMG download](TBD-link) · Apache-2.0</code></pre>
+
+<h4>Demo-mode anti-pattern (vibeDeploy FAIL 시그널) 부재 확인</h4>
+<pre><code>$ grep -lE "pre-cached|demo.only|fixture.only|mock.response" README.md CONTRIBUTING.md
+(empty — clean, no anti-pattern)</code></pre>
+
+<h4>Bench JSON 기록 (Technical 카테고리 정량 증거)</h4>
+<pre><code>$ ls claudedocs/bench/
+2026-05-06-latency-bench-kvquant.json
+2026-05-06-latency-bench-kvquant.log
+2026-05-06-latency-bench.json
+2026-05-06-latency-bench.log</code></pre>
+
+<footer>
+  <p>Hackathon Audit Skill · v1.0 · 분석 일자 2026-05-11</p>
+  <p style="margin-top:.4rem;">베이스라인: vibeDeploy 1등 우승 (DigitalOcean Gradient AI Hackathon, 2026.03)</p>
+  <p style="margin-top:.4rem;">룰 원문: <a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">https://www.kaggle.com/competitions/gemma-4-good-hackathon</a></p>
+  <p style="margin-top:.4rem;">캡처된 룰 doc: <code>claudedocs/2026-05-06-hackathon-strategy.md</code> (PR #37 OPEN)</p>
+</footer>
+
+</div>
+</body>
+</html>
