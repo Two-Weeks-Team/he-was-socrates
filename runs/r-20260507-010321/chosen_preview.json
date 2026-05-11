@@ -1,0 +1,34 @@
+{
+  "run_id": "r-20260507-010321",
+  "lock_timestamp": "2026-05-07T07:00:00Z",
+  "decision": "composite",
+  "base": {
+    "advocate_id": "P14-the-educator",
+    "rationale": "BP rank #1, Impact-Education 1순위 user decision (2026-05-07). Recursive Socratic pedagogy — the form is the message. 4-lesson scaffold + maieutics sidebar + abstention demo as Lesson 3 highlight."
+  },
+  "references": [
+    {"advocate_id": "P22-the-researcher", "contribution": "Limitations section + numbered citations [N] + TTFT distribution chart + paper-style methodology rigor"},
+    {"advocate_id": "P12-the-privacy-hawk", "contribution": "entitlements file inline (network.client ABSENT highlight) + privacy-first Impact narrative anchor"},
+    {"advocate_id": "P18-the-designer", "contribution": "5-act scroll-snap structure + bold serif typography + sticky stage technique"},
+    {"advocate_id": "P13-the-data-nerd", "contribution": "4 KPI cards + TTFT distribution SVG with p10/p50/p90 ref lines + 7-step funnel"},
+    {"advocate_id": "P20-the-oss-maintainer", "contribution": "GitHub-native badges row + clone+make 30-sec quickstart + Apache-2.0 + CC-BY-4.0 §2.5.a winner-grant compatibility"}
+  ],
+  "synthesis_path": "chosen_preview/index.html",
+  "synthesis_size_bytes_target": 70000,
+  "structure": {
+    "sections": [
+      {"id": "hero", "title": "Lesson 0 — pre-flight", "blends": ["P18 sticky", "P14 progress chrome"]},
+      {"id": "lesson-1", "title": "Hold Spacebar. Listen. Wait. Release.", "blends": ["P14 lesson chrome", "16-cell viseme strip"]},
+      {"id": "lesson-2", "title": "단정한 평어체", "blends": ["P14 sidebar", "P12 system prompt verbatim"]},
+      {"id": "lesson-3", "title": "We refuse better.", "blends": ["P14 abstention demo", "3-screen sequence", "6 categories table", "Gemma 4 function calling"]},
+      {"id": "lesson-4", "title": "On-device, by entitlement", "blends": ["P12 entitlements inline", "P13 KPI cards + TTFT chart"]},
+      {"id": "methods", "title": "4-function dispatch", "blends": ["P22 paper structure", "P13 7-step funnel"]},
+      {"id": "limitations", "title": "Honest disclosure", "blends": ["P22 Limitations section — Phase 4 designed-for, M1 Max only, macOS 26 floor, tone single-voice"]},
+      {"id": "try", "title": "Try it · ~30 seconds", "blends": ["P20 git clone + make commands"]},
+      {"id": "colophon", "title": "License + topics + references", "blends": ["P20 badges row + topics + numbered references"]}
+    ]
+  },
+  "language_policy": "English-primary; Korean for: SystemPrompt verbatim excerpt, defer_to_human demo, hero subtitle, identity sidebars",
+  "aesthetic": "1-bit halftone bust + monochrome bone/ink + mint-green accent only on voted/active states",
+  "publish_target": "GitHub Pages (gh-pages branch root after H2)"
+}
