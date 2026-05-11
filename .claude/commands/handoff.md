@@ -27,7 +27,7 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob, AskUserQuestion
    - 만든 파일 / 머지한 PR / 푸시한 branch / 변경한 spec
    - 미완 작업 + 막힌 지점
 
-4. **표준 핸드오프 문서 작성**: `claudedocs/<YYYY-MM-DD>-session-handoff.md` 형식. 필수 섹션:
+4. **표준 핸드오프 문서 작성**: **현재 working directory**의 `claudedocs/<YYYY-MM-DD>-session-handoff.md` 형식 (cwd 국한 — 다른 repo의 claudedocs/에 쓰지 않음). 필수 섹션:
 
    - **§0 두 줄 요약** — 비기술자도 이해할 한줄 + 다음 세션 1순위 액션
    - **§1 진행한 작업 (시간순)** — Phase A/B/C/... 로 시간 진행
