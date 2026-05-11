@@ -1,9 +1,11 @@
 name: CI
 
 # Triggers: PRs to main and pushes to main.
-# Runner: macOS 14 (Sonoma) on Apple Silicon when available; falls back to
-#         GitHub-hosted macos-14 (currently still primarily Apple-Silicon as
-#         of 2026-05). If that label changes, document a swap to macos-latest.
+# Runner: macos-26 (Tahoe, Apple Silicon arm64). Required after SPEC iter6
+#         raised the deployment floor to macOS 26 — older runners (macos-15
+#         and below) cannot load the test xctest bundle because it's linked
+#         against macOS 26 Swift dylibs (libswift_DarwinFoundation1.dylib).
+#         See: https://github.com/actions/runner-images for available labels.
 on:
   push:
     branches: [main]
@@ -33,7 +35,7 @@ jobs:
   # -------------------------------------------------------------------------
   engine-build-and-test:
     name: Engine build & swift-testing suite
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -82,7 +84,7 @@ jobs:
   # -------------------------------------------------------------------------
   assets-determinism:
     name: Asset pipeline determinism
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 10
     steps:
       - name: Checkout repository
@@ -108,7 +110,7 @@ jobs:
   # -------------------------------------------------------------------------
   lint-swift:
     name: swift-format lint
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 10
     steps:
       - name: Checkout repository
@@ -117,7 +119,7 @@ jobs:
       - name: Install swift-format via Homebrew
         run: |
           # Homebrew swift-format tracks Apple's main-line releases and is
-          # the most reliable source on macos-14 runners.
+          # the most reliable source on hosted runners.
           brew install swift-format
           swift-format --version
 
@@ -133,7 +135,7 @@ jobs:
   # -------------------------------------------------------------------------
   security-scan:
     name: gitleaks secret scan
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 5
     steps:
       - name: Checkout repository (full history for gitleaks)
@@ -157,7 +159,7 @@ jobs:
   # -------------------------------------------------------------------------
   install-oracles-smoke:
     name: install-oracles smoke
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -204,7 +206,7 @@ jobs:
   # -------------------------------------------------------------------------
   bench-latency-compile:
     name: LatencyBench compile-only smoke
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 20
     steps:
       - name: Checkout repository
