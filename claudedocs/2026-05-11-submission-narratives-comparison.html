@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submission Narratives — Out Loud vs Maia</title>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--card2:#1c2128;--border:#30363d;--fg:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--orange:#d29922;--purple:#bc8cff;--cyan:#39d353;--pink:#f778ba;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.65;}
+  .container{max-width:1180px;margin:0 auto;padding:2rem 1.5rem;}
+  h1{font-size:2.1rem;font-weight:800;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;line-height:1.2;}
+  h2{font-size:1.4rem;font-weight:700;color:var(--accent);margin:2.4rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:.5rem;}
+  h3{font-size:1.1rem;font-weight:600;margin:1.4rem 0 .6rem;}
+  p,li{color:var(--fg);font-size:.93rem;} .subtitle{color:var(--muted);font-size:1rem;margin-bottom:1.5rem;max-width:900px;}
+  ul,ol{padding-left:1.5rem;margin:.6rem 0;} li{margin:.3rem 0;}
+  strong{color:#fff;font-weight:600;}
+  code{background:var(--card2);padding:.12rem .35rem;border-radius:4px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.85em;color:var(--cyan);}
+  blockquote{border-left:3px solid var(--purple);background:rgba(188,140,255,.06);padding:.9rem 1.2rem;margin:1rem 0;border-radius:0 8px 8px 0;font-style:italic;color:var(--fg);}
+  a{color:var(--accent);text-decoration:none;} a:hover{text-decoration:underline;}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;background:var(--card);border-radius:10px;overflow:hidden;}
+  th,td{text-align:left;padding:.65rem .9rem;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:top;}
+  th{background:var(--card2);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.72rem;letter-spacing:.05em;}
+  tbody tr:last-child td{border-bottom:none;} tbody tr:hover{background:rgba(88,166,255,.04);}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem;margin:1rem 0;}
+  .c1{border-left:4px solid var(--cyan);} .c2{border-left:4px solid var(--orange);}
+  .tldr{background:linear-gradient(135deg,rgba(188,140,255,.08),rgba(88,166,255,.08));border:1px solid var(--purple);border-radius:14px;padding:1.4rem 1.7rem;margin:1.4rem 0 2rem;}
+  .tldr h3{color:var(--purple);margin-top:0;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;}
+  .pill{display:inline-block;padding:.1rem .5rem;border-radius:4px;font-size:.72rem;font-weight:700;}
+  .p-primary{background:rgba(57,211,83,.15);color:var(--cyan);} .p-fallback{background:rgba(210,153,34,.15);color:var(--orange);}
+  footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;text-align:center;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Submission Narratives — Out Loud vs Maia</h1>
+<p class="subtitle">The Gemma 4 Good Hackathon (Kaggle × Google DeepMind) · 마감 2026-05-19 08:59 KST · 두 후보 제출 서사 비교 · 2026-05-11</p>
+
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <p>"He Was Socrates"를 <strong>제품이 아니라 부품</strong>(on-device 음성 I/O 루프 + function-call orchestrator + abstention gate + deterministic build + 0-egress 패턴)으로 보고, 해커톤 문서가 <em>반복해서 요구하는 것</em>(on-device for "the places that need it most" · multimodal · native function calling · grounded · WOW via video, Gemma 3n winners를 따르라)에서 출발해 두 후보 서사를 완성. <strong>주(主): Out Loud</strong> — 싼 Android에서 도는 on-device Gemma 4가 글 못 읽거나 그 언어를 못 읽는 사람에게 문서/사진/양식을 소리 내어 읽어주고 무엇을 할지 알려줌. "Gemma Vision for the illiterate/excluded" — winning lineage의 안 차지된 좌석. <strong>대안(fallback): Maia</strong> — 인터넷·교사 없는 교실의 on-device Gemma 4 튜터가 한 아이 손글씨를 보고 소크라테스식으로 묻고(He Was Socrates의 ask_back thesis가 <em>옳은 집</em>을 찾음), 하루 끝 교사에게 60명 막힌 지점 지도를 줌. 둘 다 비-copycat, 둘 다 multimodal vision이 load-bearing, 둘 다 와우 영상 비트가 명확. 추정 수상가능성(Gemma-3n-winner 수준 실행 시): "any prize" ~20-30%, top-3 ~5-10% (95%는 어떤 출품작도 불가능). 전문(全文): <code>docs/submission-out-loud.md</code> · <code>docs/submission-maia.md</code>.</p>
+</div>
+
+<h2>왜 이 방향인가 — 문서가 반복해서 말하는 것</h2>
+<p>해커톤 Description 원문에서 빈도 높은 순:</p>
+<ol>
+  <li><strong>On-device / edge / local</strong> (최다): "local frontier intelligence" · "optimizing E2B and E4B models for edge-based solutions" · "a classroom with spotty internet" · "a medical site far from a data center" · "offline, edge-based disaster response"</li>
+  <li><strong>"the places that need it most"</strong> — 소외·저자원·저연결·프라이버시-필수. 명명된 세 컨텍스트: 오프라인 교실 / 원격 의료지 / <strong>"a community where privacy is non-negotiable"</strong></li>
+  <li><strong>Multimodal understanding</strong> — text/images/documents/screenshots/photos</li>
+  <li><strong>Native function calling / multi-tool agents</strong> — "multi-tool agents that adapt to the individual and empower the educator through seamless integration" · "agentic retrieval"</li>
+  <li><strong>Grounded / accurate outputs</strong> — "ensure accurate, grounded outputs" · "remains grounded and explainable"</li>
+  <li><strong>WOW via video/story</strong> — "This is the most important part of your submission" · "We want to see the 'wow' factor" · "Explore the winners and finalists of the Gemma 3n Impact Challenge"</li>
+</ol>
+<p>Gemma 3n winners의 와우 패턴: <em>특정한 사람이, 특정한 장벽 앞에서, AI가 도울 수 없던 것을 — 이제 싼 기기에서, 오프라인으로, 그들의 언어로, 해내는 걸 영상에서 본다.</em> 이미 차지된 accessibility 레인: 시각(Gemma Vision 1st) · 인지(Vite Vere 2nd) · 운동/언어(3VA, Dream Assistant) · AAC. <strong>안 차지됐고 거대한 레인 = 문해력/언어 배제(754M illiterate + 수십억 언어-배제) → Out Loud.</strong></p>
+
+<h2>두 후보</h2>
+
+<div class="card c1">
+  <h3><span class="pill p-primary">PRIMARY</span> &nbsp; Out Loud — "세상을 당신에게 읽어주는 폰"</h3>
+  <p><strong>Subtitle</strong>: The phone that reads the world to you — in your language, out loud, offline. Even the things you can't show anyone.</p>
+  <p><strong>Track</strong>: Digital Equity &amp; Inclusivity (supporting: Health &amp; Sciences, Safety &amp; Trust)</p>
+  <p><strong>한 줄 목적</strong>: 글 못 읽거나 그 언어를 못 읽는 사람이 — 퇴거 통지서·의료 청구서·진단서·이민 서류·약병·학교 편지를 — 폰에 들이대면 그들의 언어로 <em>소리 내어</em> 무엇인지 + 무엇을 할지 알려준다. cloud에 절대 안 올릴 문서이기에 <em>반드시</em> on-device.</p>
+  <blockquote>와우 비트: 부엌의 노인 이민 여성, 위협적인 영어 편지 더미. 폰을 한 장에 댐. 폰이 그녀의 언어로: "이건 병원 청구서예요. 1,240달러를 청구하는데, 보험으로 깎을 수 있어요. 이 번호로 전화하세요." → 그녀의 얼굴. → 컷: 비행기 모드 ON, Wireshark 0 패킷 — "그녀의 의료 청구서는 그녀의 손을 떠난 적이 없습니다."</blockquote>
+  <p><strong>Gemma 4 사용</strong>: multimodal vision(문서 읽음 — load-bearing) · native function calling(classify → explain → assess_deadline → find_local_resource → log) · 256K(문서 이력 — "세 번째 통지서") · E4B 4-bit(싼 Android, 오프라인) · configurable thinking(모호한 양식엔 budget) · grounded(변호사·의사 척 안 함 — 인계)</p>
+  <p><strong>POC 재사용</strong>: on-device STT/TTS 음성 루프 · FunctionCallOrchestrator · WonderingLog→문서 로그(SHA-256 dedup) · defer_to_human gate · deterministic build · 0-network-entitlement 패턴. <strong>버림</strong>: 흉상, 한국어-only lock, macOS-only, 풀스크린 UX, "답하지 않는 흉상" 헤드라인.</p>
+</div>
+
+<div class="card c2">
+  <h3><span class="pill p-fallback">FALLBACK</span> &nbsp; Maia — "한 아이의 선생님"</h3>
+  <p><strong>Subtitle</strong>: A patient tutor that adapts to one child, in their language, with no internet — and hands their real teacher a map of where all sixty are stuck.</p>
+  <p><strong>Track</strong>: Future of Education (supporting: Digital Equity)</p>
+  <p><strong>한 줄 목적</strong>: 인터넷·교사 없는 교실의 싼 태블릿에서 on-device Gemma 4 튜터가 한 아이 손글씨를 보고(multimodal vision), 어디서 틀렸는지 찾고, 답을 주지 않고 되묻고(소크라테스 — 아이에겐 productive struggle이 교육학), 하루 끝 교사에게 60명 막힌 지점 한 페이지 지도를 준다("empower the educator through seamless integration" — 브리프 어휘 그대로).</p>
+  <blockquote>와우 비트: 어느 교실의 소녀, 노트를 싼 태블릿에 댐. 태블릿: "여기 보여줘 봐... 3/4과 1/2을 더했네, 분모가 다른데 어떻게 했어?" 아이가 생각. "...아! 분모를 같게 만들어야 돼." → 컷: 교사 폰, 하루 끝 — 60명 전원 막힌 지점 한 페이지. → 컷: 태블릿 비행기 모드. "인터넷 없음. cloud 없음. 구독 없음. $80 태블릿 한 대에 모델 하나."</blockquote>
+  <p><strong>Gemma 4 사용</strong>: multimodal vision(손글씨 작업 읽음 — load-bearing) · native function calling/multi-tool(assess_work → ask_back → check_reasoning → flag_stuck → escalate_to_teacher → write_teacher_report) · 256K(아이별 학습 로그 — 오늘 질문이 지난달 실수에 기반) · E4B 4-bit(싼 태블릿, 오프라인) · configurable thinking(미묘한 오류엔 budget) · domain adaptation(opt: 소크라테스 규율 + 교사 톤 LoRA — 가중치/벤치마크 publish, "post-training" 박스 체크) · grounded(아이에게 의료/개인 조언 안 함 — escalate)</p>
+  <p><strong>POC 재사용 (가장 많음)</strong>: ask_back 소크라테스 로직(<em>진짜 집</em>) · FunctionCallOrchestrator · WonderingLog→아이별 로그 · defer_to_human→escalate_to_teacher · verbatim-locked 시스템 프롬프트 패턴(교사 톤) · deterministic build · 0-egress 패턴 · on-device TTS. <strong>버림</strong>: 흉상, macOS-only, 풀스크린 UX, "답하지 않는 흉상" 헤드라인.</p>
+</div>
+
+<h2>비교표</h2>
+<table>
+  <thead><tr><th style="width:20%;"></th><th>Out Loud (PRIMARY)</th><th>Maia (FALLBACK)</th></tr></thead>
+  <tbody>
+    <tr><td>트랙</td><td>Digital Equity &amp; Inclusivity</td><td>Future of Education</td></tr>
+    <tr><td>브리프 구절 직격</td><td>"linguistic diversity" · "a community where privacy is non-negotiable" · "helps millions"</td><td>"multi-tool agents that adapt to the individual and empower the educator through seamless integration" (정확) · "a classroom with spotty internet" (정확)</td></tr>
+    <tr><td>인구</td><td>754M illiterate + 수십억 언어-배제 + 관료제에 옭매인 모든 사람</td><td>수억 under-taught 아이들 + 그들의 교사</td></tr>
+    <tr><td>multimodal vision</td><td>load-bearing (문서/라벨/양식 읽음)</td><td>load-bearing (손글씨 작업 읽음)</td></tr>
+    <tr><td>와우 비트</td><td>노인 이민 여성 + 편지 더미 → "your medical bill never left your hand"</td><td>아이의 "...아!" + 교사의 한 페이지 지도 → "her homework never left the tablet"</td></tr>
+    <tr><td>POC 재사용</td><td>중 (음성 루프, orchestrator, abstention gate, dedup-log, 프라이버시 패턴)</td><td>고 (위 전부 + ask_back Socratic 로직이 진짜 집 + locked-system-prompt 패턴)</td></tr>
+    <tr><td>copycat 위험</td><td>낮음 — Gemma Vision lineage지만 안 차지된 인구(문해력/언어, 시각 아님)</td><td>중-낮음 — LENTERA가 "오프라인 ed 허브" 했으나 그건 인프라; 이건 개인화 적응 튜터</td></tr>
+    <tr><td>정서적 펀치</td><td>최고 (종이에 옭매인 장면)</td><td>매우 높음 (아이 깨달음 + 교사 안도 — 두 payoff)</td></tr>
+    <tr><td>buildability</td><td>새 빌드, phone-first; POC 음성+orchestrator가 많이 carry</td><td>새 빌드지만 가장 많이 재사용 — 이미 작성·테스트된 Socratic 코어 포함</td></tr>
+    <tr><td>주요 리스크</td><td>local-resource 테이블 curation 필요; 다국어 TTS 커버리지</td><td>손글씨 OCR 품질; "AI tutor" 붐비는 공간(차별화 = 작업을-봄 + Socratic + 교사 지도)</td></tr>
+  </tbody>
+</table>
+
+<h2>권고</h2>
+<p><strong>Out Loud 주(主)</strong> — 최고 수상 확률: 브리프의 최다 반복 주제(on-device for the places that need it most) 직격 + "privacy non-negotiable" 직격 + 인구 최대 + 와우 최강 + "Gemma Vision for the illiterate/excluded"는 안 차지된 winning lineage 좌석.</p>
+<p><strong>Maia 강력 fallback</strong> — 기존 작업 최다 보존 + Socratic thesis가 <em>옳은</em> 곳(영리한 게 아니라) + Education 브리프 어휘 정확 일치 + "AI tutor"가 붐비지만 <em>손글씨를-봄 + Socratic + 하루 끝 교사 지도</em> 조합은 안 붐빔.</p>
+<p><strong>정직한 확률</strong>: 둘 다 Gemma-3n-winner 수준으로 실행 시 — "any prize" ~20-30%, top-3 ~5-10%. 95%는 어떤 출품작도 불가능. 둘 다 <strong>문서가 반복해서 묻는 것에 대한 비-copycat 답이고, winning lineage의 안 차지된 좌석.</strong></p>
+
+<h2>다음 단계</h2>
+<ul>
+  <li>하나를 잠금 → POC 재사용 매핑 + D-day 빌드 계획 + 데모 영상 샷 리스트 상세화 + ≤1500단어 writeup 완성</li>
+  <li>또는 세 번째 후보 탐색 (예: "신호 없는 곳의 권리-보호 통역기")</li>
+  <li>참고: 현 He Was Socrates 빌드(macOS 앱, Safety & Trust 포지셔닝)는 별도 트랙 출품 또는 post-hackathon으로 유지 가능 — 두 새 후보와 배타적이지 않음 (다만 한 팀은 한 writeup만 제출 가능)</li>
+</ul>
+
+<footer>
+  <p>Submission Narratives Comparison · 2026-05-11 · 전문: <a href="../docs/submission-out-loud.md">docs/submission-out-loud.md</a> · <a href="../docs/submission-maia.md">docs/submission-maia.md</a></p>
+  <p style="margin-top:.4rem;">관련: <a href="2026-05-11-reevaluation-4judges-and-pivot-options.html">4-Judge Re-evaluation</a> · <a href="hackathon-audit-20260511-gemma-4-good-hackathon.html">Hackathon Audit</a></p>
+  <p style="margin-top:.4rem;">대회: <a href="https://www.kaggle.com/competitions/gemma-4-good-hackathon">The Gemma 4 Good Hackathon</a> · 마감 2026-05-19 08:59 KST</p>
+</footer>
+
+</div>
+</body>
+</html>
