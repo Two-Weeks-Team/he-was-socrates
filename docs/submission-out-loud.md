@@ -1,6 +1,8 @@
 # Submission Narrative — "Out Loud" (Scenario 1)
 
-> **Status**: strategy artifact (2026-05-11). Writeup-ready prose for the Kaggle submission, framed for the team. Not yet built — this is the *direction*, designed against the hackathon brief + the Gemma 3n winners' wow pattern. Sibling: `submission-maia.md`. Decision pending.
+> **Status**: strategy artifact (2026-05-11). Writeup-ready prose for the Kaggle submission, framed for the team. Not yet built — this is the *direction*, designed against the hackathon brief + the Gemma 3n winners' wow pattern. Sibling: `submission-maia.md`.
+>
+> ⚠️ **Superseded by [`out-loud-master-plan.md`](out-loud-master-plan.md)** (later, 2026-05-11): the master plan corrects the model facts (Gemma 4 E4B has a **128K** context, not 256K; it has **built-in multilingual OCR + document parsing + speech-to-translated-text**, so the model — not a bolted-on API — does the reading and translating), retargets to **Android-first** (Google AI Edge SDK / LiteRT, the official Gemma-on-Android path), closes every identified gap with a closure table, adds a rule-compliance checklist, a verification log, a build plan honest about D-8 scope, and a finalized ≤1500-word writeup. **Read the master plan**; this file is the earlier short narrative kept for the record.
 
 ---
 
