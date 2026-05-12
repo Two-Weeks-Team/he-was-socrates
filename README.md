@@ -268,6 +268,8 @@ he-was-socrates/
 
 **Two surfaces, one product.** The macOS app (`apps/macos/`) *is* the product — a fullscreen Socratic bust you talk to. The web companion (`apps/web/` → [he-was-socrates.vercel.app](https://he-was-socrates.vercel.app)) is the *teaching surface*: it walks a visitor through the four lessons the app embodies (push-to-talk interaction · 단정한 평어체 tone · the abstention mechanic · on-device-by-entitlement proof) and ends with a `git clone` + `make app` path. The web companion runs no LLM and collects no data — it is documentation that happens to be a webpage.
 
+> **Spin-off: [Mnemo](https://github.com/Two-Weeks-Team/mnemo).** The on-device substrate this POC proved out (on-device STT/TTS, the function-call orchestrator pattern, the SHA-256-deduped log, the zero-network-entitlement discipline) is being carried forward into a distinct product — *Mnemo*, an on-device capture-and-express system. Its engine core (formerly `packages/MnemoEngine/` here) lives at **[`Two-Weeks-Team/mnemo`](https://github.com/Two-Weeks-Team/mnemo)** along with the validated implementation plan. He Was Socrates remains the hackathon submission; Mnemo is its own thing.
+
 ---
 
 ## Hackathon facts
