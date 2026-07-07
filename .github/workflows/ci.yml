@@ -25,6 +25,8 @@ env:
   # Pin Apple's swift-format release that pairs with Swift 6.1.
   SWIFT_FORMAT_VERSION: "601.0.0"
   GITLEAKS_VERSION: "8.21.2"
+  # Bust SwiftPM .build caches when the hosted Xcode/Swift toolchain changes.
+  SWIFTPM_CACHE_EPOCH: "xcode-26.6-swift-6.3.3"
 
 jobs:
   # -------------------------------------------------------------------------
@@ -68,9 +70,9 @@ jobs:
           path: |
             ~/.swiftpm
             packages/SocraticEngine/.build
-          key: swiftpm-${{ runner.os }}-${{ hashFiles('packages/SocraticEngine/Package.swift', 'packages/SocraticEngine/Package.resolved') }}
+          key: swiftpm-${{ runner.os }}-${{ env.SWIFTPM_CACHE_EPOCH }}-${{ hashFiles('packages/SocraticEngine/Package.swift', 'packages/SocraticEngine/Package.resolved') }}
           restore-keys: |
-            swiftpm-${{ runner.os }}-
+            swiftpm-${{ runner.os }}-${{ env.SWIFTPM_CACHE_EPOCH }}-
 
       - name: Build asset pipeline (make assets)
         run: make assets
@@ -223,9 +225,9 @@ jobs:
           path: |
             ~/.swiftpm
             packages/SocraticEngine/.build
-          key: swiftpm-${{ runner.os }}-${{ hashFiles('packages/SocraticEngine/Package.swift', 'packages/SocraticEngine/Package.resolved') }}
+          key: swiftpm-${{ runner.os }}-${{ env.SWIFTPM_CACHE_EPOCH }}-${{ hashFiles('packages/SocraticEngine/Package.swift', 'packages/SocraticEngine/Package.resolved') }}
           restore-keys: |
-            swiftpm-${{ runner.os }}-
+            swiftpm-${{ runner.os }}-${{ env.SWIFTPM_CACHE_EPOCH }}-
 
       - name: Build LatencyBench (release, no run)
         run: make bench-latency-build
