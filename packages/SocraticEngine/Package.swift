@@ -21,7 +21,7 @@ let package = Package(
     ],
     dependencies: [
         // swift-testing — bundled with Xcode 16+, fetched as package for CommandLineTools-only envs.
-        .package(url: "https://github.com/apple/swift-testing", from: "0.10.0"),
+        .package(url: "https://github.com/apple/swift-testing", from: "6.3.2"),
         // mlx-swift-lm — Apple's official LLM/VLM Swift package (MIT). Provides
         // MLXLLM library with built-in Gemma 4 E4B IT 4-bit support via
         // LLMRegistry.gemma4_e4b_it_4bit pointing to mlx-community/gemma-4-e4b-it-4bit.
